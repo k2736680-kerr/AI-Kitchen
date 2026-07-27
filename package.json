@@ -9,6 +9,7 @@
     "dev:mobile": "pnpm --filter @ai-kitchen/mobile start",
     "android": "pnpm --filter @ai-kitchen/mobile android",
     "typecheck": "pnpm --filter @ai-kitchen/mobile typecheck && pnpm --filter @ai-kitchen/shared typecheck",
-    "lint": "pnpm --filter @ai-kitchen/mobile lint"
+    "lint": "pnpm --filter @ai-kitchen/mobile lint",
+    "test": "pnpm --filter @ai-kitchen/shared test"
   }
 }

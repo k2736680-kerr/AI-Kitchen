@@ -33,6 +33,9 @@
 - 新增 `apps/mobile/.env.example`，仅包含公开占位变量；
 - 增强 mobile 环境文件忽略规则；
 - 明确未创建真实 Supabase 资源、环境变量或 Secret。
+- 新增 `@ai-kitchen/shared` 的 guest、anonymous、registered 身份 Subject 类型与纯类型守卫；
+- 新增稳定 API 错误码、成功/失败 Envelope 及 10 项 Vitest 单元测试；
+- 本步骤未实现 Supabase、真实身份服务、Auth、数据库或业务功能。
 
 ---
 

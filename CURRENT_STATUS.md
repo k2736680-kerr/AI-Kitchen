@@ -5,17 +5,25 @@
 | 属性 | 当前值 |
 |---|---|
 | 更新时间 | 2026-07-27 |
-| 当前阶段 | **第二阶段：Development 环境与 Secret 边界** |
+| 当前阶段 | **第二阶段：身份、数据归属与隐私基础** |
 | 当前状态 | `IN_PROGRESS` |
 | Blueprint 版本 | `1.0.0` |
 | 产品代码状态 | `INITIALIZATION_COMPLETE`（尚未开发业务功能） |
 | 代码分支 | `main` |
-| 最近可运行 commit | `712465a chore: initialize Expo monorepo` |
+| 最近可运行 commit | `e268854 docs: define environment secret boundary` |
 | 当前环境 | pnpm Workspace + Expo SDK 57 默认模板 |
 
 ---
 
 ## 1. 已完成
+
+### 第二阶段架构决策与共享契约
+
+- [x] ADR-0001 身份、数据归属与隐私决策
+- [x] ADR-0002 Development 环境与 Secret 边界决策
+- [x] `@ai-kitchen/shared` 最小身份 Subject 与 API 错误契约及 10 项单元测试
+- [ ] Supabase、Auth、数据库与迁移（尚未创建）
+- [ ] Profile、Recipe、AI 与业务页面（尚未实现）
 
 ### Phase 1：治理与总体设计（10/10）
 
