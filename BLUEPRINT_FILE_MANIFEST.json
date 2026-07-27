@@ -1,0 +1,206 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-07-27",
+  "files": [
+    {
+      "path": ".cursor/rules/00-core-context.mdc",
+      "bytes": 1550,
+      "sha256": "bd3e14e9936b52c251993d6c1ea5a61704343cf5ee28802831e0dfe45131f2b1"
+    },
+    {
+      "path": ".cursor/rules/10-safety-and-data.mdc",
+      "bytes": 1589,
+      "sha256": "a9e58d5c7f749472235bff7b4ad28dd2f32517ac6fc6155b00250e66d98f8033"
+    },
+    {
+      "path": ".cursor/rules/20-typescript-architecture.mdc",
+      "bytes": 1647,
+      "sha256": "9aad77ecec49303f28c7dd60278c74b4b4d93b82467f882f00c11ed83252c1c6"
+    },
+    {
+      "path": ".cursor/rules/30-testing-and-proof.mdc",
+      "bytes": 1330,
+      "sha256": "dc7441080498a27ecb64ced0096e5b8e48a6186ff537f4088d8aaa753ee2cdc7"
+    },
+    {
+      "path": ".cursor/rules/40-docs-and-status.mdc",
+      "bytes": 1115,
+      "sha256": "7dc2b7a99200e3b832a5ff679c3006b4600f6c22e40f1143a28104c73ac80560"
+    },
+    {
+      "path": "00_PROJECT_MASTER_PLAN.md",
+      "bytes": 14530,
+      "sha256": "1d5854fbb62b3b0278b9cae639d6f890e490baa4a47864478473e43649dacd5a"
+    },
+    {
+      "path": "01_PRODUCT_PRD.md",
+      "bytes": 16860,
+      "sha256": "e20ef3d0e4e2913ff4e405ee3772f6d0005ffaefa7826fa8ff66c51a9c030830"
+    },
+    {
+      "path": "02_ARCHITECTURE.md",
+      "bytes": 19201,
+      "sha256": "09a7c5fe913247709a2d4ce7d44536e18fb524ab51248a10d83e737e7b052ae3"
+    },
+    {
+      "path": "03_DATABASE_DESIGN.md",
+      "bytes": 76081,
+      "sha256": "71c549c4df6d857410a31d27e77d3d671b6d8e20bdc65f765a4d9a34ecbba8a4"
+    },
+    {
+      "path": "04_API_CONTRACT.md",
+      "bytes": 75151,
+      "sha256": "e8e20fc99a80c5e217fd03510e48d8b63ed980fa94a3656fe10e8c223f860564"
+    },
+    {
+      "path": "05_AUTH_AND_IDENTITY.md",
+      "bytes": 25283,
+      "sha256": "bcac8116b32f7f4790bbe5f7fc6a7fe949ad07a69a107459e416d63ebe7f4f2f"
+    },
+    {
+      "path": "06_AI_ENGINE.md",
+      "bytes": 23307,
+      "sha256": "13c169b9ad5b9bb666bb900e1678ab2a5faab176ea1183e16eb5f0d1a0de6402"
+    },
+    {
+      "path": "07_PROMPT_ENGINEERING.md",
+      "bytes": 20913,
+      "sha256": "742f649358ecfaf3ee380f7c8519ba6823361ce8c7a6d041b27bb0e23157e7b4"
+    },
+    {
+      "path": "08_RULE_ENGINE.md",
+      "bytes": 16812,
+      "sha256": "4905f2f6b25f3b60e319f4bd10c8b8eb964f1ec84bdaafc0ffdb3160167052cd"
+    },
+    {
+      "path": "09_FOOD_SAFETY_RULES.md",
+      "bytes": 15002,
+      "sha256": "f12344d69441a37888adaadd288b10e64942ce25089bbd7fcc56342e95e01707"
+    },
+    {
+      "path": "10_RECIPE_SCHEMA.md",
+      "bytes": 24853,
+      "sha256": "3683cef61c2020629161be35a573571a952a398a74bc57bab83c64bba86de684"
+    },
+    {
+      "path": "11_NUTRITION_ENGINE.md",
+      "bytes": 11232,
+      "sha256": "6d0c124ec145ce9888508a15e06e619c8a0259b7b2bc41d1ebd635769b9d9cdb"
+    },
+    {
+      "path": "12_PRIVACY_DATA_MAP.md",
+      "bytes": 13431,
+      "sha256": "9fe51e323bbeb95096c2e2ad791665f59d267d52c2dadfc1d6a7bc5fc408646c"
+    },
+    {
+      "path": "13_MOBILE_APP_ARCHITECTURE.md",
+      "bytes": 11289,
+      "sha256": "cf38a3f5f9033dafd79f0283f781435e94b04d71f634a0dfacd0fd6ce3f7ff94"
+    },
+    {
+      "path": "14_EXPO_AND_NATIVE_STRATEGY.md",
+      "bytes": 8558,
+      "sha256": "890514ce30429382c1e29dd4310eb7b0939fa63406c76d10ab74c67cdb18a3a9"
+    },
+    {
+      "path": "15_UI_UX_SYSTEM.md",
+      "bytes": 10017,
+      "sha256": "31b7339d6af4355d0972d26ce5a735445c0e988d1fa5ac9219108d73363916b9"
+    },
+    {
+      "path": "16_STATE_MANAGEMENT.md",
+      "bytes": 6887,
+      "sha256": "3d8ece6725acd938d2f126a6fa049f4fccdb3a3d73e600cca9c1bcbe3c10cde0"
+    },
+    {
+      "path": "17_LOCAL_STORAGE_AND_SYNC.md",
+      "bytes": 9084,
+      "sha256": "93a87616484f08a748787d23baa9b743c3b041fa2925a335921d18f9776128b3"
+    },
+    {
+      "path": "18_TEST_STRATEGY.md",
+      "bytes": 9254,
+      "sha256": "4c567090f7cadfd93ad20b4032cfdd7a8bb5cdc444299468a8a64e8d9b6e3580"
+    },
+    {
+      "path": "19_OBSERVABILITY.md",
+      "bytes": 7130,
+      "sha256": "6a62ad5b8f7d6eace841ec014550d79265317eba91fc4bf66dd4c4f95f9585dd"
+    },
+    {
+      "path": "20_DEPLOYMENT_AND_RELEASE.md",
+      "bytes": 7587,
+      "sha256": "9bc3a63a98da4bab3a639d458838335f407f91b476bd2e4b15a07a6bbf336034"
+    },
+    {
+      "path": "21_STORE_COMPLIANCE.md",
+      "bytes": 7925,
+      "sha256": "19bb6ecc6e90dddcaf3170b56872fc2defd7c6bcd2bc0b67b8faeb64b8cad46a"
+    },
+    {
+      "path": "AGENTS.md",
+      "bytes": 2985,
+      "sha256": "594724b5553a35c21c3de370676a558aafc9d95e49710f6e61d1bd19677302a8"
+    },
+    {
+      "path": "AI_CONTEXT.md",
+      "bytes": 11488,
+      "sha256": "82d4169e927adf89534d63a5aed961f6da4301df8250a24e58076bc17ebea7bb"
+    },
+    {
+      "path": "BLUEPRINT_COMPLETION_REPORT.md",
+      "bytes": 2968,
+      "sha256": "eb948068c789d825f03683515ea715637ff312557d33609021803b60e4d0016b"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "bytes": 3441,
+      "sha256": "f29d163118ce1de650ec6bfa44206463425c554a7f9585bf65ede3edb15e82c6"
+    },
+    {
+      "path": "CHATGPT_PROJECT_INSTRUCTIONS.md",
+      "bytes": 3460,
+      "sha256": "9ca19d9dbf19fcecb3ef71d8fb1380945ff524eb12a5da724f1a0a7c488139e1"
+    },
+    {
+      "path": "CLAUDE.md",
+      "bytes": 3283,
+      "sha256": "bb422d6ba62ffb76915ba6df936b556f0e240382374a59a4f68877138b6d5c61"
+    },
+    {
+      "path": "CODEX.md",
+      "bytes": 2082,
+      "sha256": "55cf994b8be4c086d7779f268c76c40a51ccd16a9f69d50295773c032111e7f0"
+    },
+    {
+      "path": "CURRENT_STATUS.md",
+      "bytes": 3986,
+      "sha256": "a5d83eb71fc3b8796e4e7e7272ee4ce93187cec807946826736cf189e317cbc8"
+    },
+    {
+      "path": "DECISIONS.md",
+      "bytes": 16958,
+      "sha256": "57b93acfa079136d66c4a8ee1b30eabf30450b7f359d464bc5a69df44eadd436"
+    },
+    {
+      "path": "DEVELOPMENT_PROTOCOL.md",
+      "bytes": 14715,
+      "sha256": "99ab2aec2e7e873634dd115b5a07fc8e1c3d8526c5b6ef5fbc0f481ca21dfaa3"
+    },
+    {
+      "path": "HANDOFF_TEMPLATE.md",
+      "bytes": 2967,
+      "sha256": "30bc583c79c1b589182fc0324bda8c7fd8da98488feee3ad579239d53951ce95"
+    },
+    {
+      "path": "PROJECT_STATE.md",
+      "bytes": 4769,
+      "sha256": "391e09a4bcfe65ef9dee3032291d08e039395b259ec43c9c8128792270b1c4db"
+    },
+    {
+      "path": "README.md",
+      "bytes": 11574,
+      "sha256": "00dad9ba9e4504c5b5789a3ea37cb17372830c945fbb7bca57186eee0c8d320f"
+    }
+  ]
+}

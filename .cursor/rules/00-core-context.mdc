@@ -1,0 +1,38 @@
+---
+description: AI Kitchen core project context, source-of-truth order, and execution discipline
+globs:
+alwaysApply: true
+---
+
+# AI Kitchen Core Context
+
+Before editing any file:
+
+1. Read `AI_CONTEXT.md`.
+2. Read `DEVELOPMENT_PROTOCOL.md`.
+3. Read `PROJECT_STATE.md` and `CURRENT_STATUS.md`.
+4. Read the task-specific numbered design documents.
+5. Check `DECISIONS.md` and recent `CHANGELOG.md`.
+
+Core facts:
+
+- Product: AI kitchen assistant that turns available ingredients and constraints into executable structured recipes.
+- Mobile: React Native + Expo + TypeScript; Android first, iOS later.
+- Backend: own versioned API via Supabase Edge Functions and PostgreSQL/RLS.
+- The app never calls an AI provider directly and never contains provider or Service Role secrets.
+- Model output is an untrusted Recipe Candidate. Only the server may assemble a trusted Final Recipe after Schema, business, food-safety, and nutrition processing.
+- Food-safety validation fails closed. Nutrition may degrade to unavailable.
+- `requestId` and `idempotencyKey` are required across generation flows.
+- development, staging, and production are isolated.
+
+Do not infer that designs are implemented. Check the repository and tests. Never describe planned code as completed.
+
+For every task, state:
+
+- files to inspect/change;
+- allowed and prohibited scope;
+- acceptance criteria;
+- tests to run;
+- rollback approach.
+
+Prefer the smallest coherent change. Do not rebuild the project or replace architecture unless the user explicitly approves an ADR-backed change.
