@@ -29,6 +29,10 @@
 
 - 新增 `docs/decisions/ADR-0001-identity-data-ownership.md`，明确 guest、anonymous、registered 边界、anonymous 升级保持 `auth.users.id`、`owner_id = auth.uid()`、RLS 默认拒绝、User-scoped/Admin Supabase client 与 API Key 安全边界。
 - 明确本轮未实现 Auth、Supabase、数据库、迁移或业务功能。
+- 新增 `docs/decisions/ADR-0002-environment-secret-boundary.md`；
+- 新增 `apps/mobile/.env.example`，仅包含公开占位变量；
+- 增强 mobile 环境文件忽略规则；
+- 明确未创建真实 Supabase 资源、环境变量或 Secret。
 
 ---
 

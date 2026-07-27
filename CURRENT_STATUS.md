@@ -5,7 +5,7 @@
 | 属性 | 当前值 |
 |---|---|
 | 更新时间 | 2026-07-27 |
-| 当前阶段 | **第二阶段：身份、数据归属与隐私基础架构决策** |
+| 当前阶段 | **第二阶段：Development 环境与 Secret 边界** |
 | 当前状态 | `IN_PROGRESS` |
 | Blueprint 版本 | `1.0.0` |
 | 产品代码状态 | `INITIALIZATION_COMPLETE`（尚未开发业务功能） |
@@ -70,6 +70,8 @@
 - 确认未生成 `apps/mobile/android` 或 `apps/mobile/ios`。
 - 新增 `docs/decisions/ADR-0001-identity-data-ownership.md`，锁定 guest、anonymous、registered、`owner_id = auth.uid()`、RLS 与 User-scoped/Admin client 边界。
 - 修正最近完成提交事实为 `712465a`。
+- 步骤 2.2 新增 `docs/decisions/ADR-0002-environment-secret-boundary.md` 与 `apps/mobile/.env.example`，只定义公开变量和环境/Secret 隔离边界。
+- 当前没有真实 Supabase Project、URL、Key、Secret、Auth、数据库或迁移；`.env.example` 不代表 Supabase 已接入。
 
 ---
 
@@ -110,7 +112,7 @@
 
 ## 5. 下一项唯一任务
 
-**执行 ADR-0001 后续独立实施步骤前，先完成 P0 固定数据原型与相关范围评审。**
+**在创建任何 Supabase 资源前，先完成步骤 2.2 的待确认事项与 P0 范围评审。**
 
 任务范围：
 
