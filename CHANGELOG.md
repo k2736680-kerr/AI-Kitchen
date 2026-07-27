@@ -25,6 +25,11 @@
 
 - 本轮只完成工程初始化和默认模板验证；未实现业务页面、固定 Recipe Fixture、Supabase、Auth、数据库、AI、Food Safety、Nutrition、同步、测试体系或发布配置。
 
+### Architecture Decision
+
+- 新增 `docs/decisions/ADR-0001-identity-data-ownership.md`，明确 guest、anonymous、registered 边界、anonymous 升级保持 `auth.users.id`、`owner_id = auth.uid()`、RLS 默认拒绝、User-scoped/Admin Supabase client 与 API Key 安全边界。
+- 明确本轮未实现 Auth、Supabase、数据库、迁移或业务功能。
+
 ---
 
 ## [1.0.0] — 2026-07-27

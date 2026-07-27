@@ -5,12 +5,12 @@
 | 属性 | 当前值 |
 |---|---|
 | 更新时间 | 2026-07-27 |
-| 当前阶段 | **Expo Monorepo Initialization Complete / P0 Prototype Not Started** |
-| 当前状态 | `READY_FOR_REVIEW` |
+| 当前阶段 | **第二阶段：身份、数据归属与隐私基础架构决策** |
+| 当前状态 | `IN_PROGRESS` |
 | Blueprint 版本 | `1.0.0` |
 | 产品代码状态 | `INITIALIZATION_COMPLETE`（尚未开发业务功能） |
 | 代码分支 | `main` |
-| 最近可运行 commit | `1481cb0 docs: establish enterprise blueprint baseline`（工程初始化文件尚未提交） |
+| 最近可运行 commit | `712465a chore: initialize Expo monorepo` |
 | 当前环境 | pnpm Workspace + Expo SDK 57 默认模板 |
 
 ---
@@ -68,6 +68,8 @@
 - 实际通过 `pnpm install`、`pnpm install --frozen-lockfile`、Expo Doctor 20/20、mobile/shared/root typecheck 与 mobile/root lint。
 - 在 Android `Pixel_8a` 模拟器中实际启动 Expo Go：默认 Home 页面与 Explore 路由均可见并可切换；Metro 首次 Android bundle 成功，无红屏、模块找不到、CSS 或 JavaScript 阻断错误。
 - 确认未生成 `apps/mobile/android` 或 `apps/mobile/ios`。
+- 新增 `docs/decisions/ADR-0001-identity-data-ownership.md`，锁定 guest、anonymous、registered、`owner_id = auth.uid()`、RLS 与 User-scoped/Admin client 边界。
+- 修正最近完成提交事实为 `712465a`。
 
 ---
 
@@ -83,6 +85,8 @@
 - Local DB/Sync；
 - 自动化测试/CI/CD（本轮仅执行初始化静态检查）；
 - EAS build、监控和商店提交。
+
+本阶段仅完成架构决策设计；Supabase、Auth、数据库和迁移仍未创建或实现。
 
 任何 AI 不得把文档中的示例代码、DDL、接口或 DoD 当作已运行系统。
 
@@ -106,7 +110,7 @@
 
 ## 5. 下一项唯一任务
 
-**在已验证的 Expo Monorepo 中实现 P0 固定数据原型的首个明确任务。**
+**执行 ADR-0001 后续独立实施步骤前，先完成 P0 固定数据原型与相关范围评审。**
 
 任务范围：
 
