@@ -28,6 +28,12 @@
 - mobile 已在 `dependencies` 中声明 `@ai-kitchen/shared: workspace:*`；Workspace 链接和 TypeScript 导入验证均已通过。
 - 未增加构建产物、TypeScript 路径映射、Metro/Babel 配置；Repository、Store 和页面尚未实现。
 
+## P0 固定数据原型步骤 2
+
+- mobile Fixture Repository 已建立，支持固定食材搜索、名称规范化及固定菜谱读取。
+- 已建立 session guest namespace 的内存状态，支持食材选择、自定义添加与重复校验、生成草稿、最近菜谱和烹饪步骤状态。
+- 状态尚未接入正式页面，App 重启后不会保留；未接入 Supabase、Auth、数据库、API 或 AI。
+
 ## 1. 已完成
 
 ### 第二阶段架构决策与共享契约

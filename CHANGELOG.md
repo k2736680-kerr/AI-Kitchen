@@ -9,6 +9,12 @@
 - `@ai-kitchen/shared` 增加正式源码根入口，mobile 声明 `workspace:*` 依赖。
 - 已验证 Workspace 链接与 TypeScript 导入；未增加构建产物、路径映射、Repository、Store 或页面。
 
+## P0 固定数据原型步骤 2
+
+- 新增 mobile Fixture Repository 和 session guest namespace 内存状态。
+- 支持食材搜索、选择、自定义添加及重复校验，以及生成草稿、最近菜谱和烹饪步骤状态。
+- 状态未接入正式页面，App 重启后不保留；未接入 Supabase、Auth、数据库、API 或 AI。
+
 ## P0 固定数据原型步骤 1
 
 - 新增 Ingredient、Generation 与 Recipe 最小共享契约。
