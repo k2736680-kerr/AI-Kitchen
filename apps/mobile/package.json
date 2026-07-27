@@ -3,6 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
+    "@ai-kitchen/shared": "workspace:*",
     "@expo/ui": "~57.0.7",
     "expo": "~57.0.8",
     "expo-constants": "~57.0.7",

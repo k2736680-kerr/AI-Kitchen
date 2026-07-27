@@ -22,6 +22,12 @@
 - Fixture 契约测试已通过。
 - 移动端页面、本地 Store、AI、Supabase、Auth、数据库、营养和食品安全引擎尚未实现。
 
+## P0 固定数据原型步骤 2A
+
+- `@ai-kitchen/shared` 已补充只开放包根的正式源码入口，仍为 Monorepo 内部私有包。
+- mobile 已在 `dependencies` 中声明 `@ai-kitchen/shared: workspace:*`；Workspace 链接和 TypeScript 导入验证均已通过。
+- 未增加构建产物、TypeScript 路径映射、Metro/Babel 配置；Repository、Store 和页面尚未实现。
+
 ## 1. 已完成
 
 ### 第二阶段架构决策与共享契约

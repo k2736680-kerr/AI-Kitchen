@@ -4,6 +4,11 @@
 
 ---
 
+## P0 固定数据原型步骤 2A
+
+- `@ai-kitchen/shared` 增加正式源码根入口，mobile 声明 `workspace:*` 依赖。
+- 已验证 Workspace 链接与 TypeScript 导入；未增加构建产物、路径映射、Repository、Store 或页面。
+
 ## P0 固定数据原型步骤 1
 
 - 新增 Ingredient、Generation 与 Recipe 最小共享契约。
