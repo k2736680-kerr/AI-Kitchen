@@ -6,12 +6,24 @@
 
 ## [Unreleased]
 
-### Planned
+### Added
 
-- 创建 pnpm Monorepo 和 Expo TypeScript 固定数据原型；
-- 建立 format/lint/typecheck/unit test；
-- Android 模拟器和一台真机验证；
-- 建立 development Supabase 前先确认环境和供应商决策。
+- pnpm 11.14.0 Workspace：根配置、`apps/mobile`、`packages/shared`、`pnpm-lock.yaml` 与项目本地 `.pnpm-store`；
+- Expo SDK 57 默认 Expo Router 模板，应用元数据为 AI Kitchen；
+- 最小 `@ai-kitchen/shared` 空模块与直接 TypeScript 开发依赖；
+- Expo Flat Config ESLint、CSS TypeScript 模块声明与 Web hydration Hook 修复。
+
+### Validated
+
+- `pnpm install` 与 `pnpm install --frozen-lockfile`；
+- Expo Doctor 20/20；
+- mobile/shared/root TypeScript 与 mobile/root ESLint；
+- `Pixel_8a` Android 模拟器上的 Expo Go 默认 Home 页面和 Explore 路由切换；
+- 未生成 Android/iOS 原生目录。
+
+### Notes
+
+- 本轮只完成工程初始化和默认模板验证；未实现业务页面、固定 Recipe Fixture、Supabase、Auth、数据库、AI、Food Safety、Nutrition、同步、测试体系或发布配置。
 
 ---
 

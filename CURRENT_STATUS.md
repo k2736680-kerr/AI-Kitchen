@@ -5,13 +5,13 @@
 | 属性 | 当前值 |
 |---|---|
 | 更新时间 | 2026-07-27 |
-| 当前阶段 | **Blueprint Phase 1–4 Complete / Ready for Implementation** |
-| 当前状态 | `BLUEPRINT_COMPLETE` |
+| 当前阶段 | **Expo Monorepo Initialization Complete / P0 Prototype Not Started** |
+| 当前状态 | `READY_FOR_REVIEW` |
 | Blueprint 版本 | `1.0.0` |
-| 产品代码状态 | `NOT_STARTED` |
-| 代码分支 | 尚未创建正式代码仓库 |
-| 最近可运行 commit | 不适用 |
-| 当前环境 | 文档仓库 |
+| 产品代码状态 | `INITIALIZATION_COMPLETE`（尚未开发业务功能） |
+| 代码分支 | `main` |
+| 最近可运行 commit | `1481cb0 docs: establish enterprise blueprint baseline`（工程初始化文件尚未提交） |
+| 当前环境 | pnpm Workspace + Expo SDK 57 默认模板 |
 
 ---
 
@@ -61,28 +61,27 @@
 
 ## 2. 本轮实际完成
 
-- 生成剩余 4 份核心技术文档；
-- 生成 9 份客户端、测试和交付文档；
-- 生成 Cursor、Claude Code、Codex 和 ChatGPT 项目规则；
-- 生成跨聊天/工具交接模板；
-- 更新 README、Project State、AI Context、Master Plan、Changelog 和 Decisions；
-- 执行 Markdown 代码块、内部链接、文件清单和旧状态扫描；
-- 生成完整 Blueprint 压缩包。
+- 建立 pnpm 11.14.0 Workspace：`apps/mobile` 与 `packages/shared`；pnpm Store 固定为项目本地 `.pnpm-store`。
+- 初始化 Expo SDK 57 默认 Expo Router 模板，应用元数据为 `AI Kitchen` / `ai-kitchen` / `ai-kitchen` scheme。
+- 创建最小 `@ai-kitchen/shared` 空模块，并直接声明 TypeScript。
+- 修复模板的 CSS 类型声明与 Web hydration Hook，使 TypeScript 严格检查通过；采用 Expo Flat Config ESLint。
+- 实际通过 `pnpm install`、`pnpm install --frozen-lockfile`、Expo Doctor 20/20、mobile/shared/root typecheck 与 mobile/root lint。
+- 在 Android `Pixel_8a` 模拟器中实际启动 Expo Go：默认 Home 页面与 Explore 路由均可见并可切换；Metro 首次 Android bundle 成功，无红屏、模块找不到、CSS 或 JavaScript 阻断错误。
+- 确认未生成 `apps/mobile/android` 或 `apps/mobile/ios`。
 
 ---
 
 ## 3. 仍未实施
 
-以下全部仍为 `NOT_STARTED`：
+以下仍为 `NOT_STARTED`：
 
-- Git/Monorepo；
-- Expo App 和页面；
+- P0 业务页面和固定 Recipe Fixture；
 - Supabase projects/Auth/DB/RLS；
 - API/Edge Functions；
-- 共享 Schema 代码；
+- 共享 Recipe Schema 代码；
 - AI Provider、Prompt Registry、Rule/Nutrition Engine；
 - Local DB/Sync；
-- 自动化测试/CI/CD；
+- 自动化测试/CI/CD（本轮仅执行初始化静态检查）；
 - EAS build、监控和商店提交。
 
 任何 AI 不得把文档中的示例代码、DDL、接口或 DoD 当作已运行系统。
@@ -107,18 +106,13 @@
 
 ## 5. 下一项唯一任务
 
-**创建 P0 固定数据移动端原型的代码仓库骨架。**
+**在已验证的 Expo Monorepo 中实现 P0 固定数据原型的首个明确任务。**
 
 任务范围：
 
-- 创建 pnpm Monorepo；
-- 初始化 Expo TypeScript App；
-- 建立 `packages/shared`、`packages/domain`；
-- 建立 Expo Router 基础路由；
-- 建立 format/lint/typecheck/unit test；
-- 使用固定 Recipe Fixture 完成首页→生成条件→详情；
-- Android 模拟器和一台 Android 真机验证；
-- 不接真实 AI、Auth、云数据库和营养数据。
+- 先定义固定 Recipe Fixture 与最小共享契约；
+- 逐步完成首页→生成条件→详情固定数据流程及相关测试；
+- 不接真实 AI、Auth、云数据库、迁移、RLS、Food Safety 或 Nutrition。
 
 验收证据：可运行 commit、命令、测试结果、真机信息、截图/日志和回滚方式。
 
@@ -137,4 +131,4 @@
 
 ## 7. 回滚
 
-本轮仅创建/修改 Markdown 和 Cursor rule 文件，没有数据库、代码、密钥或生产环境变化。可通过删除新增文档并回退治理文件恢复；最终压缩包保留完整快照。
+本轮新增工程初始化文件与 Expo 默认模板、更新本状态和变更日志；没有数据库、密钥、生产环境或业务数据变化。工程初始化提交前可通过删除未提交的新工程文件并恢复本轮状态文档变更回到 `1481cb0`；提交后可回退该独立初始化提交。

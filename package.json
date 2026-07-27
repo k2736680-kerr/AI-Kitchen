@@ -1,0 +1,14 @@
+{
+  "name": "ai-kitchen",
+  "private": true,
+  "packageManager": "pnpm@11.14.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev:mobile": "pnpm --filter @ai-kitchen/mobile start",
+    "android": "pnpm --filter @ai-kitchen/mobile android",
+    "typecheck": "pnpm --filter @ai-kitchen/mobile typecheck && pnpm --filter @ai-kitchen/shared typecheck",
+    "lint": "pnpm --filter @ai-kitchen/mobile lint"
+  }
+}
