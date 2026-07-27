@@ -15,6 +15,13 @@
 
 ---
 
+## P0 固定数据原型步骤 1
+
+- Shared Ingredient、Generation 与 Recipe 最小契约已建立。
+- 已新增 10 条固定食材、3 条固定 Recipe Fixture（含缺少食材示例）和固定错误 Fixture。
+- Fixture 契约测试已通过。
+- 移动端页面、本地 Store、AI、Supabase、Auth、数据库、营养和食品安全引擎尚未实现。
+
 ## 1. 已完成
 
 ### 第二阶段架构决策与共享契约

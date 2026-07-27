@@ -1,0 +1,86 @@
+import type { RecipeFixture } from '../recipes/types';
+
+const demoSafetyNotice = {
+  level: 'info' as const,
+  message: '仅为 P0 演示提示，不代表正式食品安全校验。',
+  isDemoOnly: true as const,
+};
+
+export const RECIPE_FIXTURES: readonly RecipeFixture[] = [
+  {
+    recipeId: 'fixture-tomato-egg-noodles',
+    generationMode: 'fixture',
+    title: '番茄鸡蛋面',
+    description: '使用番茄、鸡蛋和面条完成的一道快速家常面。',
+    servings: 2,
+    totalTimeMinutes: 25,
+    requiredIngredients: [
+      { ingredientId: 'egg', displayName: '鸡蛋', amount: '2 个' },
+      { ingredientId: 'tomato', displayName: '番茄', amount: '2 个' },
+      { ingredientId: 'noodles', displayName: '面条', amount: '200 克' },
+    ],
+    optionalIngredients: [],
+    missingIngredients: [],
+    steps: [
+      { stepId: 'tomato-egg-noodles-1', order: 1, title: '准备食材', instruction: '番茄切块，鸡蛋打散。', durationMinutes: 5, ingredientRefs: ['egg', 'tomato'] },
+      { stepId: 'tomato-egg-noodles-2', order: 2, title: '煎鸡蛋', instruction: '锅热后将鸡蛋炒至凝固，盛出备用。', durationMinutes: 5, ingredientRefs: ['egg'] },
+      { stepId: 'tomato-egg-noodles-3', order: 3, title: '炒番茄', instruction: '将番茄炒至变软并出现汤汁。', durationMinutes: 5, ingredientRefs: ['tomato'] },
+      { stepId: 'tomato-egg-noodles-4', order: 4, title: '煮面', instruction: '加入清水煮沸，放入面条煮熟。', durationMinutes: 7, ingredientRefs: ['noodles'] },
+      { stepId: 'tomato-egg-noodles-5', order: 5, title: '完成', instruction: '放回鸡蛋，搅拌均匀后即可享用。', durationMinutes: 3, ingredientRefs: ['egg', 'tomato', 'noodles'] },
+    ],
+    safetyNotices: [demoSafetyNotice],
+    nutritionStatus: 'unavailable',
+  },
+  {
+    recipeId: 'fixture-onion-chicken-fried-rice',
+    generationMode: 'fixture',
+    title: '洋葱鸡胸肉炒饭',
+    description: '使用鸡胸肉、洋葱和米饭完成的简单炒饭。',
+    servings: 2,
+    totalTimeMinutes: 30,
+    requiredIngredients: [
+      { ingredientId: 'chicken-breast', displayName: '鸡胸肉', amount: '200 克' },
+      { ingredientId: 'onion', displayName: '洋葱', amount: '半个' },
+      { ingredientId: 'rice', displayName: '米饭', amount: '300 克' },
+    ],
+    optionalIngredients: [
+      { ingredientId: 'carrot', displayName: '胡萝卜', amount: '半根' },
+      { ingredientId: 'green-pepper', displayName: '青椒', amount: '半个' },
+    ],
+    missingIngredients: [],
+    steps: [
+      { stepId: 'onion-chicken-fried-rice-1', order: 1, title: '准备食材', instruction: '鸡胸肉和洋葱切丁。', durationMinutes: 5, ingredientRefs: ['chicken-breast', 'onion'] },
+      { stepId: 'onion-chicken-fried-rice-2', order: 2, title: '炒鸡肉', instruction: '将鸡胸肉炒至表面变色。', durationMinutes: 7, ingredientRefs: ['chicken-breast'] },
+      { stepId: 'onion-chicken-fried-rice-3', order: 3, title: '炒洋葱', instruction: '加入洋葱翻炒至透明。', durationMinutes: 5, ingredientRefs: ['onion'] },
+      { stepId: 'onion-chicken-fried-rice-4', order: 4, title: '加入米饭', instruction: '放入米饭并翻炒至颗粒分明。', durationMinutes: 10, ingredientRefs: ['rice'] },
+      { stepId: 'onion-chicken-fried-rice-5', order: 5, title: '完成', instruction: '拌匀所有食材后即可装盘。', durationMinutes: 3, ingredientRefs: ['chicken-breast', 'onion', 'rice'] },
+    ],
+    safetyNotices: [demoSafetyNotice],
+    nutritionStatus: 'unavailable',
+  },
+  {
+    recipeId: 'fixture-potato-egg-missing-noodles',
+    generationMode: 'fixture',
+    title: '土豆鸡蛋拌面（缺少面条）',
+    description: '用于演示缺少必要食材时的提示。',
+    servings: 2,
+    totalTimeMinutes: 20,
+    requiredIngredients: [
+      { ingredientId: 'potato', displayName: '土豆', amount: '1 个' },
+      { ingredientId: 'egg', displayName: '鸡蛋', amount: '2 个' },
+    ],
+    optionalIngredients: [],
+    missingIngredients: [
+      { ingredientId: 'noodles', displayName: '面条', amount: '200 克' },
+    ],
+    steps: [
+      { stepId: 'potato-egg-missing-noodles-1', order: 1, title: '准备食材', instruction: '土豆切丝，鸡蛋打散。', durationMinutes: 5, ingredientRefs: ['potato', 'egg'] },
+      { stepId: 'potato-egg-missing-noodles-2', order: 2, title: '处理土豆', instruction: '将土豆丝炒熟。', durationMinutes: 5, ingredientRefs: ['potato'] },
+      { stepId: 'potato-egg-missing-noodles-3', order: 3, title: '加入鸡蛋', instruction: '倒入蛋液并翻炒。', durationMinutes: 5, ingredientRefs: ['egg'] },
+      { stepId: 'potato-egg-missing-noodles-4', order: 4, title: '检查缺少食材', instruction: '确认面条尚未准备，展示缺少食材提示。', durationMinutes: 2, ingredientRefs: ['noodles'] },
+      { stepId: 'potato-egg-missing-noodles-5', order: 5, title: '完成演示', instruction: '本 Fixture 仅用于展示缺少食材状态。', durationMinutes: 3, ingredientRefs: ['potato', 'egg'] },
+    ],
+    safetyNotices: [demoSafetyNotice],
+    nutritionStatus: 'unavailable',
+  },
+];
