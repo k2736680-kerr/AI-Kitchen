@@ -26,7 +26,7 @@ export default function CookingScreen() {
     if (recipe && recipe.steps.length > 0 && !session) initializeCookingSession(recipe.recipeId, recipe.steps.length);
   }, [recipe, session, initializeCookingSession]);
 
-  if (!recipe) return <Screen><ThemedText type="title">未找到固定菜谱</ThemedText><StatusMessage message="NOT_FOUND：找不到请求的固定菜谱。" tone="error" /><AppButton label="返回菜谱详情" onPress={() => router.back()} /><AppButton label="返回首页" variant="secondary" onPress={() => router.replace('/' as Href)} /></Screen>;
+  if (!recipe) return <Screen><ThemedText type="title">未找到菜谱</ThemedText><StatusMessage message="找不到请求的菜谱。" tone="error" /><AppButton label="返回菜谱详情" onPress={() => router.back()} /><AppButton label="返回首页" variant="secondary" onPress={() => router.replace('/' as Href)} /></Screen>;
   if (!recipe.steps.length) return <Screen><StatusMessage message="当前菜谱没有可用步骤。" tone="error" /><AppButton label="返回菜谱详情" onPress={() => router.replace(`/recipe/${recipe.recipeId}` as Href)} /></Screen>;
   if (!session) return <Screen><ThemedText type="title">正在准备烹饪步骤</ThemedText><StatusMessage message="正在准备烹饪步骤" /></Screen>;
 

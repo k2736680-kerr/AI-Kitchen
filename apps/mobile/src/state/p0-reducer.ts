@@ -1,4 +1,5 @@
 import type {
+  ApiError,
   Cookware,
   IngredientCategory,
   MaxTimeMinutes,
@@ -16,6 +17,7 @@ export type P0Action =
   | { readonly type: 'SELECT_CATALOG_INGREDIENT'; readonly ingredient: SelectedIngredient }
   | { readonly type: 'ADD_CUSTOM_INGREDIENT'; readonly ingredient: SelectedIngredient }
   | { readonly type: 'REMOVE_INGREDIENT'; readonly ingredientId: string }
+  | { readonly type: 'CLEAR_SELECTED_INGREDIENTS' }
   | { readonly type: 'SET_SERVINGS'; readonly servings: ServingOption }
   | { readonly type: 'SET_MAX_TIME'; readonly maxTimeMinutes: MaxTimeMinutes }
   | { readonly type: 'TOGGLE_COOKWARE'; readonly cookware: Cookware }
@@ -24,6 +26,11 @@ export type P0Action =
       readonly category: IngredientCategory | 'all';
     }
   | { readonly type: 'SET_LAST_RECIPE'; readonly recipeId: string | null }
+  | { readonly type: 'START_GENERATION'; readonly requestId: string }
+  | { readonly type: 'SET_GENERATION_SUCCEEDED'; readonly recipeId: string }
+  | { readonly type: 'SET_GENERATION_NO_MATCH' }
+  | { readonly type: 'SET_GENERATION_FAILED'; readonly error: ApiError }
+  | { readonly type: 'CANCEL_GENERATION' }
   | { readonly type: 'ADD_RECENT_RECIPE'; readonly entry: RecentRecipeEntry }
   | { readonly type: 'INITIALIZE_COOKING_SESSION'; readonly recipeId: string; readonly totalSteps: number }
   | { readonly type: 'SET_COOKING_STEP'; readonly recipeId: string; readonly stepIndex: number }
@@ -98,6 +105,13 @@ export function p0Reducer(state: P0State, action: P0Action): P0State {
       };
     }
 
+    case 'CLEAR_SELECTED_INGREDIENTS':
+      return {
+        ...state,
+        selectedIngredients: [],
+        generationDraft: toGenerationDraft([], state),
+      };
+
     case 'SET_SERVINGS':
       return {
         ...state,
@@ -131,6 +145,57 @@ export function p0Reducer(state: P0State, action: P0Action): P0State {
 
     case 'SET_LAST_RECIPE':
       return { ...state, lastRecipeId: action.recipeId };
+
+    case 'START_GENERATION':
+      if (state.generation.status === 'generating') return state;
+      return {
+        ...state,
+        generation: {
+          status: 'generating',
+          requestId: action.requestId,
+          recipeId: null,
+          error: null,
+        },
+      };
+
+    case 'SET_GENERATION_SUCCEEDED':
+      return {
+        ...state,
+        generation: {
+          ...state.generation,
+          status: 'succeeded',
+          recipeId: action.recipeId,
+          error: null,
+        },
+      };
+
+    case 'SET_GENERATION_NO_MATCH':
+      return {
+        ...state,
+        generation: {
+          ...state.generation,
+          status: 'no-match',
+          recipeId: null,
+          error: null,
+        },
+      };
+
+    case 'SET_GENERATION_FAILED':
+      return {
+        ...state,
+        generation: {
+          ...state.generation,
+          status: 'failed',
+          recipeId: null,
+          error: action.error,
+        },
+      };
+
+    case 'CANCEL_GENERATION':
+      return {
+        ...state,
+        generation: { ...state.generation, status: 'cancelled' },
+      };
 
     case 'ADD_RECENT_RECIPE': {
       const recentRecipes = [

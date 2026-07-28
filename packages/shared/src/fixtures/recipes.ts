@@ -2,7 +2,7 @@ import type { RecipeFixture } from '../recipes/types';
 
 const demoSafetyNotice = {
   level: 'info' as const,
-  message: '仅为 P0 演示提示，不代表正式食品安全校验。',
+  message: '请根据实际食材、厨具和个人情况自行判断。',
   isDemoOnly: true as const,
 };
 
@@ -62,7 +62,7 @@ export const RECIPE_FIXTURES: readonly RecipeFixture[] = [
     recipeId: 'fixture-potato-egg-missing-noodles',
     generationMode: 'fixture',
     title: '土豆鸡蛋拌面（缺少面条）',
-    description: '用于演示缺少必要食材时的提示。',
+    description: '当面条暂未准备时，提示补充必要食材。',
     servings: 2,
     totalTimeMinutes: 20,
     requiredIngredients: [
@@ -77,8 +77,8 @@ export const RECIPE_FIXTURES: readonly RecipeFixture[] = [
       { stepId: 'potato-egg-missing-noodles-1', order: 1, title: '准备食材', instruction: '土豆切丝，鸡蛋打散。', durationMinutes: 5, ingredientRefs: ['potato', 'egg'] },
       { stepId: 'potato-egg-missing-noodles-2', order: 2, title: '处理土豆', instruction: '将土豆丝炒熟。', durationMinutes: 5, ingredientRefs: ['potato'] },
       { stepId: 'potato-egg-missing-noodles-3', order: 3, title: '加入鸡蛋', instruction: '倒入蛋液并翻炒。', durationMinutes: 5, ingredientRefs: ['egg'] },
-      { stepId: 'potato-egg-missing-noodles-4', order: 4, title: '检查缺少食材', instruction: '确认面条尚未准备，展示缺少食材提示。', durationMinutes: 2, ingredientRefs: ['noodles'] },
-      { stepId: 'potato-egg-missing-noodles-5', order: 5, title: '完成演示', instruction: '本 Fixture 仅用于展示缺少食材状态。', durationMinutes: 3, ingredientRefs: ['potato', 'egg'] },
+      { stepId: 'potato-egg-missing-noodles-4', order: 4, title: '检查面条', instruction: '确认面条是否已准备；如果还没有，请先补充后再继续。', durationMinutes: 2, ingredientRefs: ['noodles'] },
+      { stepId: 'potato-egg-missing-noodles-5', order: 5, title: '完成', instruction: '确认必要食材齐备后即可装盘。', durationMinutes: 3, ingredientRefs: ['potato', 'egg'] },
     ],
     safetyNotices: [demoSafetyNotice],
     nutritionStatus: 'unavailable',

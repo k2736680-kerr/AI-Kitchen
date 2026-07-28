@@ -1,4 +1,5 @@
 import type {
+  ApiError,
   GenerationDraft,
   IngredientCategory,
   IngredientDefinition,
@@ -11,6 +12,21 @@ export interface RecentRecipeEntry {
   readonly recipeId: string;
   readonly viewedAt: string;
   readonly source: 'fixture';
+}
+
+export type GenerationSessionStatus =
+  | 'idle'
+  | 'generating'
+  | 'succeeded'
+  | 'no-match'
+  | 'failed'
+  | 'cancelled';
+
+export interface GenerationSessionState {
+  readonly status: GenerationSessionStatus;
+  readonly requestId: string | null;
+  readonly recipeId: string | null;
+  readonly error: ApiError | null;
 }
 
 export interface P0UiPreferences {
@@ -31,6 +47,7 @@ export interface P0State {
   readonly guestId: string;
   readonly selectedIngredients: readonly SelectedIngredient[];
   readonly generationDraft: GenerationDraft;
+  readonly generation: GenerationSessionState;
   readonly lastRecipeId: string | null;
   readonly recentRecipes: readonly RecentRecipeEntry[];
   readonly activeCookingRecipeId: string | null;
@@ -57,6 +74,13 @@ const DEFAULT_DRAFT: GenerationDraft = {
   cookware: [],
 };
 
+const INITIAL_GENERATION: GenerationSessionState = {
+  status: 'idle',
+  requestId: null,
+  recipeId: null,
+  error: null,
+};
+
 /** Creates a session-only guest namespace; it is never an authenticated identity. */
 export function createSessionGuestId(): string {
   return `session-guest:${Date.now().toString(36)}:${Math.random().toString(36).slice(2)}`;
@@ -67,6 +91,7 @@ export function createInitialP0State(guestId = createSessionGuestId()): P0State 
     guestId,
     selectedIngredients: [],
     generationDraft: DEFAULT_DRAFT,
+    generation: INITIAL_GENERATION,
     lastRecipeId: null,
     recentRecipes: [],
     activeCookingRecipeId: null,

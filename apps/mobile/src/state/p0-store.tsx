@@ -1,4 +1,5 @@
 import type {
+  ApiError,
   Cookware,
   IngredientCategory,
   IngredientDefinition,
@@ -7,8 +8,10 @@ import type {
 } from '@ai-kitchen/shared';
 import {
   createContext,
+  useEffect,
   useContext,
   useMemo,
+  useRef,
   useReducer,
   type PropsWithChildren,
 } from 'react';
@@ -28,11 +31,17 @@ interface P0StoreValue {
   selectCatalogIngredient(ingredient: IngredientDefinition): void;
   addCustomIngredient(value: string): AddCustomIngredientResult;
   removeIngredient(ingredientId: string): void;
+  clearSelectedIngredients(): void;
   setServings(servings: ServingOption): void;
   setMaxTime(maxTimeMinutes: MaxTimeMinutes): void;
   toggleCookware(cookware: Cookware): void;
   setSelectedCategory(category: IngredientCategory | 'all'): void;
   setLastRecipe(recipeId: string | null): void;
+  startGeneration(requestId: string): void;
+  setGenerationSucceeded(recipeId: string): void;
+  setGenerationNoMatch(): void;
+  setGenerationFailed(error: ApiError): void;
+  cancelGeneration(): void;
   addRecentRecipe(entry: RecentRecipeEntry): void;
   initializeCookingSession(recipeId: string, totalSteps: number): void;
   setCookingStep(recipeId: string, stepIndex: number): void;
@@ -50,9 +59,13 @@ export function P0StoreProvider({ children }: PropsWithChildren) {
     createInitialP0State,
   );
 
-  const value = useMemo<P0StoreValue>(
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  const actions = useMemo<Omit<P0StoreValue, 'state'>>(
     () => ({
-      state,
       selectCatalogIngredient: (ingredient) => {
         dispatch({
           type: 'SELECT_CATALOG_INGREDIENT',
@@ -66,7 +79,7 @@ export function P0StoreProvider({ children }: PropsWithChildren) {
       addCustomIngredient: (input) => {
         const result = createCustomIngredient(
           input,
-          state.selectedIngredients,
+          stateRef.current.selectedIngredients,
           fixtureIngredientRepository.listAll(),
         );
         if (result.ok) {
@@ -76,6 +89,9 @@ export function P0StoreProvider({ children }: PropsWithChildren) {
       },
       removeIngredient: (ingredientId) => {
         dispatch({ type: 'REMOVE_INGREDIENT', ingredientId });
+      },
+      clearSelectedIngredients: () => {
+        dispatch({ type: 'CLEAR_SELECTED_INGREDIENTS' });
       },
       setServings: (servings) => {
         dispatch({ type: 'SET_SERVINGS', servings });
@@ -91,6 +107,21 @@ export function P0StoreProvider({ children }: PropsWithChildren) {
       },
       setLastRecipe: (recipeId) => {
         dispatch({ type: 'SET_LAST_RECIPE', recipeId });
+      },
+      startGeneration: (requestId) => {
+        dispatch({ type: 'START_GENERATION', requestId });
+      },
+      setGenerationSucceeded: (recipeId) => {
+        dispatch({ type: 'SET_GENERATION_SUCCEEDED', recipeId });
+      },
+      setGenerationNoMatch: () => {
+        dispatch({ type: 'SET_GENERATION_NO_MATCH' });
+      },
+      setGenerationFailed: (error) => {
+        dispatch({ type: 'SET_GENERATION_FAILED', error });
+      },
+      cancelGeneration: () => {
+        dispatch({ type: 'CANCEL_GENERATION' });
       },
       addRecentRecipe: (entry) => {
         dispatch({ type: 'ADD_RECENT_RECIPE', entry });
@@ -111,8 +142,10 @@ export function P0StoreProvider({ children }: PropsWithChildren) {
         dispatch({ type: 'RESET_GENERATION_DRAFT' });
       },
     }),
-    [state],
+    [],
   );
+
+  const value = useMemo<P0StoreValue>(() => ({ state, ...actions }), [actions, state]);
 
   return <P0StoreContext.Provider value={value}>{children}</P0StoreContext.Provider>;
 }

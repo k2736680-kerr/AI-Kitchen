@@ -17,17 +17,17 @@ import { selectCanGenerate } from '@/state/p0-selectors';
 import { useP0Store } from '@/state/p0-store';
 
 export default function HomeScreen() {
-  const { state, selectCatalogIngredient, addCustomIngredient, removeIngredient, setSelectedCategory } = useP0Store();
+  const { state, selectCatalogIngredient, addCustomIngredient, removeIngredient, clearSelectedIngredients, setSelectedCategory } = useP0Store();
   const [query, setQuery] = useState('');
   const ingredients = useMemo(() => fixtureIngredientRepository.search(query, state.uiPreferences.selectedCategory === 'all' ? undefined : state.uiPreferences.selectedCategory), [query, state.uiPreferences.selectedCategory]);
   const canGenerate = selectCanGenerate(state);
   return <Screen>
     <ThemedText type="title" style={styles.title}>AI Kitchen</ThemedText>
     <ThemedText type="subtitle">用现有食材，快速规划一顿饭</ThemedText>
-    <StatusMessage message="当前为 P0 固定数据演示，未接入 AI 或云端账户" />
+    <StatusMessage message="当前提供本地菜谱体验，尚未接入云端账户。" />
     <AppCard><ThemedText type="subtitle" style={styles.heading}>选择食材</ThemedText><IngredientCategoryTabs selected={state.uiPreferences.selectedCategory} onChange={setSelectedCategory} /><IngredientSearch value={query} onChange={setQuery} /><IngredientGrid ingredients={ingredients} selectedIds={state.selectedIngredients.map((item) => item.id)} onToggle={(ingredient) => selectCatalogIngredient(ingredient)} /></AppCard>
     <AppCard><CustomIngredientForm onAdd={addCustomIngredient} /></AppCard>
-    <AppCard><ThemedText type="subtitle" style={styles.heading}>已选择 {state.selectedIngredients.length} 种食材</ThemedText><SelectedIngredientList ingredients={state.selectedIngredients} onRemove={removeIngredient} />{canGenerate && <AppButton label="设置生成条件" onPress={() => router.push('/generate' as Href)} />}{!canGenerate && <StatusMessage message="至少选择一种食材后才能继续" />}</AppCard>
+    <AppCard><ThemedText type="subtitle" style={styles.heading}>已选择 {state.selectedIngredients.length} 种食材</ThemedText><SelectedIngredientList ingredients={state.selectedIngredients} onRemove={removeIngredient} />{canGenerate && <AppButton label="清空已选食材" variant="ghost" onPress={clearSelectedIngredients} />}{canGenerate && <AppButton label="设置生成条件" onPress={() => router.push('/generate' as Href)} />}{!canGenerate && <StatusMessage message="至少选择一种食材后才能继续" />}</AppCard>
   </Screen>;
 }
 

@@ -17,6 +17,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="generate" options={{ headerShown: false }} />
           <Stack.Screen name="generating" options={{ headerShown: false }} />
+          <Stack.Screen name="generation-result" options={{ headerShown: false }} />
           <Stack.Screen name="recipe/[recipeId]" options={{ headerShown: false }} />
           <Stack.Screen name="cooking/[recipeId]" options={{ headerShown: false }} />
         </Stack>
