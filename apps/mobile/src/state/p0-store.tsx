@@ -34,7 +34,10 @@ interface P0StoreValue {
   setSelectedCategory(category: IngredientCategory | 'all'): void;
   setLastRecipe(recipeId: string | null): void;
   addRecentRecipe(entry: RecentRecipeEntry): void;
-  setCookingStep(recipeId: string, step: number): void;
+  initializeCookingSession(recipeId: string, totalSteps: number): void;
+  setCookingStep(recipeId: string, stepIndex: number): void;
+  completeCookingStep(recipeId: string, stepIndex: number): void;
+  resetCookingSession(recipeId: string): void;
   resetGenerationDraft(): void;
 }
 
@@ -92,8 +95,17 @@ export function P0StoreProvider({ children }: PropsWithChildren) {
       addRecentRecipe: (entry) => {
         dispatch({ type: 'ADD_RECENT_RECIPE', entry });
       },
-      setCookingStep: (recipeId, step) => {
-        dispatch({ type: 'SET_COOKING_STEP', recipeId, step });
+      initializeCookingSession: (recipeId, totalSteps) => {
+        dispatch({ type: 'INITIALIZE_COOKING_SESSION', recipeId, totalSteps });
+      },
+      setCookingStep: (recipeId, stepIndex) => {
+        dispatch({ type: 'SET_COOKING_STEP', recipeId, stepIndex });
+      },
+      completeCookingStep: (recipeId, stepIndex) => {
+        dispatch({ type: 'COMPLETE_COOKING_STEP', recipeId, stepIndex });
+      },
+      resetCookingSession: (recipeId) => {
+        dispatch({ type: 'RESET_COOKING_SESSION', recipeId });
       },
       resetGenerationDraft: () => {
         dispatch({ type: 'RESET_GENERATION_DRAFT' });

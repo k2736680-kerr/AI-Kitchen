@@ -17,13 +17,24 @@ export interface P0UiPreferences {
   readonly selectedCategory: IngredientCategory | 'all';
 }
 
+export type CookingSessionStatus = 'in-progress' | 'completed';
+
+export interface CookingSessionState {
+  readonly recipeId: string;
+  readonly totalSteps: number;
+  readonly currentStepIndex: number;
+  readonly completedStepIndexes: readonly number[];
+  readonly status: CookingSessionStatus;
+}
+
 export interface P0State {
   readonly guestId: string;
   readonly selectedIngredients: readonly SelectedIngredient[];
   readonly generationDraft: GenerationDraft;
   readonly lastRecipeId: string | null;
   readonly recentRecipes: readonly RecentRecipeEntry[];
-  readonly cookingSteps: Readonly<Record<string, number>>;
+  readonly activeCookingRecipeId: string | null;
+  readonly cookingSessions: Readonly<Record<string, CookingSessionState>>;
   readonly uiPreferences: P0UiPreferences;
 }
 
@@ -58,7 +69,8 @@ export function createInitialP0State(guestId = createSessionGuestId()): P0State 
     generationDraft: DEFAULT_DRAFT,
     lastRecipeId: null,
     recentRecipes: [],
-    cookingSteps: {},
+    activeCookingRecipeId: null,
+    cookingSessions: {},
     uiPreferences: { selectedCategory: 'all' },
   };
 }

@@ -25,7 +25,10 @@ export type P0Action =
     }
   | { readonly type: 'SET_LAST_RECIPE'; readonly recipeId: string | null }
   | { readonly type: 'ADD_RECENT_RECIPE'; readonly entry: RecentRecipeEntry }
-  | { readonly type: 'SET_COOKING_STEP'; readonly recipeId: string; readonly step: number }
+  | { readonly type: 'INITIALIZE_COOKING_SESSION'; readonly recipeId: string; readonly totalSteps: number }
+  | { readonly type: 'SET_COOKING_STEP'; readonly recipeId: string; readonly stepIndex: number }
+  | { readonly type: 'COMPLETE_COOKING_STEP'; readonly recipeId: string; readonly stepIndex: number }
+  | { readonly type: 'RESET_COOKING_SESSION'; readonly recipeId: string }
   | { readonly type: 'RESET_GENERATION_DRAFT' }
   | { readonly type: 'RESET_SESSION'; readonly state: P0State };
 
@@ -58,6 +61,21 @@ function addIngredient(
     selectedIngredients,
     generationDraft: toGenerationDraft(selectedIngredients, state),
   };
+}
+
+function validStepIndex(session: P0State['cookingSessions'][string], stepIndex: number): boolean {
+  return Number.isInteger(stepIndex) && stepIndex >= 0 && stepIndex < session.totalSteps;
+}
+
+function nextIncompleteStep(session: P0State['cookingSessions'][string], fromIndex: number): number {
+  const completed = new Set(session.completedStepIndexes);
+  for (let index = fromIndex + 1; index < session.totalSteps; index += 1) {
+    if (!completed.has(index)) return index;
+  }
+  for (let index = 0; index < fromIndex; index += 1) {
+    if (!completed.has(index)) return index;
+  }
+  return session.currentStepIndex;
 }
 
 export function p0Reducer(state: P0State, action: P0Action): P0State {
@@ -124,14 +142,76 @@ export function p0Reducer(state: P0State, action: P0Action): P0State {
       return { ...state, recentRecipes };
     }
 
-    case 'SET_COOKING_STEP':
-      if (action.step < 0) {
-        return state;
-      }
+    case 'INITIALIZE_COOKING_SESSION': {
+      if (!action.recipeId || action.totalSteps <= 0 || !Number.isInteger(action.totalSteps)) return state;
+      const existing = state.cookingSessions[action.recipeId];
       return {
         ...state,
-        cookingSteps: { ...state.cookingSteps, [action.recipeId]: action.step },
+        activeCookingRecipeId: action.recipeId,
+        cookingSessions: existing
+          ? state.cookingSessions
+          : {
+              ...state.cookingSessions,
+              [action.recipeId]: {
+                recipeId: action.recipeId,
+                totalSteps: action.totalSteps,
+                currentStepIndex: 0,
+                completedStepIndexes: [],
+                status: 'in-progress',
+              },
+            },
       };
+    }
+
+    case 'SET_COOKING_STEP': {
+      const session = state.cookingSessions[action.recipeId];
+      if (!session || !validStepIndex(session, action.stepIndex)) return state;
+      return {
+        ...state,
+        activeCookingRecipeId: action.recipeId,
+        cookingSessions: {
+          ...state.cookingSessions,
+          [action.recipeId]: { ...session, currentStepIndex: action.stepIndex },
+        },
+      };
+    }
+
+    case 'COMPLETE_COOKING_STEP': {
+      const session = state.cookingSessions[action.recipeId];
+      if (!session || !validStepIndex(session, action.stepIndex)) return state;
+      const completed = session.completedStepIndexes.includes(action.stepIndex)
+        ? session.completedStepIndexes
+        : [...session.completedStepIndexes, action.stepIndex].sort((a, b) => a - b);
+      const isComplete = completed.length === session.totalSteps;
+      return {
+        ...state,
+        activeCookingRecipeId: action.recipeId,
+        cookingSessions: {
+          ...state.cookingSessions,
+          [action.recipeId]: {
+            ...session,
+            currentStepIndex: isComplete
+              ? session.currentStepIndex
+              : nextIncompleteStep({ ...session, completedStepIndexes: completed }, action.stepIndex),
+            completedStepIndexes: completed,
+            status: isComplete ? 'completed' : 'in-progress',
+          },
+        },
+      };
+    }
+
+    case 'RESET_COOKING_SESSION': {
+      const session = state.cookingSessions[action.recipeId];
+      if (!session) return state;
+      return {
+        ...state,
+        activeCookingRecipeId: action.recipeId,
+        cookingSessions: {
+          ...state.cookingSessions,
+          [action.recipeId]: { ...session, currentStepIndex: 0, completedStepIndexes: [], status: 'in-progress' },
+        },
+      };
+    }
 
     case 'RESET_GENERATION_DRAFT': {
       const resetState = createInitialP0State(state.guestId);
