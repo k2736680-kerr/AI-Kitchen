@@ -4,6 +4,16 @@
 
 ---
 
+## 内网 Fastify + MySQL 菜谱生成服务
+
+- 正式后端从 Supabase Edge 原型迁移至 `apps/api`：Node.js、TypeScript、Fastify、MySQL 原生 migration 和阿里云百炼 `qwen3.7-plus` Provider。
+- 新增 `/api/v1/health`、生成、recipe 读取、guest history 查询与 visit upsert；生成采用 MySQL 幂等、校验后 recipe snapshot 保存和事务式历史更新。
+- Shared 契约增加远程 recipe/history DTO 与 `idempotency_conflict` 状态；Mobile Remote Adapter 改用 `/api/v1` 和 `EXPO_PUBLIC_AI_KITCHEN_API_BASE_URL`，支持远程历史与动态菜谱缓存。
+- 删除不再作为正式运行路径的 Supabase Edge Function 与 PostgreSQL migration；D-016 记录内网 Node.js + MySQL 决策。
+- 尚未填写真实阿里云/内网 MySQL/Mobile 地址，因此真实 Provider、数据库和 Pixel_8a remote 联调未执行。
+
+---
+
 ## 版本化后端菜谱生成 API
 
 - 新增共享 Zod API 契约 v1：`GenerationApiRequest`、`GenerationApiResponse` 判别联合、Recipe 输出 Schema、错误码、版本常量和严格未知字段策略。

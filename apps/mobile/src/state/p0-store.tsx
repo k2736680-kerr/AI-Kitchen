@@ -53,6 +53,7 @@ interface P0StoreValue {
   setGenerationNoMatch(message: string): void;
   setGenerationFailed(error: ApiError): void;
   cancelGeneration(): void;
+  cacheRecipe(recipe: Recipe): void;
   addRecentRecipe(entry: RecentRecipeEntry): void;
   initializeCookingSession(recipeId: string, totalSteps: number): void;
   setCookingStep(recipeId: string, stepIndex: number): void;
@@ -151,6 +152,9 @@ export function P0StoreProvider({ children }: PropsWithChildren) {
       },
       cancelGeneration: () => {
         dispatch({ type: 'CANCEL_GENERATION' });
+      },
+      cacheRecipe: (recipe) => {
+        dispatch({ type: 'CACHE_RECIPE', recipe });
       },
       addRecentRecipe: (entry) => {
         dispatch({ type: 'ADD_RECENT_RECIPE', entry });

@@ -23,10 +23,10 @@ export interface AppEnvironmentConfig {
 export const environmentConfig: AppEnvironmentConfig = {
   environment: appEnvironment,
   generationMode,
-  apiBaseUrl: (process.env.EXPO_PUBLIC_API_BASE_URL ?? '').replace(/\/$/, ''),
+  apiBaseUrl: (process.env.EXPO_PUBLIC_AI_KITCHEN_API_BASE_URL ?? '').replace(/\/$/, ''),
   clientVersion: process.env.EXPO_PUBLIC_CLIENT_VERSION ?? '1.0.0',
   apiTimeoutMs: Number.isFinite(apiTimeoutValue) ? Math.min(45_000, Math.max(1_000, apiTimeoutValue)) : 45_000,
-  configurationError: generationMode === 'remote' && !(process.env.EXPO_PUBLIC_API_BASE_URL ?? '').trim()
+  configurationError: generationMode === 'remote' && !(process.env.EXPO_PUBLIC_AI_KITCHEN_API_BASE_URL ?? '').trim()
     ? '远程生成服务地址未配置。'
     : null,
 };

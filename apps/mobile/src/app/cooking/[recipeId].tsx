@@ -5,6 +5,7 @@ import { Screen } from '@/components/screen';
 import { StatusMessage } from '@/components/status-message';
 import { ThemedText } from '@/components/themed-text';
 import { fixtureRecipeRepository } from '@/data/fixtures/recipe-repository';
+import { environmentConfig } from '@/config/environment';
 import { CookingBoundaryNotice } from '@/features/cooking/cooking-boundary-notice';
 import { CookingCompleteState } from '@/features/cooking/cooking-complete-state';
 import { CookingControls } from '@/features/cooking/cooking-controls';
@@ -19,7 +20,7 @@ export default function CookingScreen() {
   const params = useLocalSearchParams<{ recipeId?: string | string[] }>();
   const recipeId = Array.isArray(params.recipeId) ? params.recipeId[0] : params.recipeId;
   const { state, initializeCookingSession, setCookingStep, completeCookingStep, resetCookingSession } = useP0Store();
-  const recipe = recipeId ? state.recipeCache[recipeId] ?? fixtureRecipeRepository.getById(recipeId) : undefined;
+  const recipe = recipeId ? state.recipeCache[recipeId] ?? (environmentConfig.generationMode === 'local' ? fixtureRecipeRepository.getById(recipeId) : undefined) : undefined;
   const session = recipeId ? selectCookingSession(state, recipeId) : undefined;
 
   useEffect(() => {

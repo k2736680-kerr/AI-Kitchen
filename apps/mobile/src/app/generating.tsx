@@ -7,6 +7,7 @@ import { ThemedText } from '@/components/themed-text';
 import { GenerationClientError } from '@/data/api/generation-client';
 import { createGenerationApiRequest } from '@/data/api/generation-request';
 import { createRecipeGenerationRepository } from '@/data/recipe-generation/repository-factory';
+import { RemoteRecipeDataRepository } from '@/data/recipe-generation/remote-recipe-data-repository';
 import type { GenerationApiResponse } from '@ai-kitchen/shared';
 import { environmentConfig } from '@/config/environment';
 import { GenerationErrorState } from '@/features/generation/generation-error-state';
@@ -17,6 +18,7 @@ function toUserError(response: Exclude<GenerationApiResponse, { status: 'success
   if (response.status === 'rate_limited') return { code: 'RATE_LIMITED' as const, message: response.error.message };
   if (response.status === 'timeout') return { code: 'TIMEOUT' as const, message: response.error.message };
   if (response.status === 'service_unavailable') return { code: 'SERVICE_UNAVAILABLE' as const, message: response.error.message };
+  if (response.status === 'idempotency_conflict') return { code: response.error.code, message: response.error.message };
   return { code: 'GENERATION_FAILED' as const, message: response.error.message };
 }
 
@@ -33,6 +35,7 @@ export default function GeneratingScreen() {
   } = useP0Store();
   const [attempt, setAttempt] = useState(1);
   const repository = useMemo(() => createRecipeGenerationRepository(), []);
+  const remoteData = useMemo(() => environmentConfig.generationMode === 'remote' ? new RemoteRecipeDataRepository(environmentConfig.apiBaseUrl) : null, []);
   const guestId = state.guestId;
   const requestId = state.generation.requestId;
   const idempotencyKey = state.generation.idempotencyKey;
@@ -54,6 +57,7 @@ export default function GeneratingScreen() {
         setLastRecipe(result.recipe.recipeId);
         setGenerationSucceeded(result.recipe, result.metadata.source);
         addRecentRecipe({ recipeId: result.recipe.recipeId, viewedAt: new Date().toISOString(), source: result.metadata.source === 'provider' ? 'remote' : 'local' });
+        if (remoteData) void remoteData.recordVisit({ guestId, recipeId: result.recipe.recipeId, source: 'remote' }, new AbortController().signal).catch(() => undefined);
         router.replace(`/recipe/${result.recipe.recipeId}` as Href);
       } else if (result.status === 'no_match') {
         setGenerationNoMatch(result.message);
@@ -77,7 +81,7 @@ export default function GeneratingScreen() {
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [addRecentRecipe, attempt, guestId, idempotencyKey, repository, requestId, requestSnapshot, setGenerationFailed, setGenerationNoMatch, setGenerationSucceeded, setLastRecipe]);
+  }, [addRecentRecipe, attempt, guestId, idempotencyKey, remoteData, repository, requestId, requestSnapshot, setGenerationFailed, setGenerationNoMatch, setGenerationSucceeded, setLastRecipe]);
 
   const cancel = () => Alert.alert('取消生成', '确定取消当前生成吗？', [
     { text: '继续等待', style: 'cancel' },

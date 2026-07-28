@@ -41,6 +41,7 @@ export type P0Action =
   | { readonly type: 'SET_GENERATION_NO_MATCH'; readonly message: string }
   | { readonly type: 'SET_GENERATION_FAILED'; readonly error: ApiError }
   | { readonly type: 'CANCEL_GENERATION' }
+  | { readonly type: 'CACHE_RECIPE'; readonly recipe: Recipe }
   | { readonly type: 'ADD_RECENT_RECIPE'; readonly entry: RecentRecipeEntry }
   | { readonly type: 'INITIALIZE_COOKING_SESSION'; readonly recipeId: string; readonly totalSteps: number }
   | { readonly type: 'SET_COOKING_STEP'; readonly recipeId: string; readonly stepIndex: number }
@@ -254,6 +255,9 @@ export function p0Reducer(state: P0State, action: P0Action): P0State {
       ].slice(0, 10);
       return { ...state, recentRecipes };
     }
+
+    case 'CACHE_RECIPE':
+      return { ...state, recipeCache: { ...state.recipeCache, [action.recipe.recipeId]: action.recipe } };
 
     case 'INITIALIZE_COOKING_SESSION': {
       if (!action.recipeId || action.totalSteps <= 0 || !Number.isInteger(action.totalSteps)) return state;

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { GenerationApiClient, GenerationClientError } from './generation-client';
-import type { GenerationApiRequest } from '@ai-kitchen/shared';
+import { RECIPE_FIXTURES, type GenerationApiRequest } from '@ai-kitchen/shared';
 
 const request: GenerationApiRequest = {
   schemaVersion: 'v1',
@@ -41,6 +41,19 @@ describe('GenerationApiClient', () => {
     vi.stubGlobal('fetch', vi.fn(async () => { throw new DOMException('Aborted', 'AbortError'); }));
     await expect(new GenerationApiClient('http://localhost').generate(request, new AbortController().signal))
       .rejects.toEqual(new GenerationClientError('timeout', '生成请求超时。'));
+    vi.unstubAllGlobals();
+  });
+
+  it('reads persisted recipe history and records a visit through the remote API', async () => {
+    const history = { schemaVersion: 'v1', items: [{ recipe: RECIPE_FIXTURES[0], source: 'remote', firstVisitedAt: '2026-07-28T00:00:00.000Z', lastVisitedAt: '2026-07-28T00:00:00.000Z', visitCount: 1 }], nextCursor: null };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(history), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ schemaVersion: 'v1', recorded: true }), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new GenerationApiClient('http://localhost');
+    await expect(client.listHistory('session-guest-client-test', new AbortController().signal)).resolves.toMatchObject({ items: [{ recipe: { recipeId: RECIPE_FIXTURES[0].recipeId } }] });
+    await expect(client.recordHistoryVisit({ guestId: 'session-guest-client-test', recipeId: RECIPE_FIXTURES[0].recipeId, source: 'remote' }, new AbortController().signal)).resolves.toBeUndefined();
+    expect(fetchMock.mock.calls[0][0]).toContain('/api/v1/history?');
     vi.unstubAllGlobals();
   });
 });
