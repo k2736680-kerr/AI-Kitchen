@@ -16,7 +16,7 @@ Before making changes, read in this order:
 
 ## Project Boundary
 
-AI Kitchen is a React Native + Expo + TypeScript mobile product with an owned versioned backend, Supabase PostgreSQL/RLS, a structured AI generation pipeline, deterministic rules, food-safety fail-closed behavior, and versioned nutrition estimates.
+AI Kitchen is a React Native + Expo + TypeScript mobile product with an owned versioned Node.js/Fastify backend, intranet MySQL, a structured AI generation pipeline, deterministic rules, food-safety fail-closed behavior, and versioned nutrition estimates. Supabase-specific Blueprint material is historical and superseded by ADR-0003.
 
 The model generates only an untrusted Recipe Candidate. Trusted Final Recipe fields are produced by the server after validation. The client never calls the model provider directly.
 

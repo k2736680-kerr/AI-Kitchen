@@ -1,10 +1,12 @@
 # ADR-0002：Development 环境与 Secret 边界
 
-**状态：** Accepted for planning; implementation not started  
+**状态：** Superseded in platform-specific sections by ADR-0003
 **日期：** 2026-07-27  
 **范围：** development/staging/production 环境隔离与客户端/服务端变量边界
 
 ## 背景
+
+> 2026-07-28 更正：正式服务端已迁移至内网 Node.js + MySQL。本文中的 Supabase 变量仅保留为历史设计记录；当前有效变量见 `apps/api/.env.example` 和 `apps/mobile/.env.example`。
 
 AI Kitchen 后续会使用 Supabase Auth、PostgreSQL/RLS 与 Edge Functions，但当前尚未创建任何 Supabase Project，也没有真实 URL、Key 或 Secret。本 ADR 只建立命名、隔离和泄漏防护边界，不代表 Supabase 已接入。
 

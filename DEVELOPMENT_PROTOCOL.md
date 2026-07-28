@@ -172,7 +172,7 @@ Repositories / API Client / Storage Adapters
 External Services
 ```
 
-- UI 不直接调用 Supabase 数据库或 AI Provider；
+- UI 不直接调用数据库或 AI Provider；
 - Screen 不承载复杂业务规则；
 - 领域规则不依赖 React Native；
 - 外部服务通过适配器访问；

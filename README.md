@@ -8,8 +8,8 @@
 | Blueprint 版本 | **1.0.0 — Blueprint Complete** |
 | 基线来源 | 《AI 厨房助手项目开发蓝图 V2.0》 |
 | Blueprint 状态 | 四阶段文档体系已完成并通过结构检查 |
-| 产品实现状态 | **P0 移动端主链路与版本化生成 API 已实现** |
-| 下一阶段 | 配置真实 Provider、部署 Edge Function 并完成 staging 联调 |
+| 产品实现状态 | **P0 移动端主链路、内网 Fastify API 与 MySQL migration 已实现** |
+| 下一阶段 | 填写内网 MySQL、阿里云与 Mobile API 地址后完成联调 |
 | 优先平台 | Android，稳定后扩展 iOS |
 | 目标周期 | 12–18 周达到可上架质量 |
 | 协作方式 | 非专业开发者主导 + AI 编程工具协作 |
@@ -23,12 +23,12 @@
 
 当前已经完成的是产品、架构、数据库、API、身份、AI、规则、安全、营养、隐私、移动端、测试、部署、商店合规和 AI 工具规则的目标设计。当前尚未创建或验证：
 
-- 正式 Supabase 项目和已部署环境；
+- 用户内网 MySQL、阿里云凭据和已部署 API 环境；
 - 真实 Provider、Prompt Registry、完整 Rule Engine；
 - 本地数据库、同步和 E2E；
 - EAS 构建、监控和商店版本。
 
-实现进度只以 `PROJECT_STATE.md` 和 `CURRENT_STATUS.md` 为准。当前 API 代码和本地契约测试已实现，但未配置真实 Provider、Supabase 项目或生产部署。
+实现进度只以 `PROJECT_STATE.md` 和 `CURRENT_STATUS.md` 为准。当前 Fastify API、MySQL migration 和本地契约测试已实现，但未配置真实 Provider、用户 MySQL 或内网部署。
 
 ---
 
@@ -178,7 +178,7 @@ ai-kitchen/
 │   ├── shared/
 │   ├── domain/
 │   └── config/
-├── supabase/
+├── apps/api/
 │   ├── functions/
 │   ├── migrations/
 │   └── seed/
@@ -260,4 +260,4 @@ ai-kitchen/
 
 ## 12. 当前版本化菜谱生成 API
 
-API 契约、Edge Function、移动端 Adapter 和运行说明见 [`docs/API_GENERATION.md`](./docs/API_GENERATION.md)。当前端点为 `POST /functions/v1/recipes-generate`，开发环境可显式使用 deterministic Provider；staging/production 不会静默回退到本地 Fixture。
+API 契约、Fastify 服务、移动端 Adapter 和内网部署说明见 [`docs/API_GENERATION.md`](./docs/API_GENERATION.md)。当前端点为 `POST /api/v1/recipes/generate`；remote 模式不会静默回退到本地 Fixture。

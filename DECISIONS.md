@@ -19,8 +19,8 @@
 | D-001 | 移动端采用 React Native + Expo + TypeScript | Accepted | 2026-07-24 |
 | D-002 | Android 优先，稳定后扩展 iOS | Accepted | 2026-07-24 |
 | D-003 | App 不直接调用 AI Provider | Accepted | 2026-07-24 |
-| D-004 | P0–P2 使用 Supabase Edge Functions | Accepted | 2026-07-24 |
-| D-005 | PostgreSQL + RLS 作为主数据系统 | Accepted | 2026-07-24 |
+| D-004 | P0–P2 使用 Supabase Edge Functions | Superseded by D-016 | 2026-07-24 |
+| D-005 | PostgreSQL + RLS 作为主数据系统 | Superseded by D-016 | 2026-07-24 |
 | D-006 | 使用 Monorepo 和共享 Schema | Accepted | 2026-07-24 |
 | D-007 | AI 输出采用四层校验 | Accepted | 2026-07-24 |
 | D-008 | 食品安全采用失败关闭 | Accepted | 2026-07-24 |
@@ -31,6 +31,7 @@
 | D-013 | requestId + idempotencyKey 全链路使用 | Accepted | 2026-07-24 |
 | D-014 | 关系规范化与 Recipe Snapshot 并存 | Accepted | 2026-07-24 |
 | D-015 | P0/P1 实施严格范围控制 | Accepted | 2026-07-24 |
+| D-016 | 正式后端使用内网 Node.js + MySQL | Accepted | 2026-07-28 |
 
 ---
 
@@ -123,7 +124,7 @@ App 只调用项目自有后端。AI Provider Key 仅存在服务端 Secrets。�
 
 ## D-004：P0–P2 使用 Supabase Edge Functions
 
-**状态：** Accepted
+**状态：** Superseded by D-016
 **日期：** 2026-07-24
 
 ### 背景
@@ -156,7 +157,7 @@ P0–P2 使用 Supabase Edge Functions 作为 API 和生成编排入口。业务
 
 ## D-005：PostgreSQL + RLS 作为主数据系统
 
-**状态：** Accepted
+**状态：** Superseded by D-016
 **日期：** 2026-07-24
 
 ### 背景
@@ -581,6 +582,31 @@ Cursor rules、`CLAUDE.md`、`AGENTS.md` 和 ChatGPT Project instructions 用于
 ### 后果
 
 需要维护多工具入口但避免把安全寄托于模型遵从；根文档保持同一事实来源，工具文件只做精简适配。
+
+## D-016：正式后端使用内网 Node.js + MySQL
+
+**状态：** Accepted
+**日期：** 2026-07-28
+
+### 背景
+
+用户已拥有内网服务器与 MySQL，Supabase Edge Functions 和 PostgreSQL 不再是正式运行平台。既有共享契约、App 不直连模型、幂等、结构化校验和食品安全失败关闭边界仍须保持。
+
+### 决策
+
+正式后端使用 monorepo `apps/api`：Node.js、TypeScript、Fastify、Zod、`mysql2/promise` 与原生 SQL migration；模型固定通过阿里云百炼 OpenAI 兼容接口调用默认 `qwen3.7-plus`。Mobile 只访问 `/api/v1`，不保存阿里云或 MySQL 凭据。
+
+### 后果
+
+- D-004、D-005 被本决策替代；Supabase runtime 与 PostgreSQL migration 从实现中移除。
+- MySQL 保存已校验 recipe snapshot、生成幂等记录和过渡期 guest 历史；guestId 不构成可信认证。
+- 后续 anonymous/registered 身份、权限与数据所有权需基于内网 API 的可信身份机制重新设计，不可依赖 Supabase Auth/RLS 假设。
+
+### 重新评估触发
+
+内网部署、MySQL 运维或同步生成能力无法满足可靠性、隔离或成本要求时，必须新增 ADR 后才能更换平台。
+
+---
 
 ## 新决策模板
 

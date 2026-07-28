@@ -4,11 +4,11 @@
 
 | 属性 | 当前值 |
 |---|---|
-| 状态日期 | 2026-07-27 |
+| 状态日期 | 2026-07-28 |
 | Blueprint 版本 | 1.0.0 |
 | Blueprint 状态 | Phase 1–4 完成 |
-| 产品阶段 | P0 固定数据移动端原型与版本化生成 API 已实现，进入后端环境联调 |
-| 代码状态 | pnpm Monorepo、Mobile、Shared 契约和 Edge Function 源码已创建 |
+| 产品阶段 | P0 移动端主链路与内网 API/MySQL 实现完成，等待真实环境联调 |
+| 代码状态 | pnpm Monorepo、Mobile、Shared 契约、Fastify API 和 MySQL migration 已创建 |
 | 发布状态 | 未发布 |
 | 优先平台 | Android |
 
@@ -24,7 +24,7 @@
 
 - 产品愿景、用户、核心流程、非目标和 P0/P1/P2 范围；
 - 12–18 周总体路线；
-- React Native/Expo/Supabase/PostgreSQL 技术基线；
+- React Native/Expo/内网 Node.js/MySQL 技术基线；
 - 数据库、API、身份、Recipe Schema 和 AI Pipeline；
 - Prompt、Rule、Food Safety、Nutrition 和 Privacy 设计；
 - Mobile、Expo、UI、State、Local Sync、Testing、Observability、Deployment 和 Store 设计；
@@ -40,7 +40,7 @@
 - React Native + Expo + TypeScript；
 - Android 优先；
 - App 只调用自有后端；
-- Supabase Edge Functions + PostgreSQL + RLS；
+- 内网 Node.js/Fastify + MySQL；
 - Monorepo + 共享 Schema；
 - Recipe Candidate 与 Final Recipe 分离；
 - AI 输出四层处理；
@@ -70,7 +70,7 @@ React Native、Expo、TypeScript strict、Expo Router、Query layer、轻量 Sto
 
 ### Backend/Data
 
-Supabase Auth、Edge Functions、PostgreSQL、RLS、migrations、versioned REST、rate limit、budget、logs。
+内网 Node.js API、MySQL、原生 migrations、versioned REST、rate limit、budget、logs。
 
 ### AI/Domain
 
@@ -94,16 +94,12 @@ P2：正式账号、删除、营养来源、隐私、监控、签名、iOS 和�
 
 ---
 
-## 6. 尚未开始
+## 6. 尚未开始或尚未接通
 
-- 正式 Git/Monorepo；
-- Expo UI；
-- Supabase 项目；
-- migrations/RLS；
-- API/AI；
-- shared packages；
-- local DB/sync；
-- automated tests/CI；
+- 用户内网 MySQL migration 执行与真实数据验证；
+- 阿里云百炼真实凭据、Provider 调用与部署联调；
+- 可信身份/登录、跨启动同步和本地 DB；
+- automated E2E/CI；
 - EAS/monitoring/store release。
 
 ---

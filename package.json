@@ -7,12 +7,16 @@
   },
   "scripts": {
     "dev:mobile": "pnpm --filter @ai-kitchen/mobile start",
+    "dev:api": "pnpm --filter @ai-kitchen/api dev",
+    "build:api": "pnpm --filter @ai-kitchen/api build",
+    "start:api": "pnpm --filter @ai-kitchen/api start",
+    "migrate:api": "pnpm --filter @ai-kitchen/api migrate:up",
     "android": "pnpm --filter @ai-kitchen/mobile android",
-    "typecheck": "pnpm --filter @ai-kitchen/mobile typecheck && pnpm --filter @ai-kitchen/shared typecheck",
-    "lint": "pnpm --filter @ai-kitchen/mobile lint",
-    "test": "pnpm --filter @ai-kitchen/shared test",
-    "test:edge": "pnpm --filter @ai-kitchen/shared exec vitest run --root ../.. supabase/functions/recipes-generate/index.test.ts",
+    "typecheck": "pnpm --filter @ai-kitchen/api typecheck && pnpm --filter @ai-kitchen/mobile typecheck && pnpm --filter @ai-kitchen/shared typecheck",
+    "lint": "pnpm --filter @ai-kitchen/api lint && pnpm --filter @ai-kitchen/mobile lint",
+    "test": "pnpm --filter @ai-kitchen/shared test && pnpm --filter @ai-kitchen/api test",
+    "test:api": "pnpm --filter @ai-kitchen/api test",
     "test:repositories": "pnpm --filter @ai-kitchen/shared exec vitest run --root ../.. apps/mobile/src/data/api/generation-client.test.ts apps/mobile/src/data/recipe-generation/local-repository.test.ts",
-    "typecheck:edge": "pnpm --filter @ai-kitchen/shared exec tsc -p ../../supabase/functions/recipes-generate/tsconfig.json"
+    "typecheck:api": "pnpm --filter @ai-kitchen/api typecheck"
   }
 }

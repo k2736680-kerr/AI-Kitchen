@@ -44,6 +44,12 @@ describe('versioned generation API schema', () => {
     };
     expect(GenerationApiResponseSchema.safeParse(noMatch).success).toBe(true);
     expect(GenerationApiResponseSchema.safeParse({ ...noMatch, status: 'provider_error' }).success).toBe(false);
+    expect(GenerationApiResponseSchema.safeParse({
+      status: 'idempotency_conflict',
+      schemaVersion: 'v1',
+      requestId: validRequest.requestId,
+      error: { code: 'IDEMPOTENCY_CONFLICT', message: '该请求已被其他内容使用。' },
+    }).success).toBe(true);
   });
 
   it('validates a success response against the recipe output schema', () => {

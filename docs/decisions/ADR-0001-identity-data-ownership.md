@@ -1,10 +1,12 @@
 # ADR-0001：身份、数据归属与隐私基础
 
-**状态：** Accepted for planning; implementation not started  
+**状态：** Accepted for identity principles; Supabase-specific implementation superseded by ADR-0003
 **日期：** 2026-07-27  
 **范围：** P0–P2 identity, ownership, privacy and profile foundation
 
 ## 背景
+
+> 2026-07-28 更正：本 ADR 中 Supabase Auth、PostgreSQL 与 RLS 的具体实现不再是正式后端方案。guest 不可信、客户端不得决定 owner、服务端验证所有权和最小化数据收集仍然有效；未来身份方案需基于内网 API 重新设计。
 
 AI Kitchen 需要同时支持无需注册的首次体验、可恢复的云端匿名身份和正式账号。身份、数据归属与密钥边界必须先于 Auth、数据库和业务数据实现锁定。本 ADR 是设计决策，不代表 Supabase、Auth、数据库、迁移或 RLS 已实现。
 

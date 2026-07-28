@@ -33,7 +33,7 @@ The Blueprint may describe target code that does not exist. Before editing:
 
 - React Native + Expo + TypeScript mobile client.
 - Versioned owned REST API; App does not call AI providers directly.
-- Supabase PostgreSQL with RLS and server-verified ownership.
+- 内网 Node.js API + MySQL；服务端验证数据归属，当前 guestId 仅为过渡期业务标识。
 - Monorepo shared request/response/Recipe Schema.
 - Model output is Recipe Candidate only.
 - Deterministic Schema, business, Food Safety, and Nutrition stages assemble Final Recipe.

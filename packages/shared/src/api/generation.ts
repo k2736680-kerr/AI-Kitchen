@@ -4,7 +4,7 @@ import { GenerationRequestSchema, GENERATION_REQUEST_SCHEMA_VERSION } from '../g
 import { RecipeSchema, RECIPE_SCHEMA_VERSION } from '../recipes/types';
 
 export const GENERATION_API_SCHEMA_VERSION = 'v1' as const;
-export const GENERATION_API_PATH = '/functions/v1/recipes-generate' as const;
+export const GENERATION_API_PATH = '/api/v1/recipes/generate' as const;
 
 export const requestIdSchema = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9:_-]{7,127}$/);
 export const idempotencyKeySchema = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$/);
@@ -106,6 +106,16 @@ export const GenerationApiRateLimitedSchema = z.object({
   }).strict(),
 }).strict();
 
+export const GenerationApiIdempotencyConflictSchema = z.object({
+  status: z.literal('idempotency_conflict'),
+  schemaVersion: z.literal(GENERATION_API_SCHEMA_VERSION),
+  requestId: requestIdSchema,
+  error: z.object({
+    code: z.enum(['IDEMPOTENCY_CONFLICT', 'IDEMPOTENCY_IN_PROGRESS']),
+    message: z.string().trim().min(1).max(500),
+  }).strict(),
+}).strict();
+
 export const GenerationApiFailureSchema = z.discriminatedUnion('status', [
   generationFailedSchema,
   timeoutSchema,
@@ -117,6 +127,7 @@ export const GenerationApiResponseSchema = z.discriminatedUnion('status', [
   GenerationApiNoMatchSchema,
   GenerationApiValidationErrorSchema,
   GenerationApiRateLimitedSchema,
+  GenerationApiIdempotencyConflictSchema,
   generationFailedSchema,
   timeoutSchema,
   serviceUnavailableSchema,

@@ -22,7 +22,7 @@ Do not rely on prior chat memory when formal documents or repository evidence ar
 
 - React Native + Expo + TypeScript, Android first and iOS later.
 - App calls only the owned versioned backend, never the AI provider directly.
-- Supabase Edge Functions + PostgreSQL + RLS.
+- 内网 Node.js/Fastify + MySQL（Supabase Edge/PostgreSQL 旧设计已由 ADR-0003 取代）。
 - Shared request, response, error, and Recipe Schema.
 - Model output is an untrusted Recipe Candidate.
 - Server performs Schema, business, Food Safety, and Nutrition processing before creating Final Recipe.
