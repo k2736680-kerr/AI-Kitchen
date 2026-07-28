@@ -33,7 +33,7 @@ describe('Fastify recipe API', () => {
     const app = await createApiApp({ config, persistence: new InMemoryRecipePersistence(), provider: provider(), now: () => new Date('2026-07-28T00:00:00.000Z') });
     const response = await app.inject({ method: 'GET', url: '/api/v1/health' });
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toMatchObject({ service: 'ai-kitchen-api', database: 'ready', provider: 'configured' });
+    expect(response.json()).toMatchObject({ service: 'ai-kitchen-api', database: 'connected', provider: 'configured' });
     expect(response.body).not.toContain('test-key');
     await app.close();
   });

@@ -6,6 +6,8 @@
 
 ## 内网 Fastify + MySQL 菜谱生成服务
 
+- 补齐 Windows 内网 MySQL 本地环境模板，health 在成功连接时返回 `database: "connected"`；环境解析忽略无关系统变量，并允许空的百炼 Base URL 使用默认兼容地址。
+- 本地 `apps/api/.env` 由 `.gitignore` 排除，仅保留待用户填写的 `MYSQL_PASSWORD`；真实数据库 migration 与 health 联调尚未执行。
 - 正式后端从 Supabase Edge 原型迁移至 `apps/api`：Node.js、TypeScript、Fastify、MySQL 原生 migration 和阿里云百炼 `qwen3.7-plus` Provider。
 - 新增 `/api/v1/health`、生成、recipe 读取、guest history 查询与 visit upsert；生成采用 MySQL 幂等、校验后 recipe snapshot 保存和事务式历史更新。
 - Shared 契约增加远程 recipe/history DTO 与 `idempotency_conflict` 状态；Mobile Remote Adapter 改用 `/api/v1` 和 `EXPO_PUBLIC_AI_KITCHEN_API_BASE_URL`，支持远程历史与动态菜谱缓存。

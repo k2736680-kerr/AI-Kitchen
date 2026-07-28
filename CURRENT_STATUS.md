@@ -5,7 +5,7 @@
 | 属性 | 当前值 |
 |---|---|
 | 更新时间 | 2026-07-28 |
-| 当前阶段 | **P0 内网 Fastify/MySQL 菜谱生成服务：等待真实环境联调** |
+| 当前阶段 | **P0 内网 Fastify/MySQL 菜谱生成服务：等待本机 `MYSQL_PASSWORD` 后执行真实 MySQL 联调** |
 | 当前状态 | `IN_PROGRESS` |
 | Blueprint 版本 | `1.0.0` |
 | 产品代码状态 | `P0_CORE_FLOW_AND_INTRANET_API_V1_IMPLEMENTED` |
@@ -46,6 +46,7 @@
 - 已完成阿里云百炼 `qwen3.7-plus` Provider、JSON 提取、Schema/安全校验、一次修复、35 秒 Provider/40 秒服务端 deadline；真实 Key 未配置，未调用真实 AI。
 - 已完成 Mobile Local/Remote Adapter、45 秒超时、Abort、remote recipe cache、远程详情和远程历史；remote 模式不回退到 Fixture。
 - Fastify 注入、Provider、事务替身测试通过；真实 MySQL、阿里云和内网部署待填写环境变量后联调。
+- Windows 开发机的 `apps/api/.env` 已按内网数据库地址创建且被 Git 忽略；当前只缺少本机 `MYSQL_PASSWORD`，因此尚未尝试真实 migration、表/索引/权限查询或 health 请求，也不会伪称已连接。
 
 ---
 

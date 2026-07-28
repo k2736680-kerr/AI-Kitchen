@@ -2,13 +2,16 @@ import { z } from 'zod';
 
 const nonEmpty = z.string().trim().min(1);
 const optionalSecret = z.string().trim().optional().transform((value) => value || undefined);
+const dashscopeBaseUrl = z.string().trim().optional()
+  .transform((value) => value || 'https://dashscope.aliyuncs.com/compatible-mode/v1')
+  .pipe(z.string().url());
 
 const environmentSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'staging', 'production']).default('development'),
   API_HOST: nonEmpty.default('0.0.0.0'),
   API_PORT: z.coerce.number().int().min(1).max(65_535).default(3100),
   API_CORS_ORIGIN: z.string().trim().default('*'),
-  DASHSCOPE_BASE_URL: z.string().url().default('https://dashscope.aliyuncs.com/compatible-mode/v1'),
+  DASHSCOPE_BASE_URL: dashscopeBaseUrl,
   DASHSCOPE_API_KEY: optionalSecret,
   DASHSCOPE_MODEL: nonEmpty.default('qwen3.7-plus'),
   DASHSCOPE_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(35_000).default(35_000),
@@ -22,7 +25,7 @@ const environmentSchema = z.object({
   GENERATION_REPAIR_ENABLED: z.enum(['true', 'false']).default('true').transform((value) => value === 'true'),
   GENERATION_MODE: z.literal('remote').default('remote'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
-}).strict();
+}).strip();
 
 export type ApiConfig = Readonly<{
   environment: 'development' | 'test' | 'staging' | 'production';

@@ -58,7 +58,7 @@ export async function createApiApp(dependencies: ApiDependencies): Promise<Fasti
     service: 'ai-kitchen-api',
     version: 'v1',
     environment: dependencies.config.environment,
-    database: (await dependencies.persistence.ping()) ? 'ready' : 'unavailable',
+    database: (await dependencies.persistence.ping()) ? 'connected' : 'unavailable',
     provider: dependencies.config.dashscope.apiKey ? 'configured' : 'unconfigured',
     currentTime: (dependencies.now ?? (() => new Date()))().toISOString(),
   }));
