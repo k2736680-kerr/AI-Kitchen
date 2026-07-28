@@ -10,7 +10,7 @@
 | 传输 | HTTPS only |
 | 适用阶段 | P0–P2 |
 | 最后更新 | 2026-07-24 |
-| 实施状态 | 尚未创建 API 或 Edge Function |
+| 实施状态 | Generation API v1 契约、Edge Function 源码和 Mobile Adapter 已实现；尚未部署 Supabase |
 
 ---
 

@@ -10,6 +10,9 @@
     "android": "pnpm --filter @ai-kitchen/mobile android",
     "typecheck": "pnpm --filter @ai-kitchen/mobile typecheck && pnpm --filter @ai-kitchen/shared typecheck",
     "lint": "pnpm --filter @ai-kitchen/mobile lint",
-    "test": "pnpm --filter @ai-kitchen/shared test"
+    "test": "pnpm --filter @ai-kitchen/shared test",
+    "test:edge": "pnpm --filter @ai-kitchen/shared exec vitest run --root ../.. supabase/functions/recipes-generate/index.test.ts",
+    "test:repositories": "pnpm --filter @ai-kitchen/shared exec vitest run --root ../.. apps/mobile/src/data/api/generation-client.test.ts apps/mobile/src/data/recipe-generation/local-repository.test.ts",
+    "typecheck:edge": "pnpm --filter @ai-kitchen/shared exec tsc -p ../../supabase/functions/recipes-generate/tsconfig.json"
   }
 }

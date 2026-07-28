@@ -8,8 +8,8 @@
 | Blueprint 版本 | **1.0.0 — Blueprint Complete** |
 | 基线来源 | 《AI 厨房助手项目开发蓝图 V2.0》 |
 | Blueprint 状态 | 四阶段文档体系已完成并通过结构检查 |
-| 产品实现状态 | **尚未开始正式编码** |
-| 下一阶段 | 创建 Monorepo、Expo 骨架和 development 环境 |
+| 产品实现状态 | **P0 移动端主链路与版本化生成 API 已实现** |
+| 下一阶段 | 配置真实 Provider、部署 Edge Function 并完成 staging 联调 |
 | 优先平台 | Android，稳定后扩展 iOS |
 | 目标周期 | 12–18 周达到可上架质量 |
 | 协作方式 | 非专业开发者主导 + AI 编程工具协作 |
@@ -23,16 +23,12 @@
 
 当前已经完成的是产品、架构、数据库、API、身份、AI、规则、安全、营养、隐私、移动端、测试、部署、商店合规和 AI 工具规则的目标设计。当前尚未创建或验证：
 
-- 正式 pnpm Monorepo；
-- Expo App；
-- Supabase 项目、数据库迁移和 RLS；
-- Edge Function/API；
-- 共享 Zod Schema 包；
-- AI Provider、Prompt Registry、Rule Engine；
+- 正式 Supabase 项目和已部署环境；
+- 真实 Provider、Prompt Registry、完整 Rule Engine；
 - 本地数据库、同步和 E2E；
 - EAS 构建、监控和商店版本。
 
-实现进度只以 `PROJECT_STATE.md` 和 `CURRENT_STATUS.md` 为准。任何 AI 都不得把本文档中的目标代码示例称为已运行实现。
+实现进度只以 `PROJECT_STATE.md` 和 `CURRENT_STATUS.md` 为准。当前 API 代码和本地契约测试已实现，但未配置真实 Provider、Supabase 项目或生产部署。
 
 ---
 
@@ -259,3 +255,9 @@ ai-kitchen/
 ## 11. Blueprint 完成结论
 
 四个文档阶段已经完成：治理与总设计、核心技术专项、客户端与交付、AI 工具规则。当前文档体系已足以让下一位 AI 或开发者从同一架构基线创建代码仓库。后续任何实现仍必须逐阶段完成测试和门禁；Blueprint 不能替代真实代码、迁移、真机和生产验证。
+
+---
+
+## 12. 当前版本化菜谱生成 API
+
+API 契约、Edge Function、移动端 Adapter 和运行说明见 [`docs/API_GENERATION.md`](./docs/API_GENERATION.md)。当前端点为 `POST /functions/v1/recipes-generate`，开发环境可显式使用 deterministic Provider；staging/production 不会静默回退到本地 Fixture。

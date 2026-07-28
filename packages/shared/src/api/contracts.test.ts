@@ -4,7 +4,11 @@ import { createApiFailure, createApiSuccess, type ApiResult } from './envelope';
 
 describe('API contracts', () => {
   it('exposes unique stable error codes', () => {
-    expect(API_ERROR_CODES).toEqual(['INVALID_REQUEST', 'AUTH_REQUIRED', 'REGISTERED_IDENTITY_REQUIRED', 'FORBIDDEN', 'NOT_FOUND', 'CONFLICT', 'RATE_LIMITED', 'INTERNAL_ERROR']);
+    expect(API_ERROR_CODES).toEqual([
+      'INVALID_REQUEST', 'SCHEMA_VERSION_UNSUPPORTED', 'AUTH_REQUIRED', 'REGISTERED_IDENTITY_REQUIRED',
+      'FORBIDDEN', 'NOT_FOUND', 'CONFLICT', 'IDEMPOTENCY_CONFLICT', 'IDEMPOTENCY_IN_PROGRESS',
+      'RATE_LIMITED', 'GENERATION_FAILED', 'TIMEOUT', 'SERVICE_UNAVAILABLE', 'INTERNAL_ERROR',
+    ]);
     expect(new Set(API_ERROR_CODES).size).toBe(API_ERROR_CODES.length);
   });
   it('creates a success envelope', () => {

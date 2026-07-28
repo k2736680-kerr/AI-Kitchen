@@ -7,8 +7,8 @@
 | 状态日期 | 2026-07-27 |
 | Blueprint 版本 | 1.0.0 |
 | Blueprint 状态 | Phase 1–4 完成 |
-| 产品阶段 | Phase 0 工程准备完成，准备进入 P0 固定数据原型 |
-| 代码状态 | 正式代码仓库尚未创建 |
+| 产品阶段 | P0 固定数据移动端原型与版本化生成 API 已实现，进入后端环境联调 |
+| 代码状态 | pnpm Monorepo、Mobile、Shared 契约和 Edge Function 源码已创建 |
 | 发布状态 | 未发布 |
 | 优先平台 | Android |
 

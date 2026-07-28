@@ -1,13 +1,8 @@
-import type { SelectedIngredient } from '../ingredients/types';
+import { z } from 'zod';
 
 export const SERVING_OPTIONS = [1, 2, 3, 4, 6, 8, 10, 12] as const;
 export const MAX_TIME_OPTIONS = [15, 30, 45, 60] as const;
-export const COOKWARE_OPTIONS = [
-  'frying-pan',
-  'pot',
-  'oven',
-  'rice-cooker',
-] as const;
+export const COOKWARE_OPTIONS = ['frying-pan', 'pot', 'oven', 'rice-cooker'] as const;
 export const DIETARY_PREFERENCE_OPTIONS = ['vegetarian', 'low-spice', 'easy', 'balanced'] as const;
 export const ALLERGEN_OPTIONS = [
   'egg.chicken',
@@ -17,12 +12,46 @@ export const ALLERGEN_OPTIONS = [
   'shellfish.shrimp',
 ] as const;
 
-export type ServingOption = (typeof SERVING_OPTIONS)[number];
-export type MaxTimeMinutes = (typeof MAX_TIME_OPTIONS)[number];
-export type Cookware = (typeof COOKWARE_OPTIONS)[number];
-export type DietaryPreference = (typeof DIETARY_PREFERENCE_OPTIONS)[number];
-export type AllergenCode = (typeof ALLERGEN_OPTIONS)[number];
-export type GenerationRequestSchemaVersion = 'v1';
+export const GENERATION_REQUEST_SCHEMA_VERSION = 'v1' as const;
+
+const servingSchema = z.union([
+  z.literal(1), z.literal(2), z.literal(3), z.literal(4),
+  z.literal(6), z.literal(8), z.literal(10), z.literal(12),
+]);
+const maxTimeSchema = z.union([z.literal(15), z.literal(30), z.literal(45), z.literal(60)]);
+const cookwareSchema = z.enum(COOKWARE_OPTIONS);
+const dietaryPreferenceSchema = z.enum(DIETARY_PREFERENCE_OPTIONS);
+const allergenSchema = z.enum(ALLERGEN_OPTIONS);
+const selectedIngredientSchema = z.object({
+  id: z.string().trim().min(1).max(80),
+  displayName: z.string().trim().min(1).max(30),
+  source: z.enum(['catalog', 'custom']),
+}).strict();
+
+function uniqueValues<T>(values: readonly T[]): boolean {
+  return new Set(values).size === values.length;
+}
+
+export const GenerationRequestSchema = z.object({
+  schemaVersion: z.literal(GENERATION_REQUEST_SCHEMA_VERSION),
+  selectedIngredientIds: z.array(z.string().trim().min(1).max(80)).max(50).refine(uniqueValues, 'values must be unique'),
+  customIngredients: z.array(selectedIngredientSchema).max(20),
+  servings: servingSchema,
+  maxCookingTimeMinutes: maxTimeSchema,
+  availableTools: z.array(cookwareSchema).max(COOKWARE_OPTIONS.length).refine(uniqueValues, 'values must be unique'),
+  dietaryPreferences: z.array(dietaryPreferenceSchema).max(DIETARY_PREFERENCE_OPTIONS.length).refine(uniqueValues, 'values must be unique'),
+  allergens: z.array(allergenSchema).max(ALLERGEN_OPTIONS.length).refine(uniqueValues, 'values must be unique'),
+  excludedIngredients: z.array(z.string().trim().min(1).max(80)).max(50).refine(uniqueValues, 'values must be unique'),
+}).strict();
+
+export type ServingOption = z.infer<typeof servingSchema>;
+export type MaxTimeMinutes = z.infer<typeof maxTimeSchema>;
+export type Cookware = z.infer<typeof cookwareSchema>;
+export type DietaryPreference = z.infer<typeof dietaryPreferenceSchema>;
+export type AllergenCode = z.infer<typeof allergenSchema>;
+export type GenerationRequest = z.infer<typeof GenerationRequestSchema>;
+export type GenerationRequestSchemaVersion = typeof GENERATION_REQUEST_SCHEMA_VERSION;
+export type GenerationDraft = Omit<GenerationRequest, 'schemaVersion'>;
 
 export const DIETARY_PREFERENCE_LABELS: Readonly<Record<DietaryPreference, string>> = {
   vegetarian: '素食',
@@ -45,17 +74,3 @@ export const COOKWARE_LABELS: Readonly<Record<Cookware, string>> = {
   oven: '烤箱',
   'rice-cooker': '电饭锅',
 };
-
-export interface GenerationRequest {
-  readonly schemaVersion: GenerationRequestSchemaVersion;
-  readonly selectedIngredientIds: readonly string[];
-  readonly customIngredients: readonly SelectedIngredient[];
-  readonly servings: ServingOption;
-  readonly maxCookingTimeMinutes: MaxTimeMinutes;
-  readonly availableTools: readonly Cookware[];
-  readonly dietaryPreferences: readonly DietaryPreference[];
-  readonly allergens: readonly AllergenCode[];
-  readonly excludedIngredients: readonly string[];
-}
-
-export type GenerationDraft = Omit<GenerationRequest, 'schemaVersion'>;

@@ -6,7 +6,7 @@
 |---|---|
 | 文档状态 | 强制执行 |
 | 适用对象 | 所有参与项目的 AI 与自动化 Agent |
-| 当前项目阶段 | Blueprint 1.0.0 已完成，准备进入 P0 固定数据原型；尚未正式编码 |
+| 当前项目阶段 | Blueprint 1.0.0 已完成，P0 移动端主链路与版本化生成 API 源码已实现 |
 | 最后更新 | 2026-07-27 |
 
 ---
@@ -43,9 +43,10 @@ AI Kitchen 是一款移动端 AI 厨房助手：用户选择手头已有食材�
 - 已完成 Blueprint Phase 1–4 和完整文档索引；
 - 已完成数据库、API、身份、AI、Prompt、规则、安全、营养、隐私、移动端、测试、部署和商店专项设计；
 - 已生成 Cursor、Claude Code、Codex、ChatGPT 项目规则和交接模板；
-- 尚未创建可运行的正式代码仓库；
-- 尚未创建数据库迁移、API、真实 AI 接口或 P0 页面；
-- 下一阶段是创建 Monorepo 和固定数据移动端原型。
+- 已创建可运行的 pnpm Monorepo、Expo Mobile、Shared Schema 和 P0 页面；
+- 已创建版本化 Generation API、Edge Function 源码、幂等 migration 和 Local/Remote Adapter；
+- 尚未部署 Supabase、配置真实 Provider、接入 Supabase Auth 或调用真实 AI；
+- 下一阶段是配置 Provider、部署 Edge Function 并完成 staging 联调。
 
 禁止将蓝图中的目标状态误认为当前已经实现的状态。
 

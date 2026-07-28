@@ -1,0 +1,5 @@
+project_id = "ai-kitchen-local"
+
+[functions.recipes-generate]
+verify_jwt = false
+import_map = "./functions/import_map.json"
