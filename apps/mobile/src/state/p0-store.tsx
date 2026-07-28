@@ -1,6 +1,8 @@
 import type {
   ApiError,
+  AllergenCode,
   Cookware,
+  DietaryPreference,
   IngredientCategory,
   IngredientDefinition,
   MaxTimeMinutes,
@@ -20,6 +22,7 @@ import { fixtureIngredientRepository } from '../data/fixtures/ingredient-reposit
 import { p0Reducer } from './p0-reducer';
 import {
   createCustomIngredient,
+  createGenerationRequest,
   createInitialP0State,
   type AddCustomIngredientResult,
   type P0State,
@@ -35,6 +38,12 @@ interface P0StoreValue {
   setServings(servings: ServingOption): void;
   setMaxTime(maxTimeMinutes: MaxTimeMinutes): void;
   toggleCookware(cookware: Cookware): void;
+  toggleDietaryPreference(preference: DietaryPreference): void;
+  toggleAllergen(allergen: AllergenCode): void;
+  toggleExcludedIngredient(ingredientId: string): void;
+  clearDietaryPreferences(): void;
+  clearAllergens(): void;
+  clearExcludedIngredients(): void;
   setSelectedCategory(category: IngredientCategory | 'all'): void;
   setLastRecipe(recipeId: string | null): void;
   startGeneration(requestId: string): void;
@@ -102,6 +111,24 @@ export function P0StoreProvider({ children }: PropsWithChildren) {
       toggleCookware: (cookware) => {
         dispatch({ type: 'TOGGLE_COOKWARE', cookware });
       },
+      toggleDietaryPreference: (preference) => {
+        dispatch({ type: 'TOGGLE_DIETARY_PREFERENCE', preference });
+      },
+      toggleAllergen: (allergen) => {
+        dispatch({ type: 'TOGGLE_ALLERGEN', allergen });
+      },
+      toggleExcludedIngredient: (ingredientId) => {
+        dispatch({ type: 'TOGGLE_EXCLUDED_INGREDIENT', ingredientId });
+      },
+      clearDietaryPreferences: () => {
+        dispatch({ type: 'CLEAR_DIETARY_PREFERENCES' });
+      },
+      clearAllergens: () => {
+        dispatch({ type: 'CLEAR_ALLERGENS' });
+      },
+      clearExcludedIngredients: () => {
+        dispatch({ type: 'CLEAR_EXCLUDED_INGREDIENTS' });
+      },
       setSelectedCategory: (category) => {
         dispatch({ type: 'SET_SELECTED_CATEGORY', category });
       },
@@ -109,7 +136,7 @@ export function P0StoreProvider({ children }: PropsWithChildren) {
         dispatch({ type: 'SET_LAST_RECIPE', recipeId });
       },
       startGeneration: (requestId) => {
-        dispatch({ type: 'START_GENERATION', requestId });
+        dispatch({ type: 'START_GENERATION', requestId, request: createGenerationRequest(stateRef.current) });
       },
       setGenerationSucceeded: (recipeId) => {
         dispatch({ type: 'SET_GENERATION_SUCCEEDED', recipeId });

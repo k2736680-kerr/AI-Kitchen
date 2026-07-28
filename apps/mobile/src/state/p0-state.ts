@@ -1,6 +1,7 @@
 import type {
   ApiError,
   GenerationDraft,
+  GenerationRequest,
   IngredientCategory,
   IngredientDefinition,
   SelectedIngredient,
@@ -27,6 +28,7 @@ export interface GenerationSessionState {
   readonly requestId: string | null;
   readonly recipeId: string | null;
   readonly error: ApiError | null;
+  readonly requestSnapshot: GenerationRequest | null;
 }
 
 export interface P0UiPreferences {
@@ -67,11 +69,14 @@ export type AddCustomIngredientResult =
     };
 
 const DEFAULT_DRAFT: GenerationDraft = {
-  ingredientIds: [],
+  selectedIngredientIds: [],
   customIngredients: [],
   servings: 2,
-  maxTimeMinutes: 30,
-  cookware: [],
+  maxCookingTimeMinutes: 30,
+  availableTools: [],
+  dietaryPreferences: [],
+  allergens: [],
+  excludedIngredients: [],
 };
 
 const INITIAL_GENERATION: GenerationSessionState = {
@@ -79,7 +84,22 @@ const INITIAL_GENERATION: GenerationSessionState = {
   requestId: null,
   recipeId: null,
   error: null,
+  requestSnapshot: null,
 };
+
+export function createGenerationRequest(state: P0State): GenerationRequest {
+  return {
+    schemaVersion: 'v1',
+    selectedIngredientIds: [...state.generationDraft.selectedIngredientIds],
+    customIngredients: state.generationDraft.customIngredients.map((ingredient) => ({ ...ingredient })),
+    servings: state.generationDraft.servings,
+    maxCookingTimeMinutes: state.generationDraft.maxCookingTimeMinutes,
+    availableTools: [...state.generationDraft.availableTools],
+    dietaryPreferences: [...state.generationDraft.dietaryPreferences],
+    allergens: [...state.generationDraft.allergens],
+    excludedIngredients: [...state.generationDraft.excludedIngredients],
+  };
+}
 
 /** Creates a session-only guest namespace; it is never an authenticated identity. */
 export function createSessionGuestId(): string {

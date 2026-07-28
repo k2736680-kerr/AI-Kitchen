@@ -12,6 +12,7 @@ export interface IngredientDefinition {
   readonly displayName: string;
   readonly aliases: readonly string[];
   readonly category: IngredientCategory;
+  readonly allergenCodes?: readonly AllergenCode[];
 }
 
 export interface SelectedIngredient {
@@ -19,3 +20,4 @@ export interface SelectedIngredient {
   readonly displayName: string;
   readonly source: 'catalog' | 'custom';
 }
+import type { AllergenCode } from '../generation/types';

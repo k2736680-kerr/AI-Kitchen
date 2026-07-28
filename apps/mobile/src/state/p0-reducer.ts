@@ -1,6 +1,9 @@
 import type {
   ApiError,
+  AllergenCode,
   Cookware,
+  DietaryPreference,
+  GenerationRequest,
   IngredientCategory,
   MaxTimeMinutes,
   SelectedIngredient,
@@ -21,12 +24,18 @@ export type P0Action =
   | { readonly type: 'SET_SERVINGS'; readonly servings: ServingOption }
   | { readonly type: 'SET_MAX_TIME'; readonly maxTimeMinutes: MaxTimeMinutes }
   | { readonly type: 'TOGGLE_COOKWARE'; readonly cookware: Cookware }
+  | { readonly type: 'TOGGLE_DIETARY_PREFERENCE'; readonly preference: DietaryPreference }
+  | { readonly type: 'TOGGLE_ALLERGEN'; readonly allergen: AllergenCode }
+  | { readonly type: 'TOGGLE_EXCLUDED_INGREDIENT'; readonly ingredientId: string }
+  | { readonly type: 'CLEAR_DIETARY_PREFERENCES' }
+  | { readonly type: 'CLEAR_ALLERGENS' }
+  | { readonly type: 'CLEAR_EXCLUDED_INGREDIENTS' }
   | {
       readonly type: 'SET_SELECTED_CATEGORY';
       readonly category: IngredientCategory | 'all';
     }
   | { readonly type: 'SET_LAST_RECIPE'; readonly recipeId: string | null }
-  | { readonly type: 'START_GENERATION'; readonly requestId: string }
+  | { readonly type: 'START_GENERATION'; readonly requestId: string; readonly request: GenerationRequest }
   | { readonly type: 'SET_GENERATION_SUCCEEDED'; readonly recipeId: string }
   | { readonly type: 'SET_GENERATION_NO_MATCH' }
   | { readonly type: 'SET_GENERATION_FAILED'; readonly error: ApiError }
@@ -45,7 +54,7 @@ function toGenerationDraft(
 ): P0State['generationDraft'] {
   return {
     ...state.generationDraft,
-    ingredientIds: selectedIngredients
+    selectedIngredientIds: selectedIngredients
       .filter((ingredient) => ingredient.source === 'catalog')
       .map((ingredient) => ingredient.id),
     customIngredients: selectedIngredients.filter(
@@ -123,19 +132,49 @@ export function p0Reducer(state: P0State, action: P0Action): P0State {
         ...state,
         generationDraft: {
           ...state.generationDraft,
-          maxTimeMinutes: action.maxTimeMinutes,
+          maxCookingTimeMinutes: action.maxTimeMinutes,
         },
       };
 
     case 'TOGGLE_COOKWARE': {
-      const cookware = state.generationDraft.cookware.includes(action.cookware)
-        ? state.generationDraft.cookware.filter((item) => item !== action.cookware)
-        : [...state.generationDraft.cookware, action.cookware];
+      const availableTools = state.generationDraft.availableTools.includes(action.cookware)
+        ? state.generationDraft.availableTools.filter((item) => item !== action.cookware)
+        : [...state.generationDraft.availableTools, action.cookware];
       return {
         ...state,
-        generationDraft: { ...state.generationDraft, cookware },
+        generationDraft: { ...state.generationDraft, availableTools },
       };
     }
+
+    case 'TOGGLE_DIETARY_PREFERENCE': {
+      const dietaryPreferences = state.generationDraft.dietaryPreferences.includes(action.preference)
+        ? state.generationDraft.dietaryPreferences.filter((item) => item !== action.preference)
+        : [...state.generationDraft.dietaryPreferences, action.preference];
+      return { ...state, generationDraft: { ...state.generationDraft, dietaryPreferences } };
+    }
+
+    case 'TOGGLE_ALLERGEN': {
+      const allergens = state.generationDraft.allergens.includes(action.allergen)
+        ? state.generationDraft.allergens.filter((item) => item !== action.allergen)
+        : [...state.generationDraft.allergens, action.allergen];
+      return { ...state, generationDraft: { ...state.generationDraft, allergens } };
+    }
+
+    case 'TOGGLE_EXCLUDED_INGREDIENT': {
+      const excludedIngredients = state.generationDraft.excludedIngredients.includes(action.ingredientId)
+        ? state.generationDraft.excludedIngredients.filter((item) => item !== action.ingredientId)
+        : [...state.generationDraft.excludedIngredients, action.ingredientId];
+      return { ...state, generationDraft: { ...state.generationDraft, excludedIngredients } };
+    }
+
+    case 'CLEAR_DIETARY_PREFERENCES':
+      return { ...state, generationDraft: { ...state.generationDraft, dietaryPreferences: [] } };
+
+    case 'CLEAR_ALLERGENS':
+      return { ...state, generationDraft: { ...state.generationDraft, allergens: [] } };
+
+    case 'CLEAR_EXCLUDED_INGREDIENTS':
+      return { ...state, generationDraft: { ...state.generationDraft, excludedIngredients: [] } };
 
     case 'SET_SELECTED_CATEGORY':
       return {
@@ -155,6 +194,7 @@ export function p0Reducer(state: P0State, action: P0Action): P0State {
           requestId: action.requestId,
           recipeId: null,
           error: null,
+          requestSnapshot: action.request,
         },
       };
 

@@ -1,4 +1,6 @@
 import type { CookingSessionState, P0State } from './p0-state';
+import { createGenerationRequest } from './p0-state';
+import { validateGenerationRequest, type GenerationValidation } from './generation-validation';
 
 export interface CookingProgress {
   readonly completed: number;
@@ -7,7 +9,11 @@ export interface CookingProgress {
 }
 
 export function selectCanGenerate(state: P0State): boolean {
-  return state.selectedIngredients.length > 0;
+  return selectGenerationValidation(state).canSubmit;
+}
+
+export function selectGenerationValidation(state: P0State): GenerationValidation {
+  return validateGenerationRequest(state, createGenerationRequest(state));
 }
 
 export function selectSelectedIngredientCount(state: P0State): number {

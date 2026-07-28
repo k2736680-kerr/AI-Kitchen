@@ -1,5 +1,9 @@
+import type { AllergenCode, Cookware, DietaryPreference } from '../generation/types';
+
 export type RecipeGenerationMode = 'fixture';
 export type NutritionStatus = 'unavailable';
+export type RecipeDifficulty = 'easy' | 'medium';
+export type RecipeSpiceLevel = 'mild' | 'medium';
 
 export interface RecipeIngredient {
   readonly ingredientId: string;
@@ -29,6 +33,11 @@ export interface RecipeFixture {
   readonly description: string;
   readonly servings: number;
   readonly totalTimeMinutes: number;
+  readonly difficulty: RecipeDifficulty;
+  readonly spiceLevel: RecipeSpiceLevel;
+  readonly dietaryTags: readonly DietaryPreference[];
+  readonly allergenCodes: readonly AllergenCode[];
+  readonly requiredCookware: readonly Cookware[];
   readonly requiredIngredients: readonly RecipeIngredient[];
   readonly optionalIngredients: readonly RecipeIngredient[];
   readonly missingIngredients: readonly RecipeIngredient[];

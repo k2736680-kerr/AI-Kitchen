@@ -28,11 +28,14 @@ export default function GeneratingScreen() {
   const [attempt, setAttempt] = useState(1);
 
   useEffect(() => {
-    const requestId = `local-generation:${Date.now().toString(36)}:${attempt}`;
-    startGeneration(requestId);
+    const request = state.generation.requestSnapshot;
+    if (!request) {
+      router.replace('/generate' as Href);
+      return;
+    }
     let active = true;
 
-    void generateLocalRecipe({ draft: state.generationDraft }).then((result) => {
+    void generateLocalRecipe({ request }).then((result) => {
       if (!active) return;
       if (result.status === 'no-match') {
         setGenerationNoMatch();
@@ -51,7 +54,7 @@ export default function GeneratingScreen() {
     return () => {
       active = false;
     };
-  }, [addRecentRecipe, attempt, setGenerationFailed, setGenerationNoMatch, setGenerationSucceeded, setLastRecipe, startGeneration, state.generationDraft]);
+  }, [addRecentRecipe, attempt, setGenerationFailed, setGenerationNoMatch, setGenerationSucceeded, setLastRecipe, startGeneration, state.generation.requestSnapshot]);
 
   const cancel = () => Alert.alert('取消生成', '确定取消当前生成吗？', [
     { text: '继续等待', style: 'cancel' },
@@ -60,6 +63,6 @@ export default function GeneratingScreen() {
 
   return <Screen>
     <ThemedText type="title">正在生成菜谱</ThemedText>
-    {state.generation.status === 'failed' && state.generation.error ? <GenerationErrorState error={state.generation.error} onRetry={() => { setAttempt((value) => value + 1); }} onBack={() => router.replace('/generate' as Href)} /> : <GeneratingState state={state} onCancel={cancel} />}
+    {state.generation.status === 'failed' && state.generation.error ? <GenerationErrorState error={state.generation.error} onRetry={() => { startGeneration(`local-generation:${Date.now().toString(36)}:retry`); setAttempt((value) => value + 1); }} onBack={() => router.replace('/generate' as Href)} /> : <GeneratingState state={state} onCancel={cancel} />}
   </Screen>;
 }
