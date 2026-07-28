@@ -4,6 +4,14 @@
 
 ---
 
+## 版本化后端菜谱生成 API
+
+- 新增共享 Zod API 契约 v1：`GenerationApiRequest`、`GenerationApiResponse` 判别联合、Recipe 输出 Schema、错误码、版本常量和严格未知字段策略。
+- 新增 `POST /functions/v1/recipes-generate` Edge Function，支持 CORS、请求校验、guest 身份边界、限流、幂等、deterministic/HTTP Provider、一次修复、超时、失败关闭和结构化最小日志。
+- 新增 `generation_requests` migration，使用唯一 `idempotency_key` 和 RLS 默认拒绝；development 可显式使用单进程 memory store，生产应使用 Supabase service-role REST store。
+- Mobile 生成状态机改为依赖 `RecipeGenerationRepository`，支持 development local/remote 配置、Remote API Adapter、45 秒超时、取消、错误映射和远程 Recipe 缓存。
+- 当前未配置真实 Provider、未调用真实 AI、未部署 Supabase、未执行真实 Edge Runtime/容器联调；相关实现状态和启动命令见 `docs/API_GENERATION.md`。
+
 ## P0 固定数据原型：完善饮食偏好与安全生成条件
 
 - 共享包新增 `GenerationRequest` v1，统一承载食材、人数、最大烹饪时间、可用厨具、饮食偏好、过敏原和忌口；页面与本地生成器不再各自定义请求字段。

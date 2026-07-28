@@ -1,0 +1,12 @@
+function randomToken(): string {
+  if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID().replace(/-/g, '');
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`;
+}
+
+export function createRequestId(): string {
+  return `req_${randomToken()}`;
+}
+
+export function createIdempotencyKey(): string {
+  return `idem_${randomToken()}`;
+}

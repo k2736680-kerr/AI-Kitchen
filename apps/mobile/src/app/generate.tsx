@@ -43,7 +43,7 @@ export default function GenerateScreen() {
   const submit = () => {
     if (!validation.canSubmit || submitLock.current || submitDisabled) return;
     submitLock.current = true;
-    startGeneration(`local-generation:${Date.now().toString(36)}`);
+    startGeneration();
     router.push('/generating' as Href);
   };
 

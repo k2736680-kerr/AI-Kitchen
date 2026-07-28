@@ -6,6 +6,7 @@ import type {
   IngredientCategory,
   IngredientDefinition,
   MaxTimeMinutes,
+  Recipe,
   ServingOption,
 } from '@ai-kitchen/shared';
 import {
@@ -18,6 +19,7 @@ import {
   type PropsWithChildren,
 } from 'react';
 
+import { createIdempotencyKey, createRequestId } from '../data/api/request-ids';
 import { fixtureIngredientRepository } from '../data/fixtures/ingredient-repository';
 import { p0Reducer } from './p0-reducer';
 import {
@@ -46,9 +48,9 @@ interface P0StoreValue {
   clearExcludedIngredients(): void;
   setSelectedCategory(category: IngredientCategory | 'all'): void;
   setLastRecipe(recipeId: string | null): void;
-  startGeneration(requestId: string): void;
-  setGenerationSucceeded(recipeId: string): void;
-  setGenerationNoMatch(): void;
+  startGeneration(): void;
+  setGenerationSucceeded(recipe: Recipe, source: 'local' | 'deterministic' | 'provider'): void;
+  setGenerationNoMatch(message: string): void;
   setGenerationFailed(error: ApiError): void;
   cancelGeneration(): void;
   addRecentRecipe(entry: RecentRecipeEntry): void;
@@ -135,14 +137,14 @@ export function P0StoreProvider({ children }: PropsWithChildren) {
       setLastRecipe: (recipeId) => {
         dispatch({ type: 'SET_LAST_RECIPE', recipeId });
       },
-      startGeneration: (requestId) => {
-        dispatch({ type: 'START_GENERATION', requestId, request: createGenerationRequest(stateRef.current) });
+      startGeneration: () => {
+        dispatch({ type: 'START_GENERATION', requestId: createRequestId(), idempotencyKey: createIdempotencyKey(), request: createGenerationRequest(stateRef.current) });
       },
-      setGenerationSucceeded: (recipeId) => {
-        dispatch({ type: 'SET_GENERATION_SUCCEEDED', recipeId });
+      setGenerationSucceeded: (recipe, source) => {
+        dispatch({ type: 'SET_GENERATION_SUCCEEDED', recipe, source });
       },
-      setGenerationNoMatch: () => {
-        dispatch({ type: 'SET_GENERATION_NO_MATCH' });
+      setGenerationNoMatch: (message) => {
+        dispatch({ type: 'SET_GENERATION_NO_MATCH', message });
       },
       setGenerationFailed: (error) => {
         dispatch({ type: 'SET_GENERATION_FAILED', error });

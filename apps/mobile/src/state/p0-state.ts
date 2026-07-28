@@ -5,6 +5,7 @@ import type {
   IngredientCategory,
   IngredientDefinition,
   SelectedIngredient,
+  Recipe,
 } from '@ai-kitchen/shared';
 
 import { normalizeIngredientText } from '../data/fixtures/ingredient-repository';
@@ -12,7 +13,7 @@ import { normalizeIngredientText } from '../data/fixtures/ingredient-repository'
 export interface RecentRecipeEntry {
   readonly recipeId: string;
   readonly viewedAt: string;
-  readonly source: 'fixture';
+  readonly source: 'fixture' | 'local' | 'remote';
 }
 
 export type GenerationSessionStatus =
@@ -26,9 +27,12 @@ export type GenerationSessionStatus =
 export interface GenerationSessionState {
   readonly status: GenerationSessionStatus;
   readonly requestId: string | null;
+  readonly idempotencyKey: string | null;
   readonly recipeId: string | null;
   readonly error: ApiError | null;
+  readonly message: string | null;
   readonly requestSnapshot: GenerationRequest | null;
+  readonly source: 'local' | 'deterministic' | 'provider' | null;
 }
 
 export interface P0UiPreferences {
@@ -50,6 +54,7 @@ export interface P0State {
   readonly selectedIngredients: readonly SelectedIngredient[];
   readonly generationDraft: GenerationDraft;
   readonly generation: GenerationSessionState;
+  readonly recipeCache: Readonly<Record<string, Recipe>>;
   readonly lastRecipeId: string | null;
   readonly recentRecipes: readonly RecentRecipeEntry[];
   readonly activeCookingRecipeId: string | null;
@@ -82,9 +87,12 @@ const DEFAULT_DRAFT: GenerationDraft = {
 const INITIAL_GENERATION: GenerationSessionState = {
   status: 'idle',
   requestId: null,
+  idempotencyKey: null,
   recipeId: null,
   error: null,
+  message: null,
   requestSnapshot: null,
+  source: null,
 };
 
 export function createGenerationRequest(state: P0State): GenerationRequest {
@@ -112,6 +120,7 @@ export function createInitialP0State(guestId = createSessionGuestId()): P0State 
     selectedIngredients: [],
     generationDraft: DEFAULT_DRAFT,
     generation: INITIAL_GENERATION,
+    recipeCache: {},
     lastRecipeId: null,
     recentRecipes: [],
     activeCookingRecipeId: null,

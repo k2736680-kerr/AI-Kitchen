@@ -5,10 +5,10 @@
 | 属性 | 当前值 |
 |---|---|
 | 更新时间 | 2026-07-28 |
-| 当前阶段 | **P0 固定数据移动端原型：生成主链路与历史基础页** |
+| 当前阶段 | **P0 移动端主链路与版本化 Generation API v1：进入后端环境联调** |
 | 当前状态 | `IN_PROGRESS` |
 | Blueprint 版本 | `1.0.0` |
-| 产品代码状态 | `P0_CORE_FLOW_IMPLEMENTED` |
+| 产品代码状态 | `P0_CORE_FLOW_AND_API_V1_IMPLEMENTED` |
 | 代码分支 | `main` |
 | 最近可运行 commit | 当前 Git HEAD（本轮第二次提交） |
 | 当前环境 | pnpm Workspace + Expo SDK 57 默认模板 |
@@ -24,7 +24,7 @@
 - 已完成正式无匹配结果页；菜谱详情显示标题、描述、人数、时间、食材、步骤和安全/营养状态，并可进入 `/cooking/[recipeId]`。
 - 成功生成或打开详情会按去重规则更新当前会话 `recentRecipes`，最近访问排在前面。
 - 已完成 Blueprint P0 历史基础页，入口为底部“历史”Tab；有记录和无记录状态均为当前会话能力，点击记录进入详情。
-- 当前仍未持久化、未接真实 AI、未接后端/API、未接云端历史、未接登录同步；App 或模拟器重启后会清空会话数据。
+- 当前会话菜谱与历史仍未持久化；真实 AI、Supabase 部署、云端历史和登录同步尚未接入。版本化 API 源码与 Mobile Remote Adapter 已完成，但尚未连接已部署后端；App 或模拟器重启后会清空会话数据。
 - Pixel_8a 已通过独立 Metro 8083 基础冒烟：首页选择三项食材、修改人数、生成成功进入番茄鸡蛋面详情、进入烹饪第 1 步并完成一步。
 
 ## P0 固定数据原型：饮食偏好与安全生成条件
@@ -37,7 +37,17 @@
 - 本地生成器按食材、最大时间、厨具、一般偏好、过敏原、忌口顺序确定性筛选；过敏原和忌口为硬过滤，无安全候选时进入正式无匹配页。
 - 已选食材与过敏原或忌口冲突会在提交前明确提示并阻止提交；自定义食材与过敏原同时存在时因无法确认映射而阻止提交。
 - 菜谱详情新增饮食标签、过敏原提示、难度信息和一般性安全提醒；不声称绝对安全。
-- 当前仍为本地确定性生成，未接真实 AI、未接后端/API、未持久化，也未新增数据库或云端能力。
+- 当前默认仍为本地确定性生成；Remote Adapter 与版本化 API 已完成但未接真实 AI 或已部署后端，条件和历史仍未持久化。
+
+## 版本化后端菜谱生成 API
+
+- 已完成共享 Zod 契约 v1：请求、响应判别联合、GenerationRequest、Recipe 输出 Schema、错误码和版本常量由 `packages/shared/src` 提供。
+- 已完成 `POST /functions/v1/recipes-generate` Supabase Edge Function：OPTIONS/CORS、POST/Content-Type、请求体大小、JSON、strict Schema、版本、请求头、guest 身份边界、基础限流、幂等、Provider、输出校验、一次修复、超时和统一错误响应。
+- 已完成 deterministic Provider 和通用 HTTP Provider Adapter 边界；真实 Provider Key 未配置，未调用真实 AI。staging/production 不允许静默使用 deterministic/local Fixture。
+- 已完成 `generation_requests` migration：幂等 key 唯一约束、请求状态/响应字段、RLS 开启且无客户端 policy；当前未执行 Supabase 部署或 migration apply。
+- 已完成 Mobile `RecipeGenerationRepository`、Local/Remote Adapter、API Client、45 秒超时、Abort 取消、错误映射和远程 Recipe 会话缓存；development 默认 local，可显式切换 remote。
+- Edge Function 契约测试 6 项、Shared Schema/安全解析测试已通过；Edge Function TypeScript 通过。Supabase CLI/Deno 未安装，因此未执行真实 Edge Runtime 或 Supabase 容器联调。
+- 当前 Edge Function 只接受本地 guest 随机 ID；anonymous/registered 尚未接入 Supabase Auth，相关请求会被拒绝，guest 不能作为可信 owner_id。
 
 ---
 

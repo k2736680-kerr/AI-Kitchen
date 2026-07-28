@@ -4,6 +4,7 @@ import type {
   Cookware,
   DietaryPreference,
   GenerationRequest,
+  Recipe,
   IngredientCategory,
   MaxTimeMinutes,
   SelectedIngredient,
@@ -35,9 +36,9 @@ export type P0Action =
       readonly category: IngredientCategory | 'all';
     }
   | { readonly type: 'SET_LAST_RECIPE'; readonly recipeId: string | null }
-  | { readonly type: 'START_GENERATION'; readonly requestId: string; readonly request: GenerationRequest }
-  | { readonly type: 'SET_GENERATION_SUCCEEDED'; readonly recipeId: string }
-  | { readonly type: 'SET_GENERATION_NO_MATCH' }
+  | { readonly type: 'START_GENERATION'; readonly requestId: string; readonly idempotencyKey: string; readonly request: GenerationRequest }
+  | { readonly type: 'SET_GENERATION_SUCCEEDED'; readonly recipe: Recipe; readonly source: 'local' | 'deterministic' | 'provider' }
+  | { readonly type: 'SET_GENERATION_NO_MATCH'; readonly message: string }
   | { readonly type: 'SET_GENERATION_FAILED'; readonly error: ApiError }
   | { readonly type: 'CANCEL_GENERATION' }
   | { readonly type: 'ADD_RECENT_RECIPE'; readonly entry: RecentRecipeEntry }
@@ -192,20 +193,26 @@ export function p0Reducer(state: P0State, action: P0Action): P0State {
         generation: {
           status: 'generating',
           requestId: action.requestId,
+          idempotencyKey: action.idempotencyKey,
           recipeId: null,
           error: null,
+          message: null,
           requestSnapshot: action.request,
+          source: null,
         },
       };
 
     case 'SET_GENERATION_SUCCEEDED':
       return {
         ...state,
+        recipeCache: { ...state.recipeCache, [action.recipe.recipeId]: action.recipe },
         generation: {
           ...state.generation,
           status: 'succeeded',
-          recipeId: action.recipeId,
+          recipeId: action.recipe.recipeId,
           error: null,
+          message: null,
+          source: action.source,
         },
       };
 
@@ -217,6 +224,7 @@ export function p0Reducer(state: P0State, action: P0Action): P0State {
           status: 'no-match',
           recipeId: null,
           error: null,
+          message: action.message,
         },
       };
 

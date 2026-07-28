@@ -19,7 +19,7 @@ export default function CookingScreen() {
   const params = useLocalSearchParams<{ recipeId?: string | string[] }>();
   const recipeId = Array.isArray(params.recipeId) ? params.recipeId[0] : params.recipeId;
   const { state, initializeCookingSession, setCookingStep, completeCookingStep, resetCookingSession } = useP0Store();
-  const recipe = recipeId ? fixtureRecipeRepository.getById(recipeId) : undefined;
+  const recipe = recipeId ? state.recipeCache[recipeId] ?? fixtureRecipeRepository.getById(recipeId) : undefined;
   const session = recipeId ? selectCookingSession(state, recipeId) : undefined;
 
   useEffect(() => {

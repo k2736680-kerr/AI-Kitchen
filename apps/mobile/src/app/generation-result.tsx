@@ -10,7 +10,7 @@ import { useP0Store } from '@/state/p0-store';
 export default function GenerationResultScreen() {
   const { state } = useP0Store();
   const message = state.generation.status === 'no-match'
-    ? '没有找到同时满足当前食材、时间和厨具条件的菜谱。'
+    ? state.generation.message ?? '没有找到符合当前条件的菜谱。'
     : '这次没有生成出可查看的菜谱，请调整条件后再试。';
 
   return <Screen>
