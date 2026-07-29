@@ -13,7 +13,7 @@ export function selectCanGenerate(state: P0State): boolean {
 }
 
 export function selectGenerationValidation(state: P0State): GenerationValidation {
-  return validateGenerationRequest(state, createGenerationRequest(state));
+  return validateGenerationRequest(state, createGenerationRequest(state, 'zh-CN'));
 }
 
 export function selectSelectedIngredientCount(state: P0State): number {

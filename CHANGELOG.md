@@ -4,6 +4,16 @@
 
 ---
 
+## 动态菜谱多语言契约
+
+- `GenerationRequest v1` 新增受限 `locale`，新版 Mobile 明确提交 `zh-CN` 或 `en-US`，旧请求兼容默认 `zh-CN`；locale 纳入已有稳定 request hash 与幂等语义。
+- `RecipeSchema` 新增内容生成语言 `recipe.locale`，服务端在 Schema 校验后按请求注入并保存；旧 MySQL 快照和旧 API payload 缺失时默认 `zh-CN`，不进行静默翻译。
+- Provider Prompt、一次 repair 调用和轻量语言一致性校验按 locale 约束自然语言正文；错误语言修复一次后仍不合格即失败关闭，未校验原始输出不保存。
+- History API、Remote Repository、session recent recipes 和 Explore 按 `recipe.locale` 过滤，切换 UI 语言重新读取对应历史，不删除另一语言菜谱。
+- 新增 `002_add_recipe_locale` migration：generation request/recipe 均保存 locale，recipes 增加 locale 查询索引；真实 MySQL migration 已执行并复跑验证。
+
+---
+
 ## 修复食材目录多语言显示
 
 - 标准食材目录由中文 `displayName`/别名展示值改为稳定 `id`、`category` 与 `zh-CN`/`en-US` 本地化名称、别名；10 项标准食材均已补齐双语资源。

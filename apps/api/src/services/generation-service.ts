@@ -14,6 +14,7 @@ import {
 import type { ApiConfig } from '../config';
 import { ProviderRateLimitError, ProviderTimeoutError, type RecipeProvider } from '../providers/recipe-provider';
 import type { RecipePersistence } from '../repositories/recipe-persistence';
+import { validateRecipeLanguage } from './recipe-language';
 
 function stableStringify(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
@@ -50,10 +51,14 @@ async function deadline<T>(work: (signal: AbortSignal) => Promise<T>, timeoutMs:
   }
 }
 
-function candidateRecipe(value: unknown): Recipe | undefined {
+function candidateRecipe(value: unknown, locale: GenerationApiRequest['generationRequest']['locale']): Recipe | undefined {
   const candidate = typeof value === 'object' && value !== null && 'recipe' in value ? (value as { recipe: unknown }).recipe : value;
-  const parsed = RecipeSchema.safeParse(candidate);
+  const parsed = RecipeSchema.safeParse(typeof candidate === 'object' && candidate !== null ? { ...candidate as Record<string, unknown>, locale } : candidate);
   return parsed.success ? parsed.data : undefined;
+}
+
+export function createGenerationRequestHash(request: GenerationApiRequest): string {
+  return createHash('sha256').update(stableStringify({ clientVersion: request.clientVersion, identity: request.identity, generationRequest: request.generationRequest })).digest('hex');
 }
 
 export class GenerationService {
@@ -67,7 +72,7 @@ export class GenerationService {
   public async generate(request: GenerationApiRequest): Promise<GenerationApiResponse> {
     const issues = validateGenerationInput(request.generationRequest);
     if (issues[0]) return validationError(request.requestId, issues[0].code, issues[0].message);
-    const requestHash = createHash('sha256').update(stableStringify({ clientVersion: request.clientVersion, identity: request.identity, generationRequest: request.generationRequest })).digest('hex');
+    const requestHash = createGenerationRequestHash(request);
     const reservation = await this.persistence.reserveGeneration({ request, requestHash });
     if (reservation.kind === 'replay') return reservation.response;
     if (reservation.kind === 'conflict') return { status: 'idempotency_conflict', schemaVersion: GENERATION_API_SCHEMA_VERSION, requestId: request.requestId, error: { code: 'IDEMPOTENCY_CONFLICT', message: '该幂等请求标识已用于其他请求。' } };
@@ -99,16 +104,16 @@ export class GenerationService {
     }
 
     let repaired = false;
-    let recipe = candidateRecipe(rawCandidate);
-    let reason = recipe ? validateRecipeAgainstRequest(request.generationRequest, recipe).map((issue) => issue.message).join(' ') : '菜谱输出不符合结构化 Schema。';
+    let recipe = candidateRecipe(rawCandidate, request.generationRequest.locale);
+    let reason = recipe ? [...validateRecipeAgainstRequest(request.generationRequest, recipe).map((issue) => issue.message), ...validateRecipeLanguage(recipe, request.generationRequest.locale)].join(' ') : '菜谱输出不符合结构化 Schema。';
     if ((!recipe || reason) && this.config.repairEnabled && this.provider.repair) {
       repaired = true;
       const remaining = this.config.totalTimeoutMs - (Date.now() - startedAt);
       if (remaining > 0) {
         try {
           rawCandidate = await deadline((signal) => this.provider.repair!({ request: request.generationRequest, candidate: rawCandidate, reason, signal }), Math.min(this.config.providerTimeoutMs, remaining));
-          recipe = rawCandidate === null ? undefined : candidateRecipe(rawCandidate);
-          reason = recipe ? validateRecipeAgainstRequest(request.generationRequest, recipe).map((issue) => issue.message).join(' ') : '菜谱输出不符合结构化 Schema。';
+          recipe = rawCandidate === null ? undefined : candidateRecipe(rawCandidate, request.generationRequest.locale);
+          reason = recipe ? [...validateRecipeAgainstRequest(request.generationRequest, recipe).map((issue) => issue.message), ...validateRecipeLanguage(recipe, request.generationRequest.locale)].join(' ') : '菜谱输出不符合结构化 Schema。';
         } catch (error) {
           if (error instanceof ProviderTimeoutError) return completeFailure('timeout', 'TIMEOUT', failureResponse('timeout', request.requestId, '生成超时，请稍后重试。'));
           return completeFailure('failed', 'GENERATION_FAILED', failureResponse('generation_failed', request.requestId, '菜谱生成失败，请稍后重试。'));
@@ -117,7 +122,7 @@ export class GenerationService {
     }
     if (!recipe || reason) return completeFailure('failed', 'GENERATION_FAILED', failureResponse('generation_failed', request.requestId, '没有得到符合安全条件的菜谱。'));
 
-    const finalRecipe = RecipeSchema.parse({ ...recipe, recipeId: randomUUID(), generationMode: 'provider' });
+    const finalRecipe = RecipeSchema.parse({ ...recipe, recipeId: randomUUID(), generationMode: 'provider', locale: request.generationRequest.locale });
     const response: Extract<GenerationApiResponse, { status: 'success' }> = {
       status: 'success',
       schemaVersion: GENERATION_API_SCHEMA_VERSION,

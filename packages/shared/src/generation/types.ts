@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { SUPPORTED_LOCALES } from '../ingredients/types';
+
 export const SERVING_OPTIONS = [1, 2, 3, 4, 6, 8, 10, 12] as const;
 export const MAX_TIME_OPTIONS = [15, 30, 45, 60] as const;
 export const COOKWARE_OPTIONS = ['frying-pan', 'pot', 'oven', 'rice-cooker'] as const;
@@ -34,6 +36,8 @@ function uniqueValues<T>(values: readonly T[]): boolean {
 
 export const GenerationRequestSchema = z.object({
   schemaVersion: z.literal(GENERATION_REQUEST_SCHEMA_VERSION),
+  /** Missing locale from older v1 clients is treated as Simplified Chinese. */
+  locale: z.enum(SUPPORTED_LOCALES).default('zh-CN'),
   selectedIngredientIds: z.array(z.string().trim().min(1).max(80)).max(50).refine(uniqueValues, 'values must be unique'),
   customIngredients: z.array(selectedIngredientSchema).max(20),
   servings: servingSchema,
@@ -51,7 +55,7 @@ export type DietaryPreference = z.infer<typeof dietaryPreferenceSchema>;
 export type AllergenCode = z.infer<typeof allergenSchema>;
 export type GenerationRequest = z.infer<typeof GenerationRequestSchema>;
 export type GenerationRequestSchemaVersion = typeof GENERATION_REQUEST_SCHEMA_VERSION;
-export type GenerationDraft = Omit<GenerationRequest, 'schemaVersion'>;
+export type GenerationDraft = Omit<GenerationRequest, 'schemaVersion' | 'locale'>;
 
 export const DIETARY_PREFERENCE_LABELS: Readonly<Record<DietaryPreference, string>> = {
   vegetarian: '素食',

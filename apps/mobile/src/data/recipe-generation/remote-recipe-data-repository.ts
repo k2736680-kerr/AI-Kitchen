@@ -1,4 +1,4 @@
-import type { HistoryListResponse, HistoryVisitRequest, Recipe } from '@ai-kitchen/shared';
+import type { HistoryListResponse, HistoryVisitRequest, Recipe, SupportedLocale } from '@ai-kitchen/shared';
 
 import { GenerationApiClient } from '../api/generation-client';
 
@@ -14,8 +14,8 @@ export class RemoteRecipeDataRepository {
     return this.client.getRecipe(recipeId, signal);
   }
 
-  public listHistory(guestId: string, signal: AbortSignal): Promise<HistoryListResponse> {
-    return this.client.listHistory(guestId, signal);
+  public listHistory(guestId: string, locale: SupportedLocale, signal: AbortSignal): Promise<HistoryListResponse> {
+    return this.client.listHistory(guestId, locale, signal);
   }
 
   public recordVisit(visit: HistoryVisitRequest, signal: AbortSignal): Promise<void> {

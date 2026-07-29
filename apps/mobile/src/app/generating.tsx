@@ -24,7 +24,7 @@ function toUserError(response: Exclude<GenerationApiResponse, { status: 'success
 }
 
 export default function GeneratingScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const {
     state,
     startGeneration,
@@ -58,7 +58,7 @@ export default function GeneratingScreen() {
       if (result.status === 'success') {
         setLastRecipe(result.recipe.recipeId);
         setGenerationSucceeded(result.recipe, result.metadata.source);
-        addRecentRecipe({ recipeId: result.recipe.recipeId, viewedAt: new Date().toISOString(), source: result.metadata.source === 'provider' ? 'remote' : 'local' });
+        addRecentRecipe({ recipeId: result.recipe.recipeId, viewedAt: new Date().toISOString(), source: result.metadata.source === 'provider' ? 'remote' : 'local', locale: result.recipe.locale });
         if (remoteData) void remoteData.recordVisit({ guestId, recipeId: result.recipe.recipeId, source: 'remote' }, new AbortController().signal).catch(() => undefined);
         router.replace(`/recipe/${result.recipe.recipeId}` as Href);
       } else if (result.status === 'no_match') {
@@ -92,6 +92,6 @@ export default function GeneratingScreen() {
 
   return <Screen>
     <AppHeader title={t('generation.generatingTitle')} back />
-    {state.generation.status === 'failed' && state.generation.error ? <GenerationErrorState error={state.generation.error} onRetry={() => { startGeneration(); setAttempt((value) => value + 1); }} onBack={() => router.replace('/generate' as Href)} /> : <GeneratingState state={state} onCancel={cancel} />}
+    {state.generation.status === 'failed' && state.generation.error ? <GenerationErrorState error={state.generation.error} onRetry={() => { startGeneration(i18n.language === 'en-US' ? 'en-US' : 'zh-CN'); setAttempt((value) => value + 1); }} onBack={() => router.replace('/generate' as Href)} /> : <GeneratingState state={state} onCancel={cancel} />}
   </Screen>;
 }

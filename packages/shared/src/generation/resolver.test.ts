@@ -6,6 +6,7 @@ import type { GenerationRequest } from './types';
 
 const baseRequest: GenerationRequest = {
   schemaVersion: 'v1',
+  locale: 'zh-CN',
   selectedIngredientIds: ['egg', 'tomato', 'noodles'],
   customIngredients: [],
   servings: 2,

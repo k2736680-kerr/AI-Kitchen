@@ -1,4 +1,4 @@
-import type { GenerationApiRequest, GenerationApiResponse, HistoryEntry, HistoryVisitRequest, Recipe } from '@ai-kitchen/shared';
+import type { GenerationApiRequest, GenerationApiResponse, HistoryEntry, HistoryVisitRequest, Recipe, SupportedLocale } from '@ai-kitchen/shared';
 
 import type { HistoryPage, IdempotencyReservation, RecipePersistence } from '../repositories/recipe-persistence';
 
@@ -38,11 +38,12 @@ export class InMemoryRecipePersistence implements RecipePersistence {
 
   public async getRecipe(recipeId: string): Promise<Recipe | null> { return this.recipes.get(recipeId) ?? null; }
 
-  public async listHistory(guestId: string, limit: number): Promise<HistoryPage> {
+  public async listHistory(guestId: string, locale: SupportedLocale, limit: number): Promise<HistoryPage> {
     const prefix = `${guestId}:`;
     const items = [...this.history.entries()]
       .filter(([key]) => key.startsWith(prefix))
       .map(([, entry]) => entry)
+      .filter((entry) => entry.recipe.locale === locale)
       .sort((left, right) => right.lastVisitedAt.localeCompare(left.lastVisitedAt))
       .slice(0, limit);
     return { items, nextCursor: null };

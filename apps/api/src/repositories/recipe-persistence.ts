@@ -1,4 +1,4 @@
-import type { GenerationApiRequest, GenerationApiResponse, HistoryEntry, HistoryVisitRequest, Recipe } from '@ai-kitchen/shared';
+import type { GenerationApiRequest, GenerationApiResponse, HistoryEntry, HistoryVisitRequest, Recipe, SupportedLocale } from '@ai-kitchen/shared';
 
 export type IdempotencyReservation =
   | { readonly kind: 'new' }
@@ -18,6 +18,6 @@ export interface RecipePersistence {
   failGeneration(input: { request: GenerationApiRequest; requestHash: string; status: 'failed' | 'timeout' | 'service_unavailable' | 'rate_limited'; errorCode: string; durationMs: number }): Promise<void>;
   saveRecipeSuccess(input: { request: GenerationApiRequest; requestHash: string; response: Extract<GenerationApiResponse, { status: 'success' }>; recipe: Recipe; durationMs: number }): Promise<void>;
   getRecipe(recipeId: string): Promise<Recipe | null>;
-  listHistory(guestId: string, limit: number, cursor?: string): Promise<HistoryPage>;
+  listHistory(guestId: string, locale: SupportedLocale, limit: number, cursor?: string): Promise<HistoryPage>;
   visitHistory(request: HistoryVisitRequest): Promise<boolean>;
 }

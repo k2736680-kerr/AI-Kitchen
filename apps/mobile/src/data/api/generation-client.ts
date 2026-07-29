@@ -12,6 +12,7 @@ import {
   type HistoryListResponse,
   type HistoryVisitRequest,
   type Recipe,
+  type SupportedLocale,
 } from '@ai-kitchen/shared';
 
 export type GenerationClientErrorKind = 'network' | 'timeout' | 'invalid-response' | 'configuration' | 'not-found';
@@ -67,8 +68,8 @@ export class GenerationApiClient {
     return parsed.data.recipe;
   }
 
-  public async listHistory(guestId: string, signal: AbortSignal): Promise<HistoryListResponse> {
-    const query = new URLSearchParams({ guestId, limit: '20' });
+  public async listHistory(guestId: string, locale: SupportedLocale, signal: AbortSignal): Promise<HistoryListResponse> {
+    const query = new URLSearchParams({ guestId, locale, limit: '20' });
     const payload = await this.requestJson(`${HISTORY_API_PATH}?${query.toString()}`, { method: 'GET', headers: { Accept: 'application/json' }, signal });
     const parsed = HistoryListResponseSchema.safeParse(payload);
     if (!parsed.success) throw new GenerationClientError('invalid-response', '历史服务返回了无法识别的结果。');

@@ -5,6 +5,7 @@ import { ProviderRateLimitError, ProviderUnavailableError } from './recipe-provi
 
 const request = {
   schemaVersion: 'v1' as const,
+  locale: 'zh-CN' as const,
   selectedIngredientIds: ['egg', 'tomato', 'noodles'], customIngredients: [], servings: 2 as const, maxCookingTimeMinutes: 30 as const,
   availableTools: [], dietaryPreferences: [], allergens: [], excludedIngredients: [],
 };
@@ -21,6 +22,17 @@ describe('AliyunQwenRecipeProvider', () => {
     const call = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     const body = JSON.parse(String(call[1].body));
     expect(body).toMatchObject({ model: 'qwen3.7-plus', temperature: 0.2, top_p: 0.8, stream: false, response_format: { type: 'json_object' }, enable_thinking: false });
+    expect(body.messages[0].content).toContain('简体中文');
+    vi.unstubAllGlobals();
+  });
+
+  it('builds an English-only provider prompt for an English request', async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ choices: [{ message: { content: '{"status":"no_match"}' } }] }), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(provider().generate({ ...request, locale: 'en-US' }, new AbortController().signal)).resolves.toBeNull();
+    const body = JSON.parse(String((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body));
+    expect(body.messages[0].content).toContain('natural American English');
+    expect(body.messages[0].content).toContain('不得输出中文');
     vi.unstubAllGlobals();
   });
 

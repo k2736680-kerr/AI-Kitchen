@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { SUPPORTED_LOCALES } from '../ingredients/types';
 import { RecipeSchema } from '../recipes/types';
 import { GENERATION_API_SCHEMA_VERSION } from './generation';
 
@@ -20,6 +21,14 @@ export const HistoryVisitRequestSchema = z.object({
   guestId: guestIdSchema,
   recipeId: recipeIdSchema,
   source: z.enum(['local', 'remote']),
+}).strict();
+
+/** Mobile must send locale; the default preserves old callers during rollout. */
+export const HistoryListQuerySchema = z.object({
+  guestId: guestIdSchema,
+  locale: z.enum(SUPPORTED_LOCALES).default('zh-CN'),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  cursor: z.string().trim().min(1).max(500).optional(),
 }).strict();
 
 export const HistoryEntrySchema = z.object({
@@ -43,5 +52,6 @@ export const HistoryVisitResponseSchema = z.object({
 
 export type RecipeApiResponse = z.infer<typeof RecipeApiResponseSchema>;
 export type HistoryVisitRequest = z.infer<typeof HistoryVisitRequestSchema>;
+export type HistoryListQuery = z.infer<typeof HistoryListQuerySchema>;
 export type HistoryEntry = z.infer<typeof HistoryEntrySchema>;
 export type HistoryListResponse = z.infer<typeof HistoryListResponseSchema>;

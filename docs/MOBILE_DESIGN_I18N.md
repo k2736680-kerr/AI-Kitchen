@@ -16,11 +16,11 @@ The mobile client uses one light, food-focused visual system: warm background, w
 - First launch follows the device language; unsupported languages use Simplified Chinese.
 - The setting is saved locally using AsyncStorage and applies immediately through i18next/react-i18next.
 - User-facing static copy is stored in `src/i18n/resources.ts`; generation IDs remain stable business values and are mapped to localized display text in the UI.
-- This setting is client-local only. It is not sent to the API and does not alter generation request v1.
+- The UI setting remains client-local and persists with AsyncStorage. For every new generation, Mobile explicitly snapshots the current `zh-CN` or `en-US` locale into `GenerationRequest v1`; it does not use device headers or server locale inference.
 
 ## Known product boundaries
 
-- Dynamic recipe titles, ingredient names, model-produced descriptions and provider error messages are payload data, not translated client copy.
+- Dynamic recipe titles, ingredient names, model-produced descriptions, steps and safety notices are payload data, not translated client copy. `recipe.locale` is the content generation language: switching UI language changes only static UI, never an existing recipe body or its database record. Remote History and session recent recipes are filtered by the current locale to avoid mixed-language lists.
 - Nutrition remains unavailable and is intentionally not rendered as a product section.
 - Recipe safety messages are contextual notices, not a claim of absolute food safety.
 - Session cooking progress and local language preference have different persistence boundaries: language persists locally; cooking progress remains session-only.

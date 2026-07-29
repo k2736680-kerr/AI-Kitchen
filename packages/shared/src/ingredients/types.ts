@@ -7,8 +7,11 @@ export const INGREDIENT_CATEGORIES = [
 
 export type IngredientCategory = (typeof INGREDIENT_CATEGORIES)[number];
 
-export const INGREDIENT_LOCALES = ['zh-CN', 'en-US'] as const;
-export type IngredientLocale = (typeof INGREDIENT_LOCALES)[number];
+/** Locales supported by the versioned generation and presentation contracts. */
+export const SUPPORTED_LOCALES = ['zh-CN', 'en-US'] as const;
+export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
+export const INGREDIENT_LOCALES = SUPPORTED_LOCALES;
+export type IngredientLocale = SupportedLocale;
 
 export interface IngredientLocalization {
   readonly name: string;

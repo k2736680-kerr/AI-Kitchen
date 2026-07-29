@@ -11,6 +11,7 @@ const request: GenerationApiRequest = {
   identity: { type: 'guest', guestId: 'guest-mobile-test' },
   generationRequest: {
     schemaVersion: 'v1',
+    locale: 'zh-CN',
     selectedIngredientIds: ['egg', 'tomato', 'noodles'],
     customIngredients: [],
     servings: 2,

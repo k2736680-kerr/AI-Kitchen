@@ -6,7 +6,7 @@ import { MySqlRecipePersistence } from './mysql-recipe-persistence';
 
 const request: GenerationApiRequest = {
   schemaVersion: 'v1', requestId: 'req_mysql_test_1234', idempotencyKey: 'idem_mysql_test_1234', clientVersion: '1.0.0', identity: { type: 'guest', guestId: 'session-guest-mysql' },
-  generationRequest: { schemaVersion: 'v1', selectedIngredientIds: ['egg', 'tomato', 'noodles'], customIngredients: [], servings: 2, maxCookingTimeMinutes: 30, availableTools: [], dietaryPreferences: [], allergens: [], excludedIngredients: [] },
+  generationRequest: { schemaVersion: 'v1', locale: 'zh-CN', selectedIngredientIds: ['egg', 'tomato', 'noodles'], customIngredients: [], servings: 2, maxCookingTimeMinutes: 30, availableTools: [], dietaryPreferences: [], allergens: [], excludedIngredients: [] },
 };
 
 class TransactionSpyDatabase implements Database {

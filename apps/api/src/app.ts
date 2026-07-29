@@ -1,9 +1,9 @@
 import cors from '@fastify/cors';
 import Fastify, { type FastifyInstance } from 'fastify';
-import { z } from 'zod';
 import {
   GENERATION_API_SCHEMA_VERSION,
   GenerationApiRequestSchema,
+  HistoryListQuerySchema,
   HistoryListResponseSchema,
   HistoryVisitRequestSchema,
   RecipeApiResponseSchema,
@@ -15,12 +15,6 @@ import { RateLimiter } from './domain/rate-limiter';
 import type { RecipeProvider } from './providers/recipe-provider';
 import type { RecipePersistence } from './repositories/recipe-persistence';
 import { GenerationService } from './services/generation-service';
-
-const historyQuerySchema = z.object({
-  guestId: z.string().trim().min(8).max(120),
-  limit: z.coerce.number().int().min(1).max(50).default(20),
-  cursor: z.string().trim().min(1).max(500).optional(),
-}).strict();
 
 export interface ApiDependencies {
   readonly config: ApiConfig;
@@ -98,9 +92,9 @@ export async function createApiApp(dependencies: ApiDependencies): Promise<Fasti
   });
 
   app.get('/api/v1/history', async (request, reply) => {
-    const query = historyQuerySchema.safeParse(request.query);
+    const query = HistoryListQuerySchema.safeParse(request.query);
     if (!query.success) return reply.code(400).send(errorBody('INVALID_REQUEST', '历史查询参数不正确。'));
-    const page = await dependencies.persistence.listHistory(query.data.guestId, query.data.limit, query.data.cursor);
+    const page = await dependencies.persistence.listHistory(query.data.guestId, query.data.locale, query.data.limit, query.data.cursor);
     return reply.code(200).send(HistoryListResponseSchema.parse({ schemaVersion: GENERATION_API_SCHEMA_VERSION, ...page }));
   });
 

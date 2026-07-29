@@ -32,6 +32,7 @@
 | D-014 | 关系规范化与 Recipe Snapshot 并存 | Accepted | 2026-07-24 |
 | D-015 | P0/P1 实施严格范围控制 | Accepted | 2026-07-24 |
 | D-016 | 正式后端使用内网 Node.js + MySQL | Accepted | 2026-07-28 |
+| D-017 | 动态菜谱按请求语言保存与检索 | Accepted | 2026-07-29 |
 
 ---
 
@@ -605,6 +606,28 @@ Cursor rules、`CLAUDE.md`、`AGENTS.md` 和 ChatGPT Project instructions 用于
 ### 重新评估触发
 
 内网部署、MySQL 运维或同步生成能力无法满足可靠性、隔离或成本要求时，必须新增 ADR 后才能更换平台。
+
+---
+
+## D-017：动态菜谱按请求语言保存与检索
+
+**状态：** Accepted
+**日期：** 2026-07-29
+
+### 背景
+
+静态 UI 和标准食材已支持中文、英文，但远程 Provider 生成的菜谱正文、幂等语义和历史列表没有语言元数据，容易让英文界面混入中文菜谱或重放另一语言结果。
+
+### 决策
+
+保持 `GenerationRequest v1`，新增受限 `locale`（`zh-CN`、`en-US`）。Mobile 每次生成显式提交当前语言；服务端将请求 locale 纳入 request hash、约束 Provider Prompt、执行轻量语言一致性校验，并在校验后写入 `recipe.locale`。History 以 recipe locale 过滤，已有菜谱正文不自动翻译。
+
+### 后果
+
+- 同条件的不同语言请求拥有不同 recipeId；相同语言和同 idempotencyKey 继续重放既有结果。
+- MySQL generation request 与 recipe 均保存 locale；旧记录和缺少字段的旧快照兼容默认 `zh-CN`。
+- 语言错误的模型输出最多修复一次，仍不一致即失败关闭；不保存原始模型输出，也不引入翻译服务。
+- UI 切换只影响固定文案和下一次生成，已打开菜谱保持其生成语言。
 
 ---
 

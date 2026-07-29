@@ -5,6 +5,7 @@ import {
   COOKWARE_OPTIONS,
   DIETARY_PREFERENCE_OPTIONS,
 } from '../generation/types';
+import { SUPPORTED_LOCALES } from '../ingredients/types';
 
 export const RECIPE_SCHEMA_VERSION = 'recipe.v1.0.0' as const;
 
@@ -32,6 +33,8 @@ const recipeSafetyNoticeSchema = z.object({
 export const RecipeSchema = z.object({
   recipeId: z.string().trim().min(1).max(120),
   generationMode: z.enum(['fixture', 'provider']),
+  /** Content language. Older persisted snapshots default to Simplified Chinese. */
+  locale: z.enum(SUPPORTED_LOCALES).default('zh-CN'),
   title: z.string().trim().min(1).max(200),
   description: z.string().trim().min(1).max(2000),
   servings: z.number().int().positive().max(12),

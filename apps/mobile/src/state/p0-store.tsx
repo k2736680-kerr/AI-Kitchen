@@ -8,6 +8,7 @@ import type {
   MaxTimeMinutes,
   Recipe,
   ServingOption,
+  SupportedLocale,
 } from '@ai-kitchen/shared';
 import {
   createContext,
@@ -48,7 +49,7 @@ interface P0StoreValue {
   clearExcludedIngredients(): void;
   setSelectedCategory(category: IngredientCategory | 'all'): void;
   setLastRecipe(recipeId: string | null): void;
-  startGeneration(): void;
+  startGeneration(locale: SupportedLocale): void;
   setGenerationSucceeded(recipe: Recipe, source: 'local' | 'deterministic' | 'provider'): void;
   setGenerationNoMatch(message: string): void;
   setGenerationFailed(error: ApiError): void;
@@ -138,8 +139,8 @@ export function P0StoreProvider({ children }: PropsWithChildren) {
       setLastRecipe: (recipeId) => {
         dispatch({ type: 'SET_LAST_RECIPE', recipeId });
       },
-      startGeneration: () => {
-        dispatch({ type: 'START_GENERATION', requestId: createRequestId(), idempotencyKey: createIdempotencyKey(), request: createGenerationRequest(stateRef.current) });
+      startGeneration: (locale) => {
+        dispatch({ type: 'START_GENERATION', requestId: createRequestId(), idempotencyKey: createIdempotencyKey(), request: createGenerationRequest(stateRef.current, locale) });
       },
       setGenerationSucceeded: (recipe, source) => {
         dispatch({ type: 'SET_GENERATION_SUCCEEDED', recipe, source });

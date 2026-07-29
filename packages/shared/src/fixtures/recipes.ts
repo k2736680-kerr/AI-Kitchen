@@ -10,6 +10,7 @@ export const RECIPE_FIXTURES: readonly RecipeFixture[] = [
   {
     recipeId: 'fixture-tomato-egg-noodles',
     generationMode: 'fixture',
+    locale: 'zh-CN',
     title: '番茄鸡蛋面',
     description: '使用番茄、鸡蛋和面条完成的一道快速家常面。',
     servings: 2,
@@ -39,6 +40,7 @@ export const RECIPE_FIXTURES: readonly RecipeFixture[] = [
   {
     recipeId: 'fixture-onion-chicken-fried-rice',
     generationMode: 'fixture',
+    locale: 'zh-CN',
     title: '洋葱鸡胸肉炒饭',
     description: '使用鸡胸肉、洋葱和米饭完成的简单炒饭。',
     servings: 2,
@@ -71,6 +73,7 @@ export const RECIPE_FIXTURES: readonly RecipeFixture[] = [
   {
     recipeId: 'fixture-potato-egg-missing-noodles',
     generationMode: 'fixture',
+    locale: 'zh-CN',
     title: '土豆鸡蛋拌面（缺少面条）',
     description: '当面条暂未准备时，提示补充必要食材。',
     servings: 2,

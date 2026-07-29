@@ -45,7 +45,7 @@ export default function RecipeDetailScreen() {
 
   useEffect(() => {
     if (!recipe) return;
-    addRecentRecipe({ recipeId: recipe.recipeId, viewedAt: new Date().toISOString(), source: existingEntry?.source ?? source });
+    addRecentRecipe({ recipeId: recipe.recipeId, viewedAt: new Date().toISOString(), source: existingEntry?.source ?? source, locale: recipe.locale });
     if (remoteData) void remoteData.recordVisit({ guestId: state.guestId, recipeId: recipe.recipeId, source: 'remote' }, new AbortController().signal).catch(() => undefined);
   }, [addRecentRecipe, existingEntry?.source, recipe, remoteData, source, state.guestId]);
   if (!recipe && remoteData && !loadError) return <Screen><AppHeader title={t('recipe.loading')} back /><StatusMessage message={t('recipe.loadingHint')} /></Screen>;

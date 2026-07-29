@@ -15,14 +15,14 @@ export class AliyunQwenRecipeProvider implements RecipeProvider {
   }
 
   public generate(request: GenerationRequest, signal: AbortSignal): Promise<unknown | null> {
-    return this.call(buildRecipeUserPrompt(request), signal);
+    return this.call(buildRecipeSystemPrompt(request.locale), buildRecipeUserPrompt(request), signal);
   }
 
   public repair(input: { request: GenerationRequest; candidate: unknown; reason: string; signal: AbortSignal }): Promise<unknown | null> {
-    return this.call(buildRecipeRepairPrompt({ candidate: input.candidate, reason: input.reason }), input.signal);
+    return this.call(buildRecipeSystemPrompt(input.request.locale), buildRecipeRepairPrompt({ candidate: input.candidate, reason: input.reason, locale: input.request.locale }), input.signal);
   }
 
-  private async call(userPrompt: string, upstreamSignal: AbortSignal): Promise<unknown | null> {
+  private async call(systemPrompt: string, userPrompt: string, upstreamSignal: AbortSignal): Promise<unknown | null> {
     if (!this.config.apiKey) throw new ProviderUnavailableError('菜谱生成服务尚未配置。');
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.config.timeoutMs);
@@ -42,7 +42,7 @@ export class AliyunQwenRecipeProvider implements RecipeProvider {
             response_format: { type: 'json_object' },
             enable_thinking: false,
             messages: [
-              { role: 'system', content: buildRecipeSystemPrompt() },
+              { role: 'system', content: systemPrompt },
               { role: 'user', content: userPrompt },
             ],
           }),

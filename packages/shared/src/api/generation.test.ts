@@ -31,6 +31,12 @@ describe('versioned generation API schema', () => {
     expect(GenerationApiRequestSchema.safeParse({ ...validRequest, unexpected: true }).success).toBe(false);
   });
 
+  it('defaults old v1 requests to Chinese and accepts only supported explicit locales', () => {
+    expect(GenerationApiRequestSchema.parse(validRequest).generationRequest.locale).toBe('zh-CN');
+    expect(GenerationApiRequestSchema.parse({ ...validRequest, generationRequest: { ...validRequest.generationRequest, locale: 'en-US' } }).generationRequest.locale).toBe('en-US');
+    expect(GenerationApiRequestSchema.safeParse({ ...validRequest, generationRequest: { ...validRequest.generationRequest, locale: 'fr-FR' } }).success).toBe(false);
+  });
+
   it('rejects an unsupported request version', () => {
     expect(GenerationApiRequestSchema.safeParse({ ...validRequest, schemaVersion: 'v2' }).success).toBe(false);
   });

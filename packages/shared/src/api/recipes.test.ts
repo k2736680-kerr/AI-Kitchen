@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { RECIPE_FIXTURES } from '../fixtures/recipes';
-import { HistoryListResponseSchema, HistoryVisitRequestSchema, RecipeApiResponseSchema } from './recipes';
+import { HistoryListQuerySchema, HistoryListResponseSchema, HistoryVisitRequestSchema, RecipeApiResponseSchema } from './recipes';
 
 describe('recipe and history API schema', () => {
   it('validates a persisted recipe response', () => {
@@ -18,5 +18,11 @@ describe('recipe and history API schema', () => {
     };
     expect(HistoryListResponseSchema.safeParse({ schemaVersion: 'v1', items: [entry], nextCursor: null }).success).toBe(true);
     expect(HistoryVisitRequestSchema.safeParse({ guestId: 'session-guest-1234', recipeId: RECIPE_FIXTURES[0].recipeId, source: 'remote', extra: true }).success).toBe(false);
+  });
+
+  it('defaults old history queries to Chinese and validates explicit supported locales', () => {
+    expect(HistoryListQuerySchema.parse({ guestId: 'session-guest-1234' }).locale).toBe('zh-CN');
+    expect(HistoryListQuerySchema.parse({ guestId: 'session-guest-1234', locale: 'en-US' }).locale).toBe('en-US');
+    expect(HistoryListQuerySchema.safeParse({ guestId: 'session-guest-1234', locale: 'ja-JP' }).success).toBe(false);
   });
 });

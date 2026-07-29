@@ -6,6 +6,7 @@ import type {
   IngredientDefinition,
   SelectedIngredient,
   Recipe,
+  SupportedLocale,
 } from '@ai-kitchen/shared';
 
 import { normalizeIngredientText } from '../data/fixtures/ingredient-repository';
@@ -14,6 +15,7 @@ export interface RecentRecipeEntry {
   readonly recipeId: string;
   readonly viewedAt: string;
   readonly source: 'fixture' | 'local' | 'remote';
+  readonly locale: SupportedLocale;
 }
 
 export type GenerationSessionStatus =
@@ -95,9 +97,10 @@ const INITIAL_GENERATION: GenerationSessionState = {
   source: null,
 };
 
-export function createGenerationRequest(state: P0State): GenerationRequest {
+export function createGenerationRequest(state: P0State, locale: SupportedLocale): GenerationRequest {
   return {
     schemaVersion: 'v1',
+    locale,
     selectedIngredientIds: [...state.generationDraft.selectedIngredientIds],
     customIngredients: state.generationDraft.customIngredients.map((ingredient) => ({ ...ingredient })),
     servings: state.generationDraft.servings,

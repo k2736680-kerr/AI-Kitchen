@@ -82,8 +82,8 @@ export class MySqlRecipePersistence implements RecipePersistence {
       try {
         await session.execute(
           `INSERT INTO ai_kitchen_generation_requests
-            (request_id, idempotency_key, request_hash, guest_id, schema_version, client_version, request_payload, status)
-           VALUES (?, ?, ?, ?, ?, ?, ?, 'processing')`,
+            (request_id, idempotency_key, request_hash, guest_id, schema_version, client_version, locale, request_payload, status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'processing')`,
           [
             input.request.requestId,
             input.request.idempotencyKey,
@@ -91,6 +91,7 @@ export class MySqlRecipePersistence implements RecipePersistence {
             input.request.identity.type === 'guest' ? input.request.identity.guestId : input.request.identity.userId,
             input.request.schemaVersion,
             input.request.clientVersion,
+            input.request.generationRequest.locale,
             JSON.stringify(input.request),
           ],
         );
@@ -130,10 +131,10 @@ export class MySqlRecipePersistence implements RecipePersistence {
     const guestId = input.request.identity.type === 'guest' ? input.request.identity.guestId : input.request.identity.userId;
     await this.database.transaction(async (session) => {
       await session.execute(
-        `INSERT INTO ai_kitchen_recipes (recipe_id, schema_version, source, provider, model, title, recipe_payload)
-         VALUES (?, ?, ?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE recipe_payload = VALUES(recipe_payload), source = VALUES(source), provider = VALUES(provider), model = VALUES(model), title = VALUES(title), updated_at = UTC_TIMESTAMP(3)`,
-        [input.recipe.recipeId, input.response.metadata.recipeSchemaVersion, input.response.metadata.source, input.response.metadata.provider ?? null, input.response.metadata.model ?? null, input.recipe.title, JSON.stringify(input.recipe)],
+        `INSERT INTO ai_kitchen_recipes (recipe_id, schema_version, source, provider, model, title, locale, recipe_payload)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE recipe_payload = VALUES(recipe_payload), source = VALUES(source), provider = VALUES(provider), model = VALUES(model), title = VALUES(title), locale = VALUES(locale), updated_at = UTC_TIMESTAMP(3)`,
+        [input.recipe.recipeId, input.response.metadata.recipeSchemaVersion, input.response.metadata.source, input.response.metadata.provider ?? null, input.response.metadata.model ?? null, input.recipe.title, input.recipe.locale, JSON.stringify(input.recipe)],
       );
       await session.execute(
         `UPDATE ai_kitchen_generation_requests
@@ -151,9 +152,9 @@ export class MySqlRecipePersistence implements RecipePersistence {
     return parsed.success ? parsed.data : null;
   }
 
-  public async listHistory(guestId: string, limit: number, cursor?: string): Promise<HistoryPage> {
+  public async listHistory(guestId: string, locale: import('@ai-kitchen/shared').SupportedLocale, limit: number, cursor?: string): Promise<HistoryPage> {
     const decoded = decodeCursor(cursor);
-    const values: unknown[] = [guestId];
+    const values: unknown[] = [guestId, locale];
     let cursorSql = '';
     if (decoded) {
       cursorSql = ' AND (h.last_visited_at < ? OR (h.last_visited_at = ? AND h.recipe_id < ?))';
@@ -164,7 +165,7 @@ export class MySqlRecipePersistence implements RecipePersistence {
       `SELECT h.recipe_id, h.source, h.first_visited_at, h.last_visited_at, h.visit_count, r.recipe_payload
        FROM ai_kitchen_recipe_history h
        INNER JOIN ai_kitchen_recipes r ON r.recipe_id = h.recipe_id
-       WHERE h.guest_id = ?${cursorSql}
+       WHERE h.guest_id = ? AND r.locale = ?${cursorSql}
        ORDER BY h.last_visited_at DESC, h.recipe_id DESC LIMIT ?`,
       values,
     );

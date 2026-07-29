@@ -11,6 +11,7 @@ const request: GenerationApiRequest = {
   identity: { type: 'guest', guestId: 'guest-client-test' },
   generationRequest: {
     schemaVersion: 'v1',
+    locale: 'zh-CN',
     selectedIngredientIds: ['egg', 'tomato', 'noodles'],
     customIngredients: [],
     servings: 2,
@@ -51,9 +52,10 @@ describe('GenerationApiClient', () => {
       .mockResolvedValueOnce(new Response(JSON.stringify({ schemaVersion: 'v1', recorded: true }), { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);
     const client = new GenerationApiClient('http://localhost');
-    await expect(client.listHistory('session-guest-client-test', new AbortController().signal)).resolves.toMatchObject({ items: [{ recipe: { recipeId: RECIPE_FIXTURES[0].recipeId } }] });
+    await expect(client.listHistory('session-guest-client-test', 'zh-CN', new AbortController().signal)).resolves.toMatchObject({ items: [{ recipe: { recipeId: RECIPE_FIXTURES[0].recipeId } }] });
     await expect(client.recordHistoryVisit({ guestId: 'session-guest-client-test', recipeId: RECIPE_FIXTURES[0].recipeId, source: 'remote' }, new AbortController().signal)).resolves.toBeUndefined();
     expect(fetchMock.mock.calls[0][0]).toContain('/api/v1/history?');
+    expect(fetchMock.mock.calls[0][0]).toContain('locale=zh-CN');
     vi.unstubAllGlobals();
   });
 });

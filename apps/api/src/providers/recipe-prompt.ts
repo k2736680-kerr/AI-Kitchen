@@ -1,12 +1,12 @@
-import { INGREDIENT_FIXTURES, type GenerationRequest } from '@ai-kitchen/shared';
+import { INGREDIENT_FIXTURES, type GenerationRequest, type SupportedLocale } from '@ai-kitchen/shared';
 
 const ingredientById = new Map(INGREDIENT_FIXTURES.map((ingredient) => [ingredient.id, ingredient]));
 
 const recipeSchemaGuide = {
   recipeId: '候选标识字符串；服务端会替换为正式 UUID',
   generationMode: 'provider',
-  title: '中文菜名',
-  description: '简短中文说明',
+  title: '由服务端指定语言的菜名',
+  description: '由服务端指定语言的简短说明',
   servings: '正整数',
   totalTimeMinutes: '正整数，不能超过用户限制',
   difficulty: 'easy 或 medium',
@@ -24,7 +24,7 @@ const recipeSchemaGuide = {
 
 function promptInput(request: GenerationRequest): Record<string, unknown> {
   return {
-    selectedIngredients: request.selectedIngredientIds.map((id) => ({ id, displayName: ingredientById.get(id)?.displayName ?? id })),
+    selectedIngredients: request.selectedIngredientIds.map((id) => ({ id, displayName: ingredientById.get(id)?.localization[request.locale].name ?? id })),
     customIngredients: request.customIngredients.map(({ id, displayName }) => ({ id, displayName })),
     servings: request.servings,
     maxCookingTimeMinutes: request.maxCookingTimeMinutes,
@@ -35,24 +35,39 @@ function promptInput(request: GenerationRequest): Record<string, unknown> {
   };
 }
 
-export function buildRecipeSystemPrompt(): string {
+function languageInstructions(locale: SupportedLocale): readonly string[] {
+  return locale === 'en-US'
+    ? [
+      'Use natural American English for every user-facing natural-language field: title, description, ingredient displayName, step title/instruction, and safetyNotices.message.',
+      '不得输出中文、中文翻译附注或中英文混杂内容；不得把内部 ingredientId、toolId、枚举值翻译为展示文本。',
+    ]
+    : [
+      '所有面向用户的自然语言字段必须使用简体中文：title、description、食材 displayName、步骤 title/instruction 与 safetyNotices.message。',
+      '不得输出繁体中文、英文翻译附注或中英文混杂内容；不得把内部 ingredientId、toolId、枚举值翻译为展示文本。',
+    ];
+}
+
+export function buildRecipeSystemPrompt(locale: SupportedLocale): string {
   return [
-    '你是 AI Kitchen 的中文菜谱候选生成器。',
+    '你是 AI Kitchen 的结构化菜谱候选生成器。',
     '只能输出一个 JSON 对象，不得使用 Markdown、解释或额外文本。',
     '如果无法安全满足约束，只输出 {"status":"no_match"}。',
     '不得把用户过敏原或忌口食材加入菜谱；不得声称医疗级或绝对安全。',
     '必须遵守人数、时间和可用厨具；requiredIngredients 必须来自用户已选标准食材。',
+    ...languageInstructions(locale),
+    'JSON key、recipeId、ingredientId、toolId、difficulty、tag ID、时长、人数、步骤编号和布尔值必须保持既定稳定格式。recipe.locale 由服务端写入，不要自行决定。',
     `菜谱对象必须包含这些字段：${JSON.stringify(recipeSchemaGuide)}。`,
   ].join('\n');
 }
 
 export function buildRecipeUserPrompt(request: GenerationRequest): string {
-  return `根据以下标准化生成条件创建一份可执行中文菜谱候选：\n${JSON.stringify(promptInput(request))}`;
+  return `根据以下标准化生成条件创建一份可执行菜谱候选。请求语言：${request.locale}。\n${JSON.stringify(promptInput(request))}`;
 }
 
-export function buildRecipeRepairPrompt(input: { candidate: unknown; reason: string }): string {
+export function buildRecipeRepairPrompt(input: { candidate: unknown; reason: string; locale: SupportedLocale }): string {
   return [
-    '修复下面的菜谱候选，只输出符合既定 JSON 字段规范的一个 JSON 对象。',
+    '修复下面的菜谱候选，只输出符合既定 JSON 字段规范的一个 JSON 对象；保持 JSON 结构和稳定机器字段不变。',
+    ...languageInstructions(input.locale),
     `受控错误摘要：${input.reason}`,
     `候选：${JSON.stringify(input.candidate)}`,
     '不要输出解释；如无法安全修复，只输出 {"status":"no_match"}。',
