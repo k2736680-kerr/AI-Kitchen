@@ -4,6 +4,16 @@
 
 ---
 
+## 游客版“我的”Tab 与产品信息入口
+
+- 暂停身份阶段 2：本轮未新增 registered 身份、用户表、登录注册 API、密码哈希、账号认领、登出或删除账号逻辑，也未改动现有 guest session 机制。
+- Mobile 底部导航新增第四个 Tab：`我的 / Profile`，并保持现有 Home、Explore、History 主流程不变。
+- 新增游客版 Profile 页面，展示 guest mode 说明、账号功能即将开放提示、语言入口、服务条款、隐私政策、关于和统一版本信息；点击“登录或注册”仅弹出轻提示，不创建假登录页面。
+- 新增 `/legal/terms`、`/legal/privacy` 和 `/about` 页面；前两者是明确标注的开发占位页，禁止作为正式法律文本上线。
+- App 版本读取统一收敛到 Mobile 共享 helper，避免设置页、关于页和 Profile 页出现不同的硬编码版本。
+
+---
+
 ## 游客身份与服务端会话基础
 
 - 新增服务端生成的 UUID guest identity 和 `ai_kitchen_guest_identities`、`ai_kitchen_sessions` MySQL migration；session token 使用 `crypto.randomBytes(32)` 生成，数据库只保存 SHA-256 hash。

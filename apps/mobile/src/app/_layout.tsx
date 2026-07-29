@@ -23,6 +23,9 @@ export default function RootLayout() {
           <Stack.Screen name="recipe/[recipeId]" options={{ headerShown: false }} />
           <Stack.Screen name="cooking/[recipeId]" options={{ headerShown: false }} />
           <Stack.Screen name="settings" options={{ headerShown: false }} />
+          <Stack.Screen name="about" options={{ headerShown: false }} />
+          <Stack.Screen name="legal/terms" options={{ headerShown: false }} />
+          <Stack.Screen name="legal/privacy" options={{ headerShown: false }} />
         </Stack>
       </ThemeProvider>
     </P0StoreProvider>

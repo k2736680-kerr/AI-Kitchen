@@ -24,3 +24,7 @@ The mobile client uses one light, food-focused visual system: warm background, w
 - Nutrition remains unavailable and is intentionally not rendered as a product section.
 - Recipe safety messages are contextual notices, not a claim of absolute food safety.
 - Session cooking progress and local language preference have different persistence boundaries: language persists locally; cooking progress remains session-only.
+- The bottom tabs now include `Home`, `Explore`, `History` and `Profile`. `Profile` is a guest-only product surface in P0/P1: it must not create fake login fields, mock users or successful sign-in states.
+- `Profile` reuses the existing Settings route for language changes. Supported language names remain `简体中文 / English`, and tab/page copy updates immediately after switching.
+- `/legal/terms` and `/legal/privacy` are placeholder structure pages only. They explicitly warn that formal legal text and effective dates must be added before any official release.
+- `/about` reads the app version from app configuration/package metadata through a shared helper so multiple pages do not diverge on version display.
