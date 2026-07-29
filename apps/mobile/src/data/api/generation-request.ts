@@ -6,7 +6,6 @@ import {
 } from '@ai-kitchen/shared';
 
 export interface GenerationApiRequestSource {
-  readonly guestId: string;
   readonly requestSnapshot: GenerationRequest | null;
   readonly requestId: string | null;
   readonly idempotencyKey: string | null;
@@ -23,7 +22,7 @@ export function createGenerationApiRequest(state: GenerationApiRequestSource, cl
     requestId,
     idempotencyKey,
     clientVersion,
-    identity: { type: 'guest', guestId: state.guestId },
+    identity: { type: 'guest' },
     generationRequest: request,
   });
 }

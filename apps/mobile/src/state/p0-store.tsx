@@ -21,6 +21,8 @@ import {
 } from 'react';
 
 import { createIdempotencyKey, createRequestId } from '../data/api/request-ids';
+import { guestSessionService } from '../auth/guest-session';
+import { environmentConfig } from '../config/environment';
 import { fixtureIngredientRepository } from '../data/fixtures/ingredient-repository';
 import { p0Reducer } from './p0-reducer';
 import {
@@ -61,6 +63,7 @@ interface P0StoreValue {
   completeCookingStep(recipeId: string, stepIndex: number): void;
   resetCookingSession(recipeId: string): void;
   resetGenerationDraft(): void;
+  retryGuestSession(): void;
 }
 
 const P0StoreContext = createContext<P0StoreValue | null>(null);
@@ -76,6 +79,21 @@ export function P0StoreProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
+
+  useEffect(() => {
+    if (environmentConfig.generationMode === 'local') {
+      dispatch({ type: 'SET_GUEST_IDENTITY_READY' });
+      return;
+    }
+    let active = true;
+    void guestSessionService.bootstrapGuestSession().then((session) => {
+      if (active) dispatch({ type: 'SET_GUEST_IDENTITY', guestId: session.subject.id });
+    }).catch((error: unknown) => {
+      if (!active) return;
+      dispatch({ type: 'SET_GUEST_IDENTITY_ERROR', message: error instanceof Error ? error.message : '游客会话初始化失败，请重试。' });
+    });
+    return () => { active = false; };
+  }, []);
 
   const actions = useMemo<Omit<P0StoreValue, 'state'>>(
     () => ({
@@ -174,6 +192,14 @@ export function P0StoreProvider({ children }: PropsWithChildren) {
       },
       resetGenerationDraft: () => {
         dispatch({ type: 'RESET_GENERATION_DRAFT' });
+      },
+      retryGuestSession: () => {
+        dispatch({ type: 'SET_GUEST_IDENTITY_ERROR', message: '正在初始化游客会话。' });
+        void guestSessionService.bootstrapGuestSession().then((session) => {
+          dispatch({ type: 'SET_GUEST_IDENTITY', guestId: session.subject.id });
+        }).catch((error: unknown) => {
+          dispatch({ type: 'SET_GUEST_IDENTITY_ERROR', message: error instanceof Error ? error.message : '游客会话初始化失败，请重试。' });
+        });
       },
     }),
     [],

@@ -1,6 +1,6 @@
 # ADR-0004：用户身份与数据所有权
 
-**状态：** Accepted（仅设计，未实现）
+**状态：** Accepted；阶段 1 已实现游客身份与会话基础，注册登录仍未实现
 **日期：** 2026-07-29
 **范围：** guest、registered、数据归属、访客升级、会话安全、账号能力和“我的”Tab边界
 
@@ -109,10 +109,10 @@ AI Kitchen 当前已经有 Mobile remote、Fastify `/api/v1`、MySQL、远程生
 
 | 表 | 用途与主键 | 重要唯一约束 | 关系与是否需要 |
 | --- | --- | --- | --- |
-| `ai_kitchen_users` | 正式用户资料；`user_id` UUID 主键 | 可选规范化 email 唯一；状态索引 | 被 auth identities、sessions、业务 owner 引用；P0 阶段 1 创建 |
+| `ai_kitchen_users` | 正式用户资料；`user_id` UUID 主键 | 可选规范化 email 唯一；状态索引 | 被 auth identities、sessions、业务 owner 引用；阶段 2 创建 |
 | `ai_kitchen_auth_identities` | 登录方式映射；`auth_identity_id` 主键 | `(provider, provider_subject)` 唯一；email 规范化规则单独约束 | 多对一 users；P0 仅邮箱密码也建议创建，便于后续扩展 |
-| `ai_kitchen_sessions` | refresh/session 撤销与过期；`session_id` 主键 | `session_token_hash` 唯一 | 多对一 users；只存 hash，不存明文 token；P0 阶段 1 创建 |
-| `ai_kitchen_guest_identities` | 服务端受控 guest proof 与状态；`guest_identity_id` 主键 | `guest_namespace` 唯一 | 可与现有 guest_id 记录映射；P0 阶段 1 创建，替代直接信任 raw guestId |
+| `ai_kitchen_sessions` | guest session 撤销与过期；`session_id` 主键 | `token_hash` 唯一 | 多对一 guest identities；只存 hash，不存明文 token；阶段 1 已创建 |
+| `ai_kitchen_guest_identities` | 服务端受控 guest subject 与状态；`guest_id` 主键 | `guest_id` 主键 | 由 sessions 和后续业务 owner 引用；阶段 1 已创建 |
 | `ai_kitchen_identity_merges` | 认领/合并审计和幂等状态；`merge_id` 主键 | `(source_guest, target_user, idempotency_key)` 唯一 | 关联 guest、users 和迁移结果；P0 阶段 3 创建 |
 
 现有 `ai_kitchen_generation_requests`、`ai_kitchen_recipes`、`ai_kitchen_recipe_history` 后续增加受约束的 owner 列（guest identity 或 userId 的明确关系），并补齐 owner-scoped 索引/唯一约束和迁移回滚方案。不要通过一个同时含字符串 guestId/userId 的模糊字段绕过关系约束。P0 本轮不创建任何用户表或 owner migration。
@@ -210,4 +210,14 @@ P0 不新增这些 API。现有生成、recipe、history API 在正式身份上�
 - 风险：现有 guest rows 没有可信 owner；正式身份上线前不得把 raw guestId 当作安全数据边界。
 - 风险：guest session 丢失会导致无法认领本地数据；产品必须明确未注册数据可能丢失。
 - 风险：合并会涉及 recipe/history 唯一约束和外键；实现前必须做事务、失败恢复和备份演练。
-- 本轮回滚只需回退 ADR、决策索引、状态和变更记录，不涉及数据库或运行环境。未来身份 migration 必须有 down/恢复演练，不能以回滚文档代替数据备份。
+- 代码回滚可回退本阶段提交；已执行的 003 migration 不能通过 Git 回滚。只有在确认不需要保留身份数据的环境，才可按数据库说明执行 down；真实联调和生产默认不执行 down。未来身份 migration 必须有恢复演练，不能以代码回滚代替数据备份。
+
+## 阶段 1 实施状态
+
+- [x] 服务端 UUID guest identity、opaque session token、SHA-256 token hash 和 TTL 配置。
+- [x] `003_identity_session_foundation` migration、外键、唯一约束和过期索引。
+- [x] `POST /api/v1/auth/guest-session` 与 `GET /api/v1/auth/session`。
+- [x] Fastify 私有路由统一从 Bearer session 推导 guest subject。
+- [x] Mobile Expo SecureStore 保存 token，并用单例 bootstrap Promise 防止并发创建多个 guest。
+- [x] 旧 guestId 字段兼容接收但服务端忽略；旧 raw guest 数据不自动认领。
+- [ ] 真实 MySQL 003 migration、Pixel_8a 重启保持和真实远程生成验证：本轮实现后执行。

@@ -6,6 +6,7 @@ import {
   RecipeSchema,
   validateGenerationInput,
   validateRecipeAgainstRequest,
+  type AuthenticatedGenerationApiRequest,
   type GenerationApiRequest,
   type GenerationApiResponse,
   type Recipe,
@@ -51,13 +52,13 @@ async function deadline<T>(work: (signal: AbortSignal) => Promise<T>, timeoutMs:
   }
 }
 
-function candidateRecipe(value: unknown, locale: GenerationApiRequest['generationRequest']['locale']): Recipe | undefined {
+function candidateRecipe(value: unknown, locale: AuthenticatedGenerationApiRequest['generationRequest']['locale']): Recipe | undefined {
   const candidate = typeof value === 'object' && value !== null && 'recipe' in value ? (value as { recipe: unknown }).recipe : value;
   const parsed = RecipeSchema.safeParse(typeof candidate === 'object' && candidate !== null ? { ...candidate as Record<string, unknown>, locale } : candidate);
   return parsed.success ? parsed.data : undefined;
 }
 
-export function createGenerationRequestHash(request: GenerationApiRequest): string {
+export function createGenerationRequestHash(request: GenerationApiRequest | AuthenticatedGenerationApiRequest): string {
   return createHash('sha256').update(stableStringify({ clientVersion: request.clientVersion, identity: request.identity, generationRequest: request.generationRequest })).digest('hex');
 }
 
@@ -69,7 +70,7 @@ export class GenerationService {
     private readonly now: () => Date = () => new Date(),
   ) {}
 
-  public async generate(request: GenerationApiRequest): Promise<GenerationApiResponse> {
+  public async generate(request: AuthenticatedGenerationApiRequest): Promise<GenerationApiResponse> {
     const issues = validateGenerationInput(request.generationRequest);
     if (issues[0]) return validationError(request.requestId, issues[0].code, issues[0].message);
     const requestHash = createGenerationRequestHash(request);

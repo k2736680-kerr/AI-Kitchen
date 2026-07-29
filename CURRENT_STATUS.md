@@ -11,6 +11,14 @@
 - 后续正式身份必须由 API 从已验证会话确定 userId，不能信任请求体中的 userId/ownerId/raw guestId；guest 注册时采用用户确认的、幂等且可回滚的数据认领/合并。
 - `recipeCache`、`recentRecipes`、语言设置和当前烹饪进度目前属于设备本地/当前会话；生成请求、生成菜谱和历史在未来账号化后分别归 guest subject 或 registered userId。收藏、偏好、过敏原、忌口和自定义食材必须归身份主体。
 
+## 身份阶段 1：游客身份数据库与服务端会话基础（COMPLETED）
+
+- 已实现服务端 UUID guest identity、`crypto.randomBytes(32)` opaque token、SHA-256 token hash、默认 180 天 `SESSION_TTL_DAYS` 和 MySQL session 校验。
+- 已新增 `POST /api/v1/auth/guest-session`、`GET /api/v1/auth/session`；Health 仍无需身份。
+- 已将生成、动态菜谱详情、History 和 visit 改为 Bearer session 身份；请求体/查询参数中的旧 guestId 仅兼容接收并完全忽略。
+- Mobile 已接入 Expo SecureStore、启动 bootstrap、已有 token 校验和并发 bootstrap Promise；token 不进入普通 Store、AsyncStorage、URL 或日志。
+- 已新增 migration 003 和 API/Shared/Mobile 身份测试；真实 MySQL 迁移已执行并幂等重跑，Pixel_8a 已完成远程生成冒烟和应用重载保持验证。
+
 > 本节是当前事实基线；下方按阶段记录的旧状态保留历史，不覆盖本节及 ADR-0004 的结论。
 
 ## Mobile product UI/UX and internationalization

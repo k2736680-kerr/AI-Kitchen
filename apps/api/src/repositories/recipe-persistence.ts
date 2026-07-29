@@ -1,4 +1,4 @@
-import type { GenerationApiRequest, GenerationApiResponse, HistoryEntry, HistoryVisitRequest, Recipe, SupportedLocale } from '@ai-kitchen/shared';
+import type { AuthenticatedGenerationApiRequest, AuthenticatedHistoryVisitRequest, GenerationApiResponse, HistoryEntry, Recipe, SupportedLocale } from '@ai-kitchen/shared';
 
 export type IdempotencyReservation =
   | { readonly kind: 'new' }
@@ -13,11 +13,11 @@ export interface HistoryPage {
 
 export interface RecipePersistence {
   ping(): Promise<boolean>;
-  reserveGeneration(input: { request: GenerationApiRequest; requestHash: string }): Promise<IdempotencyReservation>;
-  completeGeneration(input: { request: GenerationApiRequest; requestHash: string; response: GenerationApiResponse; status: 'succeeded' | 'no_match'; durationMs: number }): Promise<void>;
-  failGeneration(input: { request: GenerationApiRequest; requestHash: string; status: 'failed' | 'timeout' | 'service_unavailable' | 'rate_limited'; errorCode: string; durationMs: number }): Promise<void>;
-  saveRecipeSuccess(input: { request: GenerationApiRequest; requestHash: string; response: Extract<GenerationApiResponse, { status: 'success' }>; recipe: Recipe; durationMs: number }): Promise<void>;
-  getRecipe(recipeId: string): Promise<Recipe | null>;
+  reserveGeneration(input: { request: AuthenticatedGenerationApiRequest; requestHash: string }): Promise<IdempotencyReservation>;
+  completeGeneration(input: { request: AuthenticatedGenerationApiRequest; requestHash: string; response: GenerationApiResponse; status: 'succeeded' | 'no_match'; durationMs: number }): Promise<void>;
+  failGeneration(input: { request: AuthenticatedGenerationApiRequest; requestHash: string; status: 'failed' | 'timeout' | 'service_unavailable' | 'rate_limited'; errorCode: string; durationMs: number }): Promise<void>;
+  saveRecipeSuccess(input: { request: AuthenticatedGenerationApiRequest; requestHash: string; response: Extract<GenerationApiResponse, { status: 'success' }>; recipe: Recipe; durationMs: number }): Promise<void>;
+  getRecipe(recipeId: string, guestId: string): Promise<Recipe | null>;
   listHistory(guestId: string, locale: SupportedLocale, limit: number, cursor?: string): Promise<HistoryPage>;
-  visitHistory(request: HistoryVisitRequest): Promise<boolean>;
+  visitHistory(request: AuthenticatedHistoryVisitRequest): Promise<boolean>;
 }

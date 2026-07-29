@@ -36,6 +36,9 @@ export type P0Action =
       readonly category: IngredientCategory | 'all';
     }
   | { readonly type: 'SET_LAST_RECIPE'; readonly recipeId: string | null }
+  | { readonly type: 'SET_GUEST_IDENTITY'; readonly guestId: string }
+  | { readonly type: 'SET_GUEST_IDENTITY_READY' }
+  | { readonly type: 'SET_GUEST_IDENTITY_ERROR'; readonly message: string }
   | { readonly type: 'START_GENERATION'; readonly requestId: string; readonly idempotencyKey: string; readonly request: GenerationRequest }
   | { readonly type: 'SET_GENERATION_SUCCEEDED'; readonly recipe: Recipe; readonly source: 'local' | 'deterministic' | 'provider' }
   | { readonly type: 'SET_GENERATION_NO_MATCH'; readonly message: string }
@@ -186,6 +189,15 @@ export function p0Reducer(state: P0State, action: P0Action): P0State {
 
     case 'SET_LAST_RECIPE':
       return { ...state, lastRecipeId: action.recipeId };
+
+    case 'SET_GUEST_IDENTITY':
+      return { ...state, guestId: action.guestId, identityStatus: 'ready', identityError: null };
+
+    case 'SET_GUEST_IDENTITY_READY':
+      return { ...state, identityStatus: 'ready', identityError: null };
+
+    case 'SET_GUEST_IDENTITY_ERROR':
+      return { ...state, identityStatus: 'error', identityError: action.message };
 
     case 'START_GENERATION':
       if (state.generation.status === 'generating') return state;

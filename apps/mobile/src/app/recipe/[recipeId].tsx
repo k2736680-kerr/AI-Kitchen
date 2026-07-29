@@ -29,7 +29,7 @@ export default function RecipeDetailScreen() {
     : 'fixture');
 
   useEffect(() => {
-    if (!remoteData || !recipeId || recipe) return;
+    if (!remoteData || !recipeId || recipe || state.identityStatus !== 'ready') return;
     let active = true;
     const controller = new AbortController();
     void remoteData.getRecipe(recipeId, controller.signal).then((remoteRecipe) => {
@@ -41,13 +41,13 @@ export default function RecipeDetailScreen() {
       if (active) setLoadError(t('recipe.notFoundHint'));
     });
     return () => { active = false; controller.abort(); };
-  }, [cacheRecipe, recipe, recipeId, remoteData, t]);
+  }, [cacheRecipe, recipe, recipeId, remoteData, state.identityStatus, t]);
 
   useEffect(() => {
     if (!recipe) return;
     addRecentRecipe({ recipeId: recipe.recipeId, viewedAt: new Date().toISOString(), source: existingEntry?.source ?? source, locale: recipe.locale });
-    if (remoteData) void remoteData.recordVisit({ guestId: state.guestId, recipeId: recipe.recipeId, source: 'remote' }, new AbortController().signal).catch(() => undefined);
-  }, [addRecentRecipe, existingEntry?.source, recipe, remoteData, source, state.guestId]);
+    if (remoteData && state.identityStatus === 'ready') void remoteData.recordVisit({ recipeId: recipe.recipeId, source: 'remote' }, new AbortController().signal).catch(() => undefined);
+  }, [addRecentRecipe, existingEntry?.source, recipe, remoteData, source, state.identityStatus]);
   if (!recipe && remoteData && !loadError) return <Screen><AppHeader title={t('recipe.loading')} back /><StatusMessage message={t('recipe.loadingHint')} /></Screen>;
   if (!recipe) return <Screen><AppHeader title={t('recipe.notFound')} back /><StatusMessage message={loadError ?? t('recipe.notFoundHint')} tone="error" /><AppButton label={t('recipe.backToConditions')} onPress={() => router.replace('/generate' as Href)} /><AppButton label={t('common.home')} variant="secondary" onPress={() => router.replace('/' as Href)} /></Screen>;
   return <Screen><AppHeader title={t('common.appName')} back /><RecipeHeader recipe={recipe} source={source} selectedServings={state.generationDraft.servings} /><RecipeConstraintSummary recipe={recipe} /><RecipeIngredientList title={t('recipe.requiredIngredients')} ingredients={recipe.requiredIngredients} /><RecipeIngredientList title={t('recipe.optionalIngredients')} ingredients={recipe.optionalIngredients} /><MissingIngredientNotice ingredients={recipe.missingIngredients} /><RecipeStepList steps={recipe.steps} /><SafetyNotice notices={recipe.safetyNotices} /><AppButton label={t('recipe.startCooking')} disabled={recipe.steps.length === 0} onPress={() => router.push(`/cooking/${recipe.recipeId}` as Href)} /><AppButton label={t('recipe.backToConditions')} variant="secondary" onPress={() => router.replace('/generate' as Href)} /><AppButton label={t('common.home')} variant="ghost" onPress={() => router.replace('/' as Href)} /></Screen>;

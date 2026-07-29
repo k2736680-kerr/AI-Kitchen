@@ -4,6 +4,14 @@
 
 ---
 
+## 游客身份与服务端会话基础
+
+- 新增服务端生成的 UUID guest identity 和 `ai_kitchen_guest_identities`、`ai_kitchen_sessions` MySQL migration；session token 使用 `crypto.randomBytes(32)` 生成，数据库只保存 SHA-256 hash。
+- 新增 `POST /api/v1/auth/guest-session`、`GET /api/v1/auth/session`，默认 TTL 为 180 天，可由 `SESSION_TTL_DAYS` 配置。
+- Generation、动态 recipe detail、History、history visit 统一从 Bearer session 推导 guestId；旧请求字段只兼容接收，不再作为所有权依据。
+- Mobile 使用 Expo SecureStore 保存 token，并通过单例 bootstrap Promise 保证 App 重启恢复同一 guest、并发页面不重复创建会话。
+- 本轮未实现注册登录、refresh、账号删除、anonymous 或 registered；旧身份加固前 raw guest 数据不自动认领。
+
 ## 用户身份与数据所有权方案
 
 - 新增 `docs/adr/0004-user-identity-and-data-ownership.md`，完成当前 guestId、现有 MySQL 记录关系、数据所有权、guest 升级、已有账号登录、退出和删除账号的架构审计。

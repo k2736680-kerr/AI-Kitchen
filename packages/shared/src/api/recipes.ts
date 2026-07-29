@@ -18,14 +18,16 @@ export const RecipeApiResponseSchema = z.object({
 }).strict();
 
 export const HistoryVisitRequestSchema = z.object({
-  guestId: guestIdSchema,
+  /** Deprecated client field. The API ignores it and derives ownership from Authorization. */
+  guestId: guestIdSchema.optional(),
   recipeId: recipeIdSchema,
   source: z.enum(['local', 'remote']),
 }).strict();
 
 /** Mobile must send locale; the default preserves old callers during rollout. */
 export const HistoryListQuerySchema = z.object({
-  guestId: guestIdSchema,
+  /** Deprecated client field. The API ignores it and derives ownership from Authorization. */
+  guestId: guestIdSchema.optional(),
   locale: z.enum(SUPPORTED_LOCALES).default('zh-CN'),
   limit: z.coerce.number().int().min(1).max(50).default(20),
   cursor: z.string().trim().min(1).max(500).optional(),
@@ -52,6 +54,7 @@ export const HistoryVisitResponseSchema = z.object({
 
 export type RecipeApiResponse = z.infer<typeof RecipeApiResponseSchema>;
 export type HistoryVisitRequest = z.infer<typeof HistoryVisitRequestSchema>;
+export type AuthenticatedHistoryVisitRequest = Omit<HistoryVisitRequest, 'guestId'> & { readonly guestId: string };
 export type HistoryListQuery = z.infer<typeof HistoryListQuerySchema>;
 export type HistoryEntry = z.infer<typeof HistoryEntrySchema>;
 export type HistoryListResponse = z.infer<typeof HistoryListResponseSchema>;

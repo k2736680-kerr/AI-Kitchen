@@ -26,6 +26,8 @@ export type GenerationSessionStatus =
   | 'failed'
   | 'cancelled';
 
+export type GuestIdentityStatus = 'initializing' | 'ready' | 'error';
+
 export interface GenerationSessionState {
   readonly status: GenerationSessionStatus;
   readonly requestId: string | null;
@@ -52,7 +54,9 @@ export interface CookingSessionState {
 }
 
 export interface P0State {
-  readonly guestId: string;
+  readonly guestId: string | null;
+  readonly identityStatus: GuestIdentityStatus;
+  readonly identityError: string | null;
   readonly selectedIngredients: readonly SelectedIngredient[];
   readonly generationDraft: GenerationDraft;
   readonly generation: GenerationSessionState;
@@ -112,14 +116,11 @@ export function createGenerationRequest(state: P0State, locale: SupportedLocale)
   };
 }
 
-/** Creates a session-only guest namespace; it is never an authenticated identity. */
-export function createSessionGuestId(): string {
-  return `session-guest:${Date.now().toString(36)}:${Math.random().toString(36).slice(2)}`;
-}
-
-export function createInitialP0State(guestId = createSessionGuestId()): P0State {
+export function createInitialP0State(guestId: string | null = null): P0State {
   return {
     guestId,
+    identityStatus: guestId ? 'ready' : 'initializing',
+    identityError: null,
     selectedIngredients: [],
     generationDraft: DEFAULT_DRAFT,
     generation: INITIAL_GENERATION,

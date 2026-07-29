@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SUBJECT_TYPES, getSubjectId, isAnonymousSubject, isAuthenticatedSubject, isGuestSubject, isRegisteredSubject, type IdentitySubject } from './subject';
 
 describe('identity subjects', () => {
-  const guest: IdentitySubject = { type: 'guest', guestId: 'guest-1' };
+  const guest: IdentitySubject = { type: 'guest', id: '00000000-0000-4000-8000-000000000001' };
   const anonymous: IdentitySubject = { type: 'anonymous', userId: 'user-1' };
   const registered: IdentitySubject = { type: 'registered', userId: 'user-2' };
 
@@ -12,7 +12,7 @@ describe('identity subjects', () => {
   });
   it('classifies guest', () => {
     expect([isGuestSubject(guest), isAuthenticatedSubject(guest), isAnonymousSubject(guest), isRegisteredSubject(guest)]).toEqual([true, false, false, false]);
-    expect(getSubjectId(guest)).toBe('guest-1');
+    expect(getSubjectId(guest)).toBe('00000000-0000-4000-8000-000000000001');
   });
   it('classifies anonymous', () => {
     expect([isGuestSubject(anonymous), isAuthenticatedSubject(anonymous), isAnonymousSubject(anonymous), isRegisteredSubject(anonymous)]).toEqual([false, true, true, false]);
@@ -23,7 +23,7 @@ describe('identity subjects', () => {
     expect(getSubjectId(registered)).toBe('user-2');
   });
   it('narrows by the discriminant', () => {
-    const ids = [guest, anonymous, registered].map((subject) => subject.type === 'guest' ? subject.guestId : subject.userId);
-    expect(ids).toEqual(['guest-1', 'user-1', 'user-2']);
+  const ids = [guest, anonymous, registered].map((subject) => subject.type === 'guest' ? subject.id : subject.userId);
+    expect(ids).toEqual(['00000000-0000-4000-8000-000000000001', 'user-1', 'user-2']);
   });
 });

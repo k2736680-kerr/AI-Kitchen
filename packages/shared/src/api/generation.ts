@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { GenerationRequestSchema, GENERATION_REQUEST_SCHEMA_VERSION } from '../generation/types';
+import type { GuestSubject } from '../identity/subject';
 import { RecipeSchema, RECIPE_SCHEMA_VERSION } from '../recipes/types';
 
 export const GENERATION_API_SCHEMA_VERSION = 'v1' as const;
@@ -10,7 +11,8 @@ export const requestIdSchema = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9:_-]{7,12
 export const idempotencyKeySchema = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$/);
 
 export const generationIdentitySchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('guest'), guestId: z.string().trim().min(1).max(120) }).strict(),
+  /** Deprecated client hint. The API ignores it and derives the guest from Authorization. */
+  z.object({ type: z.literal('guest'), guestId: z.string().trim().min(1).max(120).optional() }).strict(),
   z.object({ type: z.literal('anonymous'), userId: z.string().trim().min(1).max(120) }).strict(),
   z.object({ type: z.literal('registered'), userId: z.string().trim().min(1).max(120) }).strict(),
 ]);
@@ -138,3 +140,4 @@ export type GenerationMetadata = z.infer<typeof GenerationMetadataSchema>;
 export type GenerationApiSuccess = z.infer<typeof GenerationApiSuccessSchema>;
 export type GenerationApiResponse = z.infer<typeof GenerationApiResponseSchema>;
 export type GenerationIdentity = z.infer<typeof generationIdentitySchema>;
+export type AuthenticatedGenerationApiRequest = Omit<GenerationApiRequest, 'identity'> & { readonly identity: GuestSubject };

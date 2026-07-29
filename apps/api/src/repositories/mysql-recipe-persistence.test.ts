@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { RECIPE_FIXTURES, type GenerationApiRequest, type GenerationApiResponse } from '@ai-kitchen/shared';
+import { RECIPE_FIXTURES, type AuthenticatedGenerationApiRequest, type GenerationApiResponse } from '@ai-kitchen/shared';
 
 import type { Database, SqlSession } from '../database/mysql-database';
 import { MySqlRecipePersistence } from './mysql-recipe-persistence';
 
-const request: GenerationApiRequest = {
-  schemaVersion: 'v1', requestId: 'req_mysql_test_1234', idempotencyKey: 'idem_mysql_test_1234', clientVersion: '1.0.0', identity: { type: 'guest', guestId: 'session-guest-mysql' },
+const request: AuthenticatedGenerationApiRequest = {
+  schemaVersion: 'v1', requestId: 'req_mysql_test_1234', idempotencyKey: 'idem_mysql_test_1234', clientVersion: '1.0.0', identity: { type: 'guest', id: '00000000-0000-4000-8000-00000000000a' },
   generationRequest: { schemaVersion: 'v1', locale: 'zh-CN', selectedIngredientIds: ['egg', 'tomato', 'noodles'], customIngredients: [], servings: 2, maxCookingTimeMinutes: 30, availableTools: [], dietaryPreferences: [], allergens: [], excludedIngredients: [] },
 };
 

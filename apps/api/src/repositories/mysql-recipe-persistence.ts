@@ -1,10 +1,10 @@
 import {
   GenerationApiResponseSchema,
   RecipeSchema,
-  type GenerationApiRequest,
+  type AuthenticatedGenerationApiRequest,
+  type AuthenticatedHistoryVisitRequest,
   type GenerationApiResponse,
   type HistoryEntry,
-  type HistoryVisitRequest,
   type Recipe,
 } from '@ai-kitchen/shared';
 
@@ -67,7 +67,7 @@ export class MySqlRecipePersistence implements RecipePersistence {
     return this.database.ping();
   }
 
-  public async reserveGeneration(input: { request: GenerationApiRequest; requestHash: string }): Promise<IdempotencyReservation> {
+  public async reserveGeneration(input: { request: AuthenticatedGenerationApiRequest; requestHash: string }): Promise<IdempotencyReservation> {
     return this.database.transaction(async (session) => {
       const existing = await session.rows<GenerationRow>(
         'SELECT request_id, request_hash, status, response_payload FROM ai_kitchen_generation_requests WHERE idempotency_key = ? FOR UPDATE',
@@ -88,7 +88,7 @@ export class MySqlRecipePersistence implements RecipePersistence {
             input.request.requestId,
             input.request.idempotencyKey,
             input.requestHash,
-            input.request.identity.type === 'guest' ? input.request.identity.guestId : input.request.identity.userId,
+            input.request.identity.id,
             input.request.schemaVersion,
             input.request.clientVersion,
             input.request.generationRequest.locale,
@@ -109,7 +109,7 @@ export class MySqlRecipePersistence implements RecipePersistence {
     });
   }
 
-  public async completeGeneration(input: { request: GenerationApiRequest; requestHash: string; response: GenerationApiResponse; status: 'succeeded' | 'no_match'; durationMs: number }): Promise<void> {
+  public async completeGeneration(input: { request: AuthenticatedGenerationApiRequest; requestHash: string; response: GenerationApiResponse; status: 'succeeded' | 'no_match'; durationMs: number }): Promise<void> {
     await this.database.execute(
       `UPDATE ai_kitchen_generation_requests
        SET status = ?, response_payload = ?, duration_ms = ?, completed_at = UTC_TIMESTAMP(3), error_code = NULL
@@ -118,7 +118,7 @@ export class MySqlRecipePersistence implements RecipePersistence {
     );
   }
 
-  public async failGeneration(input: { request: GenerationApiRequest; requestHash: string; status: 'failed' | 'timeout' | 'service_unavailable' | 'rate_limited'; errorCode: string; durationMs: number }): Promise<void> {
+  public async failGeneration(input: { request: AuthenticatedGenerationApiRequest; requestHash: string; status: 'failed' | 'timeout' | 'service_unavailable' | 'rate_limited'; errorCode: string; durationMs: number }): Promise<void> {
     await this.database.execute(
       `UPDATE ai_kitchen_generation_requests
        SET status = ?, error_code = ?, duration_ms = ?, completed_at = UTC_TIMESTAMP(3)
@@ -127,8 +127,8 @@ export class MySqlRecipePersistence implements RecipePersistence {
     );
   }
 
-  public async saveRecipeSuccess(input: { request: GenerationApiRequest; requestHash: string; response: Extract<GenerationApiResponse, { status: 'success' }>; recipe: Recipe; durationMs: number }): Promise<void> {
-    const guestId = input.request.identity.type === 'guest' ? input.request.identity.guestId : input.request.identity.userId;
+  public async saveRecipeSuccess(input: { request: AuthenticatedGenerationApiRequest; requestHash: string; response: Extract<GenerationApiResponse, { status: 'success' }>; recipe: Recipe; durationMs: number }): Promise<void> {
+    const guestId = input.request.identity.id;
     await this.database.transaction(async (session) => {
       await session.execute(
         `INSERT INTO ai_kitchen_recipes (recipe_id, schema_version, source, provider, model, title, locale, recipe_payload)
@@ -146,8 +146,14 @@ export class MySqlRecipePersistence implements RecipePersistence {
     });
   }
 
-  public async getRecipe(recipeId: string): Promise<Recipe | null> {
-    const rows = await this.database.rows<RecipeRow>('SELECT recipe_payload FROM ai_kitchen_recipes WHERE recipe_id = ?', [recipeId]);
+  public async getRecipe(recipeId: string, guestId: string): Promise<Recipe | null> {
+    const rows = await this.database.rows<RecipeRow>(
+      `SELECT r.recipe_payload
+       FROM ai_kitchen_recipes r
+       INNER JOIN ai_kitchen_recipe_history h ON h.recipe_id = r.recipe_id
+       WHERE r.recipe_id = ? AND h.guest_id = ?`,
+      [recipeId, guestId],
+    );
     const parsed = RecipeSchema.safeParse(jsonValue(rows[0]?.recipe_payload));
     return parsed.success ? parsed.data : null;
   }
@@ -178,14 +184,17 @@ export class MySqlRecipePersistence implements RecipePersistence {
     return { items, nextCursor: rows.length > limit && last ? encodeCursor({ lastVisitedAt: toIso(last.last_visited_at), recipeId: last.recipe_id }) : null };
   }
 
-  public async visitHistory(request: HistoryVisitRequest): Promise<boolean> {
-    const recipes = await this.database.rows<{ recipe_id: string }>('SELECT recipe_id FROM ai_kitchen_recipes WHERE recipe_id = ?', [request.recipeId]);
-    if (!recipes[0]) return false;
+  public async visitHistory(request: AuthenticatedHistoryVisitRequest): Promise<boolean> {
+    const history = await this.database.rows<{ recipe_id: string }>(
+      'SELECT recipe_id FROM ai_kitchen_recipe_history WHERE guest_id = ? AND recipe_id = ?',
+      [request.guestId, request.recipeId],
+    );
+    if (!history[0]) return false;
     await this.upsertHistory(this.database, request);
     return true;
   }
 
-  private async upsertHistory(session: SqlSession, request: HistoryVisitRequest): Promise<void> {
+  private async upsertHistory(session: SqlSession, request: AuthenticatedHistoryVisitRequest): Promise<void> {
     await session.execute(
       `INSERT INTO ai_kitchen_recipe_history (guest_id, recipe_id, source, first_visited_at, last_visited_at, visit_count)
        VALUES (?, ?, ?, UTC_TIMESTAMP(3), UTC_TIMESTAMP(3), 1)

@@ -18,6 +18,7 @@ import { ServingSelector } from '@/features/generation/serving-selector';
 import { TimeSelector } from '@/features/generation/time-selector';
 import { selectGenerationValidation } from '@/state/p0-selectors';
 import { useP0Store } from '@/state/p0-store';
+import { environmentConfig } from '@/config/environment';
 
 export default function GenerateScreen() {
   const { t, i18n } = useTranslation();
@@ -34,11 +35,13 @@ export default function GenerateScreen() {
     clearAllergens,
     clearExcludedIngredients,
     startGeneration,
+    retryGuestSession,
   } = useP0Store();
   const submitLock = useRef(false);
   const validation = selectGenerationValidation(state);
   const hasIngredients = state.selectedIngredients.length > 0;
-  const submitDisabled = state.generation.status === 'generating';
+  const identityReady = environmentConfig.generationMode === 'local' || state.identityStatus === 'ready';
+  const submitDisabled = state.generation.status === 'generating' || !identityReady;
 
   useFocusEffect(useCallback(() => {
     submitLock.current = false;
@@ -102,6 +105,8 @@ export default function GenerateScreen() {
       <StatusMessage message={t('generation.summaryHint')} />
       {validation.messages.map((message) => <StatusMessage key={message} message={message} tone="error" />)}
     </AppCard>
+    {environmentConfig.generationMode === 'remote' && state.identityStatus === 'initializing' ? <StatusMessage message={t('common.loading')} /> : null}
+    {environmentConfig.generationMode === 'remote' && state.identityStatus === 'error' ? <><StatusMessage message={state.identityError ?? t('generation.unavailable')} tone="error" /><AppButton label={t('common.retry')} variant="secondary" onPress={retryGuestSession} /></> : null}
     <AppButton label={t('generation.backToIngredients')} variant="secondary" onPress={() => router.back()} />
     <AppButton label={t('generation.generate')} disabled={!validation.canSubmit || submitDisabled} onPress={submit} />
   </Screen>;

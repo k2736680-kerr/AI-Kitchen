@@ -21,6 +21,7 @@ const environmentSchema = z.object({
   MYSQL_USER: nonEmpty,
   MYSQL_PASSWORD: nonEmpty,
   MYSQL_CONNECTION_LIMIT: z.coerce.number().int().min(1).max(100).default(10),
+  SESSION_TTL_DAYS: z.coerce.number().int().min(1).max(730).default(180),
   GENERATION_TOTAL_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(45_000).default(40_000),
   GENERATION_REPAIR_ENABLED: z.enum(['true', 'false']).default('true').transform((value) => value === 'true'),
   GENERATION_MODE: z.literal('remote').default('remote'),
@@ -34,6 +35,7 @@ export type ApiConfig = Readonly<{
   corsOrigin: string;
   dashscope: Readonly<{ baseUrl: string; apiKey?: string; model: string; timeoutMs: number }>;
   mysql: Readonly<{ host: string; port: number; database: string; user: string; password: string; connectionLimit: number }>;
+  session: Readonly<{ ttlDays: number }>;
   generation: Readonly<{ totalTimeoutMs: number; repairEnabled: boolean; mode: 'remote' }>;
   logLevel: 'debug' | 'info' | 'warn' | 'error';
 }>;
@@ -52,6 +54,7 @@ export function loadApiConfig(environment: NodeJS.ProcessEnv = process.env): Api
     corsOrigin: value.API_CORS_ORIGIN,
     dashscope: { baseUrl: value.DASHSCOPE_BASE_URL.replace(/\/$/, ''), apiKey: value.DASHSCOPE_API_KEY, model: value.DASHSCOPE_MODEL, timeoutMs: value.DASHSCOPE_TIMEOUT_MS },
     mysql: { host: value.MYSQL_HOST, port: value.MYSQL_PORT, database: value.MYSQL_DATABASE, user: value.MYSQL_USER, password: value.MYSQL_PASSWORD, connectionLimit: value.MYSQL_CONNECTION_LIMIT },
+    session: { ttlDays: value.SESSION_TTL_DAYS },
     generation: { totalTimeoutMs: value.GENERATION_TOTAL_TIMEOUT_MS, repairEnabled: value.GENERATION_REPAIR_ENABLED, mode: value.GENERATION_MODE },
     logLevel: value.LOG_LEVEL,
   };

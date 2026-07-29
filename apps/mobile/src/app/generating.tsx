@@ -38,13 +38,13 @@ export default function GeneratingScreen() {
   const [attempt, setAttempt] = useState(1);
   const repository = useMemo(() => createRecipeGenerationRepository(), []);
   const remoteData = useMemo(() => environmentConfig.generationMode === 'remote' ? new RemoteRecipeDataRepository(environmentConfig.apiBaseUrl) : null, []);
-  const guestId = state.guestId;
   const requestId = state.generation.requestId;
   const idempotencyKey = state.generation.idempotencyKey;
   const requestSnapshot = state.generation.requestSnapshot;
 
   useEffect(() => {
-    const request = createGenerationApiRequest({ guestId, requestId, idempotencyKey, requestSnapshot }, environmentConfig.clientVersion);
+    if (environmentConfig.generationMode === 'remote' && state.identityStatus !== 'ready') return;
+    const request = createGenerationApiRequest({ requestId, idempotencyKey, requestSnapshot }, environmentConfig.clientVersion);
     if (!request) {
       router.replace('/generate' as Href);
       return;
@@ -59,7 +59,7 @@ export default function GeneratingScreen() {
         setLastRecipe(result.recipe.recipeId);
         setGenerationSucceeded(result.recipe, result.metadata.source);
         addRecentRecipe({ recipeId: result.recipe.recipeId, viewedAt: new Date().toISOString(), source: result.metadata.source === 'provider' ? 'remote' : 'local', locale: result.recipe.locale });
-        if (remoteData) void remoteData.recordVisit({ guestId, recipeId: result.recipe.recipeId, source: 'remote' }, new AbortController().signal).catch(() => undefined);
+        if (remoteData) void remoteData.recordVisit({ recipeId: result.recipe.recipeId, source: 'remote' }, new AbortController().signal).catch(() => undefined);
         router.replace(`/recipe/${result.recipe.recipeId}` as Href);
       } else if (result.status === 'no_match') {
         setGenerationNoMatch(result.message);
@@ -70,7 +70,7 @@ export default function GeneratingScreen() {
     }).catch((reason: unknown) => {
       if (!active) return;
       if (reason instanceof GenerationClientError) {
-        setGenerationFailed({ code: reason.kind === 'timeout' ? 'TIMEOUT' : reason.kind === 'configuration' ? 'SERVICE_UNAVAILABLE' : 'INTERNAL_ERROR', message: reason.message });
+        setGenerationFailed({ code: reason.kind === 'timeout' ? 'TIMEOUT' : reason.kind === 'configuration' || reason.kind === 'auth-required' ? 'AUTH_REQUIRED' : 'INTERNAL_ERROR', message: reason.message });
       } else if (reason instanceof DOMException && reason.name === 'AbortError') {
         setGenerationFailed({ code: 'TIMEOUT', message: t('generation.timedOut') });
       } else {
@@ -83,7 +83,7 @@ export default function GeneratingScreen() {
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [addRecentRecipe, attempt, guestId, idempotencyKey, remoteData, repository, requestId, requestSnapshot, setGenerationFailed, setGenerationNoMatch, setGenerationSucceeded, setLastRecipe, t]);
+  }, [addRecentRecipe, attempt, idempotencyKey, remoteData, repository, requestId, requestSnapshot, setGenerationFailed, setGenerationNoMatch, setGenerationSucceeded, setLastRecipe, state.identityStatus, t]);
 
   const cancel = () => Alert.alert(t('generation.cancelTitle'), t('generation.cancelConfirm'), [
     { text: t('generation.continueWaiting'), style: 'cancel' },

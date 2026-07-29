@@ -3,6 +3,7 @@ export * from './api/errors';
 export * from './api/envelope';
 export * from './api/generation';
 export * from './api/recipes';
+export * from './api/identity';
 export * from './ingredients/types';
 export * from './generation/types';
 export * from './generation/resolver';

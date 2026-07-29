@@ -1,4 +1,4 @@
-import type { GenerationApiRequest, GenerationApiResponse, HistoryEntry, HistoryVisitRequest, Recipe, SupportedLocale } from '@ai-kitchen/shared';
+import type { AuthenticatedGenerationApiRequest, AuthenticatedHistoryVisitRequest, GenerationApiResponse, HistoryEntry, Recipe, SupportedLocale } from '@ai-kitchen/shared';
 
 import type { HistoryPage, IdempotencyReservation, RecipePersistence } from '../repositories/recipe-persistence';
 
@@ -11,7 +11,7 @@ export class InMemoryRecipePersistence implements RecipePersistence {
 
   public async ping(): Promise<boolean> { return true; }
 
-  public async reserveGeneration(input: { request: GenerationApiRequest; requestHash: string }): Promise<IdempotencyReservation> {
+  public async reserveGeneration(input: { request: AuthenticatedGenerationApiRequest; requestHash: string }): Promise<IdempotencyReservation> {
     const existing = this.generations.get(input.request.idempotencyKey);
     if (!existing) {
       this.generations.set(input.request.idempotencyKey, { requestHash: input.requestHash, status: 'processing' });
@@ -22,21 +22,25 @@ export class InMemoryRecipePersistence implements RecipePersistence {
     return existing.response ? { kind: 'replay', response: existing.response } : { kind: 'conflict' };
   }
 
-  public async completeGeneration(input: { request: GenerationApiRequest; requestHash: string; response: GenerationApiResponse; status: 'succeeded' | 'no_match'; durationMs: number }): Promise<void> {
+  public async completeGeneration(input: { request: AuthenticatedGenerationApiRequest; requestHash: string; response: GenerationApiResponse; status: 'succeeded' | 'no_match'; durationMs: number }): Promise<void> {
     this.generations.set(input.request.idempotencyKey, { requestHash: input.requestHash, status: input.status, response: input.response });
   }
 
-  public async failGeneration(input: { request: GenerationApiRequest; requestHash: string; status: 'failed' | 'timeout' | 'service_unavailable' | 'rate_limited'; errorCode: string; durationMs: number }): Promise<void> {
+  public async failGeneration(input: { request: AuthenticatedGenerationApiRequest; requestHash: string; status: 'failed' | 'timeout' | 'service_unavailable' | 'rate_limited'; errorCode: string; durationMs: number }): Promise<void> {
     this.generations.set(input.request.idempotencyKey, { requestHash: input.requestHash, status: input.status });
   }
 
-  public async saveRecipeSuccess(input: { request: GenerationApiRequest; requestHash: string; response: Extract<GenerationApiResponse, { status: 'success' }>; recipe: Recipe; durationMs: number }): Promise<void> {
+  public async saveRecipeSuccess(input: { request: AuthenticatedGenerationApiRequest; requestHash: string; response: Extract<GenerationApiResponse, { status: 'success' }>; recipe: Recipe; durationMs: number }): Promise<void> {
     this.recipes.set(input.recipe.recipeId, input.recipe);
     this.generations.set(input.request.idempotencyKey, { requestHash: input.requestHash, status: 'succeeded', response: input.response });
-    await this.visitHistory({ guestId: input.request.identity.type === 'guest' ? input.request.identity.guestId : input.request.identity.userId, recipeId: input.recipe.recipeId, source: 'remote' });
+    this.upsertHistory({ guestId: input.request.identity.id, recipeId: input.recipe.recipeId, source: 'remote' });
   }
 
-  public async getRecipe(recipeId: string): Promise<Recipe | null> { return this.recipes.get(recipeId) ?? null; }
+  public async getRecipe(recipeId: string, guestId: string): Promise<Recipe | null> {
+    return [...this.history.entries()].some(([key, entry]) => key === `${guestId}:${recipeId}` && entry.recipe.recipeId === recipeId)
+      ? this.recipes.get(recipeId) ?? null
+      : null;
+  }
 
   public async listHistory(guestId: string, locale: SupportedLocale, limit: number): Promise<HistoryPage> {
     const prefix = `${guestId}:`;
@@ -49,9 +53,17 @@ export class InMemoryRecipePersistence implements RecipePersistence {
     return { items, nextCursor: null };
   }
 
-  public async visitHistory(request: HistoryVisitRequest): Promise<boolean> {
+  public async visitHistory(request: AuthenticatedHistoryVisitRequest): Promise<boolean> {
     const recipe = this.recipes.get(request.recipeId);
-    if (!recipe) return false;
+    const key = `${request.guestId}:${request.recipeId}`;
+    if (!recipe || !this.history.has(key)) return false;
+    this.upsertHistory(request);
+    return true;
+  }
+
+  private upsertHistory(request: AuthenticatedHistoryVisitRequest): void {
+    const recipe = this.recipes.get(request.recipeId);
+    if (!recipe) return;
     const key = `${request.guestId}:${request.recipeId}`;
     const existing = this.history.get(key);
     const now = new Date().toISOString();
@@ -62,6 +74,5 @@ export class InMemoryRecipePersistence implements RecipePersistence {
       lastVisitedAt: now,
       visitCount: (existing?.visitCount ?? 0) + 1,
     });
-    return true;
   }
 }

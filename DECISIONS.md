@@ -645,7 +645,7 @@ Cursor rules、`CLAUDE.md`、`AGENTS.md` 和 ChatGPT Project instructions 用于
 
 ### 后果
 
-- 本轮不创建用户表、owner migration、认证 API、登录注册页面或伪用户。
+- 本阶段不创建正式 users/auth identities、owner migration、注册登录 API、登录注册页面或伪用户；阶段 1 允许创建受控 guest identity/session 基础和游客会话 API。
 - 后续身份数据库、会话、guest claim/merge 和现有业务表 owner 迁移必须按 `docs/adr/0004-user-identity-and-data-ownership.md` 分阶段实施。
 - D-010 的 guest → anonymous → registered 路径和 D-017 的旧 Supabase ownership 说明不再作为当前实现依据；D-016 的内网 Node.js + MySQL 后端决策保持有效。
 
