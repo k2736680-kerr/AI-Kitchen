@@ -4,6 +4,16 @@
 
 ---
 
+## 用户身份与数据所有权方案
+
+- 新增 `docs/adr/0004-user-identity-and-data-ownership.md`，完成当前 guestId、现有 MySQL 记录关系、数据所有权、guest 升级、已有账号登录、退出和删除账号的架构审计。
+- 正式身份模型确定为 `guest` / `registered` 两态；不保留 `anonymous` 作为独立产品状态。当前 P0 仍只提供游客体验，不新增用户表 migration、认证 API、登录注册页面或伪用户。
+- 明确后续服务端必须从验证后的会话确定 owner，guestId 不能作为正式安全凭证；生成请求、菜谱、历史、收藏、偏好和安全条件在账号化后归身份主体，语言、缓存和临时烹饪进度可保留在设备本地。
+- 明确 guest 注册和登录已有账号都必须用户确认后执行幂等合并；保持 recipeId 和可审计合并记录，冲突不静默覆盖；账号删除、服务条款、隐私政策和“我的”Tab只完成边界设计。
+- 本轮仅修改 ADR、决策索引、当前状态和变更记录，未修改 API、数据库、migration、Provider、Mobile 业务代码或设备配置。
+
+---
+
 ## 动态菜谱多语言契约
 
 - `GenerationRequest v1` 新增受限 `locale`，新版 Mobile 明确提交 `zh-CN` 或 `en-US`，旧请求兼容默认 `zh-CN`；locale 纳入已有稳定 request hash 与幂等语义。

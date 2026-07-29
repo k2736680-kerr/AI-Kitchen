@@ -2,6 +2,17 @@
 
 > 本文件记录当前真实状态。计划、示例和目标设计不得冒充实现完成。
 
+## 当前身份与数据所有权基线（2026-07-29）
+
+- 当前只有 guest 能力，没有正式注册、登录、账号会话或跨设备恢复。
+- 当前 `guestId` 在 Mobile Store 初始化时由时间戳和随机值生成，未通过 AsyncStorage/SecureStore 持久化；它是当前会话 namespace，不是认证凭据。重建 Store、App 重启、卸载或清除数据都可能产生新的值。
+- Remote API 目前将客户端提供的 guestId 写入 generation request 和 recipe history；`ai_kitchen_recipes` 当前没有 owner 字段，recipe 读取也没有基于身份的授权校验。因此现有 guest 数据是过渡期业务数据，不应被当作安全的账号私有边界；Fixture/公共目录才是公共数据。
+- 本轮新增 [ADR-0004](docs/adr/0004-user-identity-and-data-ownership.md)（决策索引 D-027）：正式产品身份采用 `guest` 与 `registered` 两态，不保留 `anonymous` 作为独立产品身份；P0 继续游客体验，不创建用户表、登录页面、认证 API 或迁移。
+- 后续正式身份必须由 API 从已验证会话确定 userId，不能信任请求体中的 userId/ownerId/raw guestId；guest 注册时采用用户确认的、幂等且可回滚的数据认领/合并。
+- `recipeCache`、`recentRecipes`、语言设置和当前烹饪进度目前属于设备本地/当前会话；生成请求、生成菜谱和历史在未来账号化后分别归 guest subject 或 registered userId。收藏、偏好、过敏原、忌口和自定义食材必须归身份主体。
+
+> 本节是当前事实基线；下方按阶段记录的旧状态保留历史，不覆盖本节及 ADR-0004 的结论。
+
 ## Mobile product UI/UX and internationalization
 
 - Mobile has a shared food-focused design system: warm background, white cards, sage primary actions, semantic alert colors, consistent type scale, spacing, radius and shadow tokens.

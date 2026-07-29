@@ -25,7 +25,7 @@
 | D-007 | AI 输出采用四层校验 | Accepted | 2026-07-24 |
 | D-008 | 食品安全采用失败关闭 | Accepted | 2026-07-24 |
 | D-009 | 标准食材 ID 与别名分离 | Accepted | 2026-07-24 |
-| D-010 | guest → anonymous → registered 身份路径 | Accepted | 2026-07-24 |
+| D-010 | guest → anonymous → registered 身份路径 | Superseded by D-027 | 2026-07-24 |
 | D-011 | 单菜同步生成，长任务未来异步 | Accepted | 2026-07-24 |
 | D-012 | development/staging/production 完全隔离 | Accepted | 2026-07-24 |
 | D-013 | requestId + idempotencyKey 全链路使用 | Accepted | 2026-07-24 |
@@ -33,6 +33,7 @@
 | D-015 | P0/P1 实施严格范围控制 | Accepted | 2026-07-24 |
 | D-016 | 正式后端使用内网 Node.js + MySQL | Accepted | 2026-07-28 |
 | D-017 | 动态菜谱按请求语言保存与检索 | Accepted | 2026-07-29 |
+| D-027 | 用户身份与数据所有权采用 guest/registered 两态 | Accepted | 2026-07-29 |
 
 ---
 
@@ -429,7 +430,7 @@ P0/P1 单菜生成使用同步 API。App 等待上限建议 45 秒，模型单�
 
 ## D-017：所有权只能来自服务端验证的 Subject
 
-**状态：** Accepted
+**状态：** Superseded by D-027
 **日期：** 2026-07-27
 
 ### 决策
@@ -628,6 +629,25 @@ Cursor rules、`CLAUDE.md`、`AGENTS.md` 和 ChatGPT Project instructions 用于
 - MySQL generation request 与 recipe 均保存 locale；旧记录和缺少字段的旧快照兼容默认 `zh-CN`。
 - 语言错误的模型输出最多修复一次，仍不一致即失败关闭；不保存原始模型输出，也不引入翻译服务。
 - UI 切换只影响固定文案和下一次生成，已打开菜谱保持其生成语言。
+
+---
+
+## D-027：用户身份与数据所有权采用 guest/registered 两态
+
+**状态：** Accepted
+**日期：** 2026-07-29
+
+### 决策
+
+正式产品身份只保留 `guest` 与 `registered` 两态，不把 `anonymous` 作为独立产品身份。当前 P0 继续支持游客体验；未来 guest 注册时直接升级到 registered，数据认领必须由已验证的服务端会话、用户确认、幂等 merge operation 和可回滚事务完成。
+
+所有权必须由服务端验证的 subject 推导。raw guestId、请求体中的 userId/ownerId、设备 ID 和 recipeId 都不能单独作为授权依据。生成请求、私有生成菜谱、History、收藏、偏好和安全条件未来归 guest subject 或 registered userId；语言、recipeCache、recentRecipes 和临时烹饪进度可保持设备本地。
+
+### 后果
+
+- 本轮不创建用户表、owner migration、认证 API、登录注册页面或伪用户。
+- 后续身份数据库、会话、guest claim/merge 和现有业务表 owner 迁移必须按 `docs/adr/0004-user-identity-and-data-ownership.md` 分阶段实施。
+- D-010 的 guest → anonymous → registered 路径和 D-017 的旧 Supabase ownership 说明不再作为当前实现依据；D-016 的内网 Node.js + MySQL 后端决策保持有效。
 
 ---
 
