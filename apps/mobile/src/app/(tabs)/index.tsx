@@ -9,6 +9,7 @@ import { Screen } from '@/components/screen';
 import { StatusMessage } from '@/components/status-message';
 import { ThemedText } from '@/components/themed-text';
 import { fixtureIngredientRepository } from '@/data/fixtures/ingredient-repository';
+import { resolveIngredientLocale } from '@/features/ingredients/ingredient-presentation';
 import { CustomIngredientForm } from '@/features/ingredients/custom-ingredient-form';
 import { IngredientCategoryTabs } from '@/features/ingredients/ingredient-category-tabs';
 import { IngredientGrid } from '@/features/ingredients/ingredient-grid';
@@ -18,10 +19,11 @@ import { selectCanGenerate } from '@/state/p0-selectors';
 import { useP0Store } from '@/state/p0-store';
 
 export default function HomeScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { state, selectCatalogIngredient, addCustomIngredient, removeIngredient, clearSelectedIngredients, setSelectedCategory } = useP0Store();
   const [query, setQuery] = useState('');
-  const ingredients = useMemo(() => fixtureIngredientRepository.search(query, state.uiPreferences.selectedCategory === 'all' ? undefined : state.uiPreferences.selectedCategory), [query, state.uiPreferences.selectedCategory]);
+  const ingredientLocale = resolveIngredientLocale(i18n.language);
+  const ingredients = useMemo(() => fixtureIngredientRepository.search(query, state.uiPreferences.selectedCategory === 'all' ? undefined : state.uiPreferences.selectedCategory, ingredientLocale), [ingredientLocale, query, state.uiPreferences.selectedCategory]);
   const canGenerate = selectCanGenerate(state);
   return <Screen>
     <AppHeader title={t('home.title')} eyebrow={t('home.eyebrow')} />

@@ -8,6 +8,8 @@
 - Home, generation conditions, generating/no-match states, recipe detail, cooking, Explore and History now use shared screen/header/card/button/notice primitives.
 - `zh-CN` and `en-US` UI support is implemented. Device language selects the first-run default (unsupported languages fall back to Chinese); Settings persists a local selection and applies it immediately.
 - Tabs, static page copy, choices and user-facing status copy are mapped through the i18n resource layer. Business identifiers and GenerationRequest/API schemas are unchanged.
+- 标准食材目录现以稳定 `id` 与 `category` 为业务值，并为全部 10 项提供 `zh-CN`/`en-US` 名称及别名。展示、当前语言搜索和菜谱食材引用均在 Mobile presentation 边界按语言解析；自定义食材保留用户原始输入。
+- 英文别名仅在有自然且有价值的译名时展示；未知标准 ID 依次回退到当前语言、默认语言及人类可读格式化名称，避免直接显示内部 ID。
 - Recipe steps normalize literal `\\n` for display, ingredient reference IDs are no longer rendered in cooking UI, duplicate session and nutrition notices are removed, and History separates blocking empty/error states from a non-blocking refresh warning when cached content exists.
 - Language preference is local AsyncStorage only; it is not account-synced or sent to the API. No Mobile backend, schema, Android or iOS native directory was added.
 

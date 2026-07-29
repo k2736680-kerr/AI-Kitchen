@@ -4,13 +4,14 @@ import { useTranslation } from 'react-i18next';
 import type { IngredientDefinition } from '@ai-kitchen/shared';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
+import { presentCatalogIngredient, resolveIngredientLocale } from './ingredient-presentation';
 
 export function IngredientGrid({ ingredients, selectedIds, onToggle }: { readonly ingredients: readonly IngredientDefinition[]; readonly selectedIds: readonly string[]; readonly onToggle: (ingredient: IngredientDefinition) => void }) {
   const theme = useTheme();
-  const { t } = useTranslation();
-  return <View style={styles.grid}>{ingredients.map((ingredient) => { const selected = selectedIds.includes(ingredient.id); return <Pressable key={ingredient.id} accessibilityRole="checkbox" accessibilityState={{ checked: selected }} onPress={() => onToggle(ingredient)} style={[styles.item, { borderColor: theme.border }, selected && { backgroundColor: theme.primary, borderColor: theme.primary }]}>
-    <ThemedText style={{ color: selected ? theme.background : theme.text }}>{ingredient.displayName}</ThemedText>
-    <ThemedText type="small" style={{ color: selected ? theme.background : theme.textSecondary }}>{selected ? t('common.selected') : ingredient.aliases[0] ? t('home.alias', { value: ingredient.aliases[0] }) : t('home.choose')}</ThemedText>
+  const { t, i18n } = useTranslation(); const locale = resolveIngredientLocale(i18n.language);
+  return <View style={styles.grid}>{ingredients.map((ingredient) => { const selected = selectedIds.includes(ingredient.id); const presentation = presentCatalogIngredient(ingredient, locale); return <Pressable key={ingredient.id} accessibilityRole="checkbox" accessibilityState={{ checked: selected }} onPress={() => onToggle(ingredient)} style={[styles.item, { borderColor: theme.border }, selected && { backgroundColor: theme.primary, borderColor: theme.primary }]}>
+    <ThemedText style={{ color: selected ? theme.background : theme.text }}>{presentation.name}</ThemedText>
+    <ThemedText type="small" style={{ color: selected ? theme.background : theme.textSecondary }}>{selected ? t('common.selected') : presentation.aliases[0] ? t('home.alias', { value: presentation.aliases[0] }) : t('home.choose')}</ThemedText>
   </Pressable>; })}</View>;
 }
 

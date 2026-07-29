@@ -7,11 +7,20 @@ export const INGREDIENT_CATEGORIES = [
 
 export type IngredientCategory = (typeof INGREDIENT_CATEGORIES)[number];
 
+export const INGREDIENT_LOCALES = ['zh-CN', 'en-US'] as const;
+export type IngredientLocale = (typeof INGREDIENT_LOCALES)[number];
+
+export interface IngredientLocalization {
+  readonly name: string;
+  readonly aliases: readonly string[];
+}
+
 export interface IngredientDefinition {
   readonly id: string;
-  readonly displayName: string;
-  readonly aliases: readonly string[];
   readonly category: IngredientCategory;
+  readonly localization: Readonly<Record<IngredientLocale, IngredientLocalization>>;
+  /** Compatibility label for non-UI prompt construction. UI must use `localization`. */
+  readonly displayName: string;
   readonly allergenCodes?: readonly AllergenCode[];
 }
 

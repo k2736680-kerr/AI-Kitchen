@@ -83,7 +83,7 @@ export function P0StoreProvider({ children }: PropsWithChildren) {
           type: 'SELECT_CATALOG_INGREDIENT',
           ingredient: {
             id: ingredient.id,
-            displayName: ingredient.displayName,
+            displayName: ingredient.localization['zh-CN'].name,
             source: 'catalog',
           },
         });

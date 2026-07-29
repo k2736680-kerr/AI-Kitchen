@@ -146,7 +146,7 @@ export function createCustomIngredient(
   }
 
   const isCatalogDuplicate = catalog.some((ingredient) =>
-    [ingredient.displayName, ...ingredient.aliases].some(
+    Object.values(ingredient.localization).flatMap((localized) => [localized.name, ...localized.aliases]).some(
       (candidate) => normalizeIngredientText(candidate) === normalizedName,
     ),
   );

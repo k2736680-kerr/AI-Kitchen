@@ -10,6 +10,7 @@ import { StatusMessage } from '@/components/status-message';
 import { ThemedText } from '@/components/themed-text';
 import { DIETARY_PREFERENCE_OPTIONS, ALLERGEN_OPTIONS, type AllergenCode, type DietaryPreference } from '@ai-kitchen/shared';
 import { fixtureIngredientRepository } from '@/data/fixtures/ingredient-repository';
+import { presentCatalogIngredient, presentSelectedIngredient, resolveIngredientLocale } from '@/features/ingredients/ingredient-presentation';
 import { CookwareSelector } from '@/features/generation/cookware-selector';
 import { GenerationDraftSummary } from '@/features/generation/generation-draft-summary';
 import { MultiOptionSelector } from '@/features/generation/multi-option-selector';
@@ -19,7 +20,8 @@ import { selectGenerationValidation } from '@/state/p0-selectors';
 import { useP0Store } from '@/state/p0-store';
 
 export default function GenerateScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const ingredientLocale = resolveIngredientLocale(i18n.language);
   const {
     state,
     setServings,
@@ -53,7 +55,7 @@ export default function GenerateScreen() {
     <AppHeader title={t('generation.title')} eyebrow={t('generation.eyebrow')} back />
     <AppCard>
       <ThemedText type="sectionTitle">{t('generation.selectedIngredients', { count: state.selectedIngredients.length })}</ThemedText>
-      <ThemedText>{hasIngredients ? state.selectedIngredients.map((item) => item.displayName).join(' · ') : t('generation.noIngredients')}</ThemedText>
+      <ThemedText>{hasIngredients ? state.selectedIngredients.map((item) => presentSelectedIngredient(item, ingredientLocale)).join(' · ') : t('generation.noIngredients')}</ThemedText>
       {!hasIngredients && <StatusMessage message={t('generation.chooseIngredients')} tone="error" />}
     </AppCard>
     <AppCard>
@@ -88,7 +90,7 @@ export default function GenerateScreen() {
       <ThemedText type="sectionTitle">{t('generation.exclusions')} · {t('common.optional')}</ThemedText>
       <ThemedText type="small" themeColor="textSecondary">{t('generation.exclusionsHint')}</ThemedText>
       <MultiOptionSelector
-        options={fixtureIngredientRepository.listAll().map((ingredient) => ({ value: ingredient.id, label: ingredient.displayName }))}
+        options={fixtureIngredientRepository.listAll().map((ingredient) => ({ value: ingredient.id, label: presentCatalogIngredient(ingredient, ingredientLocale).name }))}
         selected={state.generationDraft.excludedIngredients}
         onToggle={toggleExcludedIngredient}
       />
