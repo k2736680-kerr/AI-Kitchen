@@ -1,9 +1,10 @@
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AppButton } from '@/components/app-button';
+import { AppHeader } from '@/components/app-header';
 import { Screen } from '@/components/screen';
 import { StatusMessage } from '@/components/status-message';
-import { ThemedText } from '@/components/themed-text';
 import { fixtureRecipeRepository } from '@/data/fixtures/recipe-repository';
 import { environmentConfig } from '@/config/environment';
 import { RemoteRecipeDataRepository } from '@/data/recipe-generation/remote-recipe-data-repository';
@@ -16,6 +17,7 @@ import { SafetyNotice } from '@/features/recipes/safety-notice';
 import { useP0Store } from '@/state/p0-store';
 
 export default function RecipeDetailScreen() {
+  const { t } = useTranslation();
   const { recipeId } = useLocalSearchParams<{ recipeId?: string }>();
   const { state, addRecentRecipe, cacheRecipe } = useP0Store();
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -36,17 +38,17 @@ export default function RecipeDetailScreen() {
         cacheRecipe(remoteRecipe);
       }
     }).catch(() => {
-      if (active) setLoadError('暂时无法加载该菜谱，请返回历史记录后重试。');
+      if (active) setLoadError(t('recipe.notFoundHint'));
     });
     return () => { active = false; controller.abort(); };
-  }, [cacheRecipe, recipe, recipeId, remoteData]);
+  }, [cacheRecipe, recipe, recipeId, remoteData, t]);
 
   useEffect(() => {
     if (!recipe) return;
     addRecentRecipe({ recipeId: recipe.recipeId, viewedAt: new Date().toISOString(), source: existingEntry?.source ?? source });
     if (remoteData) void remoteData.recordVisit({ guestId: state.guestId, recipeId: recipe.recipeId, source: 'remote' }, new AbortController().signal).catch(() => undefined);
   }, [addRecentRecipe, existingEntry?.source, recipe, remoteData, source, state.guestId]);
-  if (!recipe && remoteData && !loadError) return <Screen><ThemedText type="title">正在加载菜谱</ThemedText><StatusMessage message="正在读取已保存的菜谱。" /></Screen>;
-  if (!recipe) return <Screen><ThemedText type="title">未找到菜谱</ThemedText><StatusMessage message={loadError ?? '找不到请求的菜谱。'} tone="error" /><AppButton label="返回生成条件" onPress={() => router.replace('/generate' as Href)} /><AppButton label="返回首页" variant="secondary" onPress={() => router.replace('/' as Href)} /></Screen>;
-  return <Screen><RecipeHeader recipe={recipe} source={source} selectedServings={state.generationDraft.servings} /><RecipeConstraintSummary recipe={recipe} /><RecipeIngredientList title="必需食材" ingredients={recipe.requiredIngredients} /><RecipeIngredientList title="可选食材" ingredients={recipe.optionalIngredients} /><MissingIngredientNotice ingredients={recipe.missingIngredients} /><RecipeStepList steps={recipe.steps} /><SafetyNotice notices={recipe.safetyNotices} /><StatusMessage message="营养信息暂不可用。" /><AppButton label="开始烹饪" disabled={recipe.steps.length === 0} onPress={() => router.push(`/cooking/${recipe.recipeId}` as Href)} /><StatusMessage message="烹饪进度仅保存在当前应用会话。" /><AppButton label="返回生成条件" variant="secondary" onPress={() => router.replace('/generate' as Href)} /><AppButton label="返回首页" variant="ghost" onPress={() => router.replace('/' as Href)} /></Screen>;
+  if (!recipe && remoteData && !loadError) return <Screen><AppHeader title={t('recipe.loading')} back /><StatusMessage message={t('recipe.loadingHint')} /></Screen>;
+  if (!recipe) return <Screen><AppHeader title={t('recipe.notFound')} back /><StatusMessage message={loadError ?? t('recipe.notFoundHint')} tone="error" /><AppButton label={t('recipe.backToConditions')} onPress={() => router.replace('/generate' as Href)} /><AppButton label={t('common.home')} variant="secondary" onPress={() => router.replace('/' as Href)} /></Screen>;
+  return <Screen><AppHeader title={t('common.appName')} back /><RecipeHeader recipe={recipe} source={source} selectedServings={state.generationDraft.servings} /><RecipeConstraintSummary recipe={recipe} /><RecipeIngredientList title={t('recipe.requiredIngredients')} ingredients={recipe.requiredIngredients} /><RecipeIngredientList title={t('recipe.optionalIngredients')} ingredients={recipe.optionalIngredients} /><MissingIngredientNotice ingredients={recipe.missingIngredients} /><RecipeStepList steps={recipe.steps} /><SafetyNotice notices={recipe.safetyNotices} /><AppButton label={t('recipe.startCooking')} disabled={recipe.steps.length === 0} onPress={() => router.push(`/cooking/${recipe.recipeId}` as Href)} /><AppButton label={t('recipe.backToConditions')} variant="secondary" onPress={() => router.replace('/generate' as Href)} /><AppButton label={t('common.home')} variant="ghost" onPress={() => router.replace('/' as Href)} /></Screen>;
 }

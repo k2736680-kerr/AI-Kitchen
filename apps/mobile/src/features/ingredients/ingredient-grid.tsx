@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import type { IngredientDefinition } from '@ai-kitchen/shared';
 import { ThemedText } from '@/components/themed-text';
@@ -6,9 +7,10 @@ import { useTheme } from '@/hooks/use-theme';
 
 export function IngredientGrid({ ingredients, selectedIds, onToggle }: { readonly ingredients: readonly IngredientDefinition[]; readonly selectedIds: readonly string[]; readonly onToggle: (ingredient: IngredientDefinition) => void }) {
   const theme = useTheme();
-  return <View style={styles.grid}>{ingredients.map((ingredient) => { const selected = selectedIds.includes(ingredient.id); return <Pressable key={ingredient.id} onPress={() => onToggle(ingredient)} style={[styles.item, { borderColor: theme.textSecondary }, selected && { backgroundColor: theme.text, borderColor: theme.text }]}>
+  const { t } = useTranslation();
+  return <View style={styles.grid}>{ingredients.map((ingredient) => { const selected = selectedIds.includes(ingredient.id); return <Pressable key={ingredient.id} accessibilityRole="checkbox" accessibilityState={{ checked: selected }} onPress={() => onToggle(ingredient)} style={[styles.item, { borderColor: theme.border }, selected && { backgroundColor: theme.primary, borderColor: theme.primary }]}>
     <ThemedText style={{ color: selected ? theme.background : theme.text }}>{ingredient.displayName}</ThemedText>
-    <ThemedText type="small" style={{ color: selected ? theme.background : theme.textSecondary }}>{selected ? '已选' : ingredient.aliases[0] ? `别名：${ingredient.aliases[0]}` : '选择'}</ThemedText>
+    <ThemedText type="small" style={{ color: selected ? theme.background : theme.textSecondary }}>{selected ? t('common.selected') : ingredient.aliases[0] ? t('home.alias', { value: ingredient.aliases[0] }) : t('home.choose')}</ThemedText>
   </Pressable>; })}</View>;
 }
 

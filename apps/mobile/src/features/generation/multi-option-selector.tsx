@@ -26,9 +26,9 @@ export function MultiOptionSelector<T extends string>({
         accessibilityRole="checkbox"
         accessibilityState={{ checked: isSelected }}
         onPress={() => onToggle(option.value)}
-        style={[styles.option, { borderColor: isSelected ? theme.text : theme.textSecondary, backgroundColor: isSelected ? theme.backgroundSelected : theme.backgroundElement }]}
+        style={[styles.option, { borderColor: isSelected ? theme.primary : theme.border, backgroundColor: isSelected ? theme.backgroundSelected : theme.backgroundElement }]}
       >
-        <ThemedText style={{ color: theme.text }}>{isSelected ? '✓ ' : ''}{option.label}</ThemedText>
+        <ThemedText style={{ color: isSelected ? theme.primaryPressed : theme.text }}>{isSelected ? '✓ ' : ''}{option.label}</ThemedText>
       </Pressable>;
     })}
   </View>;

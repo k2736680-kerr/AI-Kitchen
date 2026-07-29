@@ -1,12 +1,10 @@
 import { StyleSheet, View } from 'react-native';
-
+import { Palette, Radius, Spacing } from '@/constants/theme';
 import { ThemedText } from './themed-text';
-import { useTheme } from '@/hooks/use-theme';
 
-export function StatusMessage({ message, tone = 'info' }: { readonly message: string; readonly tone?: 'info' | 'error' | 'success' }) {
-  const theme = useTheme();
-  const color = tone === 'error' ? '#c62828' : tone === 'success' ? '#2e7d32' : theme.textSecondary;
-  return <View style={[styles.box, { borderColor: color }]}><ThemedText style={{ color }}>{message}</ThemedText></View>;
+export function StatusMessage({ message, tone = 'info' }: { readonly message: string; readonly tone?: 'info' | 'error' | 'success' | 'warning' }) {
+  const presentation = tone === 'error' ? styles.error : tone === 'warning' ? styles.warning : tone === 'success' ? styles.success : styles.info;
+  return <View accessibilityRole={tone === 'error' ? 'alert' : 'text'} style={[styles.box, presentation]}><ThemedText type="small" style={styles.text}>{message}</ThemedText></View>;
 }
-
-const styles = StyleSheet.create({ box: { borderWidth: 1, borderRadius: 10, padding: 12 } });
+export const InlineNotice = StatusMessage;
+const styles = StyleSheet.create({ box: { borderRadius: Radius.input, padding: Spacing.sm, borderWidth: 1 }, text: { color: Palette.textSecondary }, info: { backgroundColor: Palette.sageLight, borderColor: '#CEE0D1' }, error: { backgroundColor: Palette.dangerSurface, borderColor: '#EAA18F' }, warning: { backgroundColor: Palette.warningSurface, borderColor: '#E9C97F' }, success: { backgroundColor: Palette.sageLight, borderColor: '#9BBCA3' } });

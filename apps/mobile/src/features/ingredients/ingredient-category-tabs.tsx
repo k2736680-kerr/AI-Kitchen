@@ -1,19 +1,18 @@
 import { Pressable, ScrollView, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import type { IngredientCategory } from '@ai-kitchen/shared';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
 
-const categories: readonly { value: IngredientCategory | 'all'; label: string }[] = [
-  { value: 'all', label: '全部' }, { value: 'egg', label: '蛋类' },
-  { value: 'vegetable', label: '蔬菜' }, { value: 'staple', label: '主食' }, { value: 'meat', label: '肉类' },
-];
+const categories: readonly (IngredientCategory | 'all')[] = ['all', 'egg', 'vegetable', 'staple', 'meat'];
 
 export function IngredientCategoryTabs({ selected, onChange }: { readonly selected: IngredientCategory | 'all'; readonly onChange: (value: IngredientCategory | 'all') => void }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   return <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
-    {categories.map((category) => <Pressable key={category.value} onPress={() => onChange(category.value)} style={[styles.tab, { borderColor: theme.text }, selected === category.value && { backgroundColor: theme.text }]}>
-      <ThemedText style={{ color: selected === category.value ? theme.background : theme.text }}>{category.label}</ThemedText>
+    {categories.map((category) => <Pressable key={category} onPress={() => onChange(category)} style={[styles.tab, { borderColor: theme.border }, selected === category && { backgroundColor: theme.primary, borderColor: theme.primary }]}>
+      <ThemedText style={{ color: selected === category ? theme.background : theme.text }}>{t(`home.categories.${category}`)}</ThemedText>
     </Pressable>)}
   </ScrollView>;
 }

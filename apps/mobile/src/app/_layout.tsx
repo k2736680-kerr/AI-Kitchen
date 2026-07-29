@@ -3,6 +3,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { I18nProvider } from '@/i18n';
 import { P0StoreProvider } from '@/state/p0-store';
 
 SplashScreen.preventAutoHideAsync();
@@ -10,6 +11,7 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   return (
+    <I18nProvider>
     <P0StoreProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <AnimatedSplashOverlay />
@@ -20,8 +22,10 @@ export default function RootLayout() {
           <Stack.Screen name="generation-result" options={{ headerShown: false }} />
           <Stack.Screen name="recipe/[recipeId]" options={{ headerShown: false }} />
           <Stack.Screen name="cooking/[recipeId]" options={{ headerShown: false }} />
+          <Stack.Screen name="settings" options={{ headerShown: false }} />
         </Stack>
       </ThemeProvider>
     </P0StoreProvider>
+    </I18nProvider>
   );
 }

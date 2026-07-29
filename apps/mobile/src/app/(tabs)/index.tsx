@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { router, type Href } from 'expo-router';
 
 import { AppButton } from '@/components/app-button';
 import { AppCard } from '@/components/app-card';
+import { AppHeader } from '@/components/app-header';
 import { Screen } from '@/components/screen';
 import { StatusMessage } from '@/components/status-message';
 import { ThemedText } from '@/components/themed-text';
@@ -17,18 +18,16 @@ import { selectCanGenerate } from '@/state/p0-selectors';
 import { useP0Store } from '@/state/p0-store';
 
 export default function HomeScreen() {
+  const { t } = useTranslation();
   const { state, selectCatalogIngredient, addCustomIngredient, removeIngredient, clearSelectedIngredients, setSelectedCategory } = useP0Store();
   const [query, setQuery] = useState('');
   const ingredients = useMemo(() => fixtureIngredientRepository.search(query, state.uiPreferences.selectedCategory === 'all' ? undefined : state.uiPreferences.selectedCategory), [query, state.uiPreferences.selectedCategory]);
   const canGenerate = selectCanGenerate(state);
   return <Screen>
-    <ThemedText type="title" style={styles.title}>AI Kitchen</ThemedText>
-    <ThemedText type="subtitle">用现有食材，快速规划一顿饭</ThemedText>
-    <StatusMessage message="当前提供本地菜谱体验，尚未接入云端账户。" />
-    <AppCard><ThemedText type="subtitle" style={styles.heading}>选择食材</ThemedText><IngredientCategoryTabs selected={state.uiPreferences.selectedCategory} onChange={setSelectedCategory} /><IngredientSearch value={query} onChange={setQuery} /><IngredientGrid ingredients={ingredients} selectedIds={state.selectedIngredients.map((item) => item.id)} onToggle={(ingredient) => selectCatalogIngredient(ingredient)} /></AppCard>
+    <AppHeader title={t('home.title')} eyebrow={t('home.eyebrow')} />
+    <ThemedText themeColor="textSecondary">{t('home.subtitle')}</ThemedText>
+    <AppCard><ThemedText type="sectionTitle">{t('home.ingredients')}</ThemedText><IngredientCategoryTabs selected={state.uiPreferences.selectedCategory} onChange={setSelectedCategory} /><IngredientSearch value={query} onChange={setQuery} /><IngredientGrid ingredients={ingredients} selectedIds={state.selectedIngredients.map((item) => item.id)} onToggle={(ingredient) => selectCatalogIngredient(ingredient)} /></AppCard>
     <AppCard><CustomIngredientForm onAdd={addCustomIngredient} /></AppCard>
-    <AppCard><ThemedText type="subtitle" style={styles.heading}>已选择 {state.selectedIngredients.length} 种食材</ThemedText><SelectedIngredientList ingredients={state.selectedIngredients} onRemove={removeIngredient} />{canGenerate && <AppButton label="清空已选食材" variant="ghost" onPress={clearSelectedIngredients} />}{canGenerate && <AppButton label="设置生成条件" onPress={() => router.push('/generate' as Href)} />}{!canGenerate && <StatusMessage message="至少选择一种食材后才能继续" />}</AppCard>
+    <AppCard><ThemedText type="sectionTitle">{t('home.selectedIngredients', { count: state.selectedIngredients.length })}</ThemedText><SelectedIngredientList ingredients={state.selectedIngredients} onRemove={removeIngredient} />{canGenerate && <AppButton label={t('home.clearSelection')} variant="ghost" onPress={clearSelectedIngredients} />}{canGenerate && <AppButton label={t('home.generate')} onPress={() => router.push('/generate' as Href)} />}{!canGenerate && <StatusMessage message={t('home.noSelection')} />}</AppCard>
   </Screen>;
 }
-
-const styles = StyleSheet.create({ title: { fontSize: 40, lineHeight: 46 }, heading: { fontSize: 22, lineHeight: 30 } });

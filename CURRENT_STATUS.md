@@ -2,6 +2,15 @@
 
 > 本文件记录当前真实状态。计划、示例和目标设计不得冒充实现完成。
 
+## Mobile product UI/UX and internationalization
+
+- Mobile has a shared food-focused design system: warm background, white cards, sage primary actions, semantic alert colors, consistent type scale, spacing, radius and shadow tokens.
+- Home, generation conditions, generating/no-match states, recipe detail, cooking, Explore and History now use shared screen/header/card/button/notice primitives.
+- `zh-CN` and `en-US` UI support is implemented. Device language selects the first-run default (unsupported languages fall back to Chinese); Settings persists a local selection and applies it immediately.
+- Tabs, static page copy, choices and user-facing status copy are mapped through the i18n resource layer. Business identifiers and GenerationRequest/API schemas are unchanged.
+- Recipe steps normalize literal `\\n` for display, ingredient reference IDs are no longer rendered in cooking UI, duplicate session and nutrition notices are removed, and History separates blocking empty/error states from a non-blocking refresh warning when cached content exists.
+- Language preference is local AsyncStorage only; it is not account-synced or sent to the API. No Mobile backend, schema, Android or iOS native directory was added.
+
 | 属性 | 当前值 |
 |---|---|
 | 更新时间 | 2026-07-28 |

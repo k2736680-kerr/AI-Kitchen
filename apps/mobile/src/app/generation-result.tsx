@@ -1,25 +1,28 @@
 import { router, type Href } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 
 import { AppButton } from '@/components/app-button';
 import { AppCard } from '@/components/app-card';
+import { AppHeader } from '@/components/app-header';
 import { Screen } from '@/components/screen';
 import { StatusMessage } from '@/components/status-message';
 import { ThemedText } from '@/components/themed-text';
 import { useP0Store } from '@/state/p0-store';
 
 export default function GenerationResultScreen() {
+  const { t } = useTranslation();
   const { state } = useP0Store();
   const message = state.generation.status === 'no-match'
-    ? state.generation.message ?? '没有找到符合当前条件的菜谱。'
-    : '这次没有生成出可查看的菜谱，请调整条件后再试。';
+    ? state.generation.message ?? t('generation.noMatchFallback')
+    : t('generation.noMatchFallback');
 
   return <Screen>
-    <ThemedText type="title">暂时没有合适的菜谱</ThemedText>
+    <AppHeader title={t('generation.noMatchTitle')} back />
     <AppCard>
       <StatusMessage message={message} tone="error" />
-      <ThemedText>你可以减少限制、选择更多食材，或返回首页重新选择。</ThemedText>
+      <ThemedText themeColor="textSecondary">{t('generation.noMatchHint')}</ThemedText>
     </AppCard>
-    <AppButton label="调整生成条件" onPress={() => router.replace('/generate' as Href)} />
-    <AppButton label="返回首页选择食材" variant="secondary" onPress={() => router.replace('/' as Href)} />
+    <AppButton label={t('common.adjust')} onPress={() => router.replace('/generate' as Href)} />
+    <AppButton label={t('common.home')} variant="secondary" onPress={() => router.replace('/' as Href)} />
   </Screen>;
 }

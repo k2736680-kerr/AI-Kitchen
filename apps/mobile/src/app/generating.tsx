@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert } from 'react-native';
 import { router, type Href } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 
+import { AppHeader } from '@/components/app-header';
 import { Screen } from '@/components/screen';
-import { ThemedText } from '@/components/themed-text';
 import { GenerationClientError } from '@/data/api/generation-client';
 import { createGenerationApiRequest } from '@/data/api/generation-request';
 import { createRecipeGenerationRepository } from '@/data/recipe-generation/repository-factory';
@@ -23,6 +24,7 @@ function toUserError(response: Exclude<GenerationApiResponse, { status: 'success
 }
 
 export default function GeneratingScreen() {
+  const { t } = useTranslation();
   const {
     state,
     startGeneration,
@@ -70,9 +72,9 @@ export default function GeneratingScreen() {
       if (reason instanceof GenerationClientError) {
         setGenerationFailed({ code: reason.kind === 'timeout' ? 'TIMEOUT' : reason.kind === 'configuration' ? 'SERVICE_UNAVAILABLE' : 'INTERNAL_ERROR', message: reason.message });
       } else if (reason instanceof DOMException && reason.name === 'AbortError') {
-        setGenerationFailed({ code: 'TIMEOUT', message: '生成请求超时，请稍后重试。' });
+        setGenerationFailed({ code: 'TIMEOUT', message: t('generation.timedOut') });
       } else {
-        setGenerationFailed({ code: 'INTERNAL_ERROR', message: '菜谱生成暂时不可用，请稍后重试。' });
+        setGenerationFailed({ code: 'INTERNAL_ERROR', message: t('generation.unavailable') });
       }
     });
 
@@ -81,15 +83,15 @@ export default function GeneratingScreen() {
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [addRecentRecipe, attempt, guestId, idempotencyKey, remoteData, repository, requestId, requestSnapshot, setGenerationFailed, setGenerationNoMatch, setGenerationSucceeded, setLastRecipe]);
+  }, [addRecentRecipe, attempt, guestId, idempotencyKey, remoteData, repository, requestId, requestSnapshot, setGenerationFailed, setGenerationNoMatch, setGenerationSucceeded, setLastRecipe, t]);
 
-  const cancel = () => Alert.alert('取消生成', '确定取消当前生成吗？', [
-    { text: '继续等待', style: 'cancel' },
-    { text: '取消生成', style: 'destructive', onPress: () => { cancelGeneration(); router.back(); } },
+  const cancel = () => Alert.alert(t('generation.cancelTitle'), t('generation.cancelConfirm'), [
+    { text: t('generation.continueWaiting'), style: 'cancel' },
+    { text: t('generation.cancel'), style: 'destructive', onPress: () => { cancelGeneration(); router.back(); } },
   ]);
 
   return <Screen>
-    <ThemedText type="title">正在生成菜谱</ThemedText>
+    <AppHeader title={t('generation.generatingTitle')} back />
     {state.generation.status === 'failed' && state.generation.error ? <GenerationErrorState error={state.generation.error} onRetry={() => { startGeneration(); setAttempt((value) => value + 1); }} onBack={() => router.replace('/generate' as Href)} /> : <GeneratingState state={state} onCancel={cancel} />}
   </Screen>;
 }

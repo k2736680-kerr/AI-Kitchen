@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { AppButton } from '@/components/app-button';
 import { AppCard } from '@/components/app-card';
@@ -7,12 +8,13 @@ import { ThemedText } from '@/components/themed-text';
 import type { P0State } from '@/state/p0-state';
 
 export function GeneratingState({ state, onCancel }: { readonly state: P0State; readonly onCancel: () => void }) {
+  const { t } = useTranslation();
   return <AppCard>
-    <ThemedText type="subtitle" style={styles.heading}>正在查找适合你的菜谱</ThemedText>
-    <StatusMessage message="正在根据已选食材和生成条件处理，请稍候。" />
-    <ThemedText>食材：{state.selectedIngredients.map((item) => item.displayName).join('、')}</ThemedText>
-    <ThemedText>{state.generationDraft.servings} 人 · 最多 {state.generationDraft.maxCookingTimeMinutes} 分钟</ThemedText>
-    <AppButton label="取消生成" variant="secondary" onPress={onCancel} />
+    <ThemedText type="sectionTitle" style={styles.heading}>{t('generation.generatingHeading')}</ThemedText>
+    <StatusMessage message={t('generation.generatingHint')} />
+    <ThemedText>{state.selectedIngredients.map((item) => item.displayName).join(' · ')}</ThemedText>
+    <ThemedText type="small" themeColor="textSecondary">{t('common.people', { count: state.generationDraft.servings })} · {t('common.minutes', { count: state.generationDraft.maxCookingTimeMinutes })}</ThemedText>
+    <AppButton label={t('generation.cancel')} variant="secondary" onPress={onCancel} />
   </AppCard>;
 }
 
