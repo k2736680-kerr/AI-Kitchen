@@ -1,5 +1,6 @@
 import { Alert, StyleSheet, View } from 'react-native';
 import { router, type Href } from 'expo-router';
+import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 
 import { AppCard } from '@/components/app-card';
@@ -22,10 +23,15 @@ export default function ProfileScreen() {
 
       <AppCard>
         <View style={styles.guestHeader}>
-          <View style={styles.guestBadge}>
-            <ThemedText type="smallBold" style={styles.guestBadgeText}>{t('profile.guestBadge')}</ThemedText>
+          <View style={styles.guestMarkContainer}>
+            <Image source={require('@/assets/images/ai-kitchen/brand/splash-mark.png')} style={styles.guestMark} contentFit="contain" />
           </View>
-          <ThemedText type="sectionTitle">{t('profile.guestTitle')}</ThemedText>
+          <View style={styles.guestHeaderCopy}>
+            <View style={styles.guestBadge}>
+              <ThemedText type="smallBold" style={styles.guestBadgeText}>{t('profile.guestBadge')}</ThemedText>
+            </View>
+            <ThemedText type="sectionTitle">{t('profile.guestTitle')}</ThemedText>
+          </View>
         </View>
         <ThemedText themeColor="textSecondary">{t('profile.guestDescription')}</ThemedText>
         <ThemedText themeColor="textSecondary">{t('profile.guestFuture')}</ThemedText>
@@ -91,7 +97,25 @@ const styles = StyleSheet.create({
     paddingBottom: BottomTabInset + Spacing.lg,
   },
   guestHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  guestHeaderCopy: {
     gap: Spacing.xs,
+    flex: 1,
+  },
+  guestMarkContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: Radius.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Palette.sageLight,
+  },
+  guestMark: {
+    width: 44,
+    height: 44,
   },
   guestBadge: {
     alignSelf: 'flex-start',

@@ -1,14 +1,19 @@
 import { Image } from 'expo-image';
 import * as SplashScreen from 'expo-splash-screen';
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
 import Animated, { Easing, Keyframe } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-const INITIAL_SCALE_FACTOR = Dimensions.get('screen').height / 90;
-const DURATION = 600;
+import { Palette, Spacing } from '@/constants/theme';
+import { ThemedText } from './themed-text';
 
-export function AnimatedSplashOverlay() {
+const INITIAL_SCALE_FACTOR = Dimensions.get('screen').height / 90;
+const DURATION = 1180;
+
+export function AnimatedSplashOverlay({ onFinished }: { readonly onFinished?: () => void }) {
+  const { t } = useTranslation();
   const [animate, setAnimate] = useState(false);
   const [visible, setVisible] = useState(true);
 
@@ -22,18 +27,27 @@ export function AnimatedSplashOverlay() {
     20: {
       opacity: 1,
     },
-    70: {
-      opacity: 0,
-      easing: Easing.elastic(0.7),
+    68: {
+      opacity: 1,
+      transform: [{ scale: 1 }],
     },
     100: {
       opacity: 0,
-      transform: [{ scale: 1 }],
-      easing: Easing.elastic(0.7),
+      transform: [{ scale: 0.96 }],
+      easing: Easing.out(Easing.cubic),
     },
   });
 
-  const image = <Image style={styles.image} source={require('@/assets/images/expo-logo.png')} />;
+  const content = (
+    <View style={styles.content}>
+      <View style={styles.markContainer}>
+        <Image style={styles.brandMark} source={require('@/assets/images/ai-kitchen/brand/splash-mark.png')} contentFit="contain" />
+      </View>
+      <ThemedText type="title" style={styles.title}>{t('common.appName')}</ThemedText>
+      <ThemedText themeColor="textSecondary" style={styles.slogan}>{t('launch.slogan')}</ThemedText>
+      <Image style={styles.bottomDecor} source={require('@/assets/images/ai-kitchen/decor/botanical-wave-bottom.png')} contentFit="contain" />
+    </View>
+  );
 
   return animate ? (
     <Animated.View
@@ -41,10 +55,13 @@ export function AnimatedSplashOverlay() {
         'worklet';
         if (finished) {
           scheduleOnRN(setVisible, false);
+          if (onFinished) {
+            scheduleOnRN(onFinished);
+          }
         }
       })}
       style={styles.splashOverlay}>
-      {image}
+      {content}
     </Animated.View>
   ) : (
     <View
@@ -54,7 +71,7 @@ export function AnimatedSplashOverlay() {
         });
       }}
       style={styles.splashOverlay}>
-      {image}
+      {content}
     </View>
   );
 }
@@ -131,6 +148,10 @@ const styles = StyleSheet.create({
     width: 76,
     height: 71,
   },
+  brandMark: {
+    width: 108,
+    height: 108,
+  },
   background: {
     borderRadius: 40,
     experimental_backgroundImage: `linear-gradient(180deg, #3C9FFE, #0274DF)`,
@@ -140,9 +161,41 @@ const styles = StyleSheet.create({
   },
   splashOverlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: '#208AEF',
+    backgroundColor: Palette.background,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,
+  },
+  content: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.page,
+    gap: Spacing.sm,
+  },
+  markContainer: {
+    width: 156,
+    height: 156,
+    borderRadius: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Palette.surface,
+    shadowColor: '#1E2922',
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 4,
+  },
+  title: {
+    color: Palette.text,
+  },
+  slogan: {
+    maxWidth: 280,
+    textAlign: 'center',
+  },
+  bottomDecor: {
+    width: 248,
+    height: 74,
+    marginTop: Spacing.sm,
   },
 });

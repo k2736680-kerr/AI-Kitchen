@@ -15,8 +15,9 @@ function preferredLanguage(): AppLanguage { return getLocales()[0]?.languageCode
 void i18n.use(initReactI18next).init({ resources, lng: preferredLanguage(), fallbackLng: 'zh-CN', interpolation: { escapeValue: false }, compatibilityJSON: 'v4' });
 
 export function I18nProvider({ children }: PropsWithChildren) {
-  const [, setReady] = useState(false);
-  useEffect(() => { void AsyncStorage.getItem(languageStorageKey).then((language) => { if (language === 'zh-CN' || language === 'en-US') return i18n.changeLanguage(language); return undefined; }).finally(() => setReady(true)); }, []);
+  const [ready, setReady] = useState(false);
+  useEffect(() => { void AsyncStorage.getItem(languageStorageKey).then((language) => { if (language === 'zh-CN' || language === 'en-US') return i18n.changeLanguage(language); return undefined; }).catch((error: unknown) => { console.warn('[i18n] Failed to read saved language; using the device language.', error); }).finally(() => setReady(true)); }, []);
+  if (!ready) return null;
   return <I18nextProvider i18n={i18n}>{children}</I18nextProvider>;
 }
 export async function setAppLanguage(language: AppLanguage): Promise<void> { await i18n.changeLanguage(language); await AsyncStorage.setItem(languageStorageKey, language); }

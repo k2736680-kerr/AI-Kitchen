@@ -4,6 +4,17 @@
 
 ---
 
+## Mobile 品牌启动页与首次引导
+
+- Mobile Expo 资源配置已切换到最终 AI Kitchen 品牌素材：应用图标、Android adaptive icon 和 native splash 不再使用默认 Expo 图。
+- App 启动后的过渡页已替换为品牌 splash mark、产品名、i18n slogan 和植物装饰图；中英文 slogan 由 `src/i18n/resources.ts` 提供，不写死在图片中。
+- 新增三页首次启动 onboarding，使用本地静态 `require()` 插图与现有主题色；完成或跳过后仅在本地 AsyncStorage 标记，清除应用数据后会重新出现。
+- 修复 onboarding 作为普通 React 覆盖层时被原生 NativeTabs 压住并拦截触摸的问题：onboarding 现为独立 Expo Router Stack 页面，根 Navigator 保持挂载，完成标记写入成功后才替换到首页；Skip 与三步完成均稳定进入四 Tab 主应用。
+- Onboarding 改用 `react-native-safe-area-context`，并在 Expo Go 开发模式为悬浮 Tools 热区留出 Skip 点击空间；正式构建布局不受该开发态避让影响。
+- Profile 来宾卡片复用品牌 splash mark 作为图标容器视觉，保持现有 guest-only 产品边界，不新增登录、注册、账号恢复或服务端身份改动。
+
+---
+
 ## 游客版“我的”Tab 与产品信息入口
 
 - 暂停身份阶段 2：本轮未新增 registered 身份、用户表、登录注册 API、密码哈希、账号认领、登出或删除账号逻辑，也未改动现有 guest session 机制。

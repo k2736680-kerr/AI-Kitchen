@@ -8,6 +8,7 @@ The mobile client uses one light, food-focused visual system: warm background, w
 
 - `src/constants/theme.ts` defines palette, spacing, radii, shadow, icon and motion tokens.
 - `Screen`, `AppHeader`, `AppCard`/`SurfaceCard`, `AppButton`, `ThemedText` and `StatusMessage` are the shared screen primitives.
+- Launch and onboarding visuals reuse the same palette and illustration direction: native splash + in-app launch transition use the brand splash mark, and first-run onboarding uses static local `require()` illustrations with localized copy layered outside the image assets.
 - Ingredient, condition, recipe, history and cooking feature components use those primitives rather than maintaining page-level visual systems.
 
 ## Language behavior
@@ -15,6 +16,7 @@ The mobile client uses one light, food-focused visual system: warm background, w
 - Supported UI languages are `zh-CN` and `en-US`.
 - First launch follows the device language; unsupported languages use Simplified Chinese.
 - The setting is saved locally using AsyncStorage and applies immediately through i18next/react-i18next.
+- First-run onboarding completion is also stored locally with AsyncStorage. It is a device-local UX flag only: clearing app data resets it, and it is not synced to any backend identity.
 - User-facing static copy is stored in `src/i18n/resources.ts`; generation IDs remain stable business values and are mapped to localized display text in the UI.
 - The UI setting remains client-local and persists with AsyncStorage. For every new generation, Mobile explicitly snapshots the current `zh-CN` or `en-US` locale into `GenerationRequest v1`; it does not use device headers or server locale inference.
 

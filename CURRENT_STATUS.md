@@ -27,6 +27,7 @@
 - Home, generation conditions, generating/no-match states, recipe detail, cooking, Explore and History now use shared screen/header/card/button/notice primitives.
 - Bottom Tabs now expose `Home` / `Explore` / `History` / `Profile`; the new Profile surface is guest-only and does not create login, registration, mock account or sign-out flows.
 - Profile shows guest status, a coming-soon account entry, a language shortcut into the existing `/settings`, placeholder Terms/Privacy routes and an About page with a shared app-version source.
+- Mobile launch now uses the final AI Kitchen brand assets for native icon, native splash, an in-app branded transition overlay, and a three-step first-run onboarding flow stored locally in AsyncStorage. Clearing app data resets onboarding; guest session/bootstrap behavior is otherwise unchanged.
 - Terms of Service and Privacy Policy pages are explicit development placeholders and must be replaced before any formal release.
 - `zh-CN` and `en-US` UI support is implemented. Device language selects the first-run default (unsupported languages fall back to Chinese); Settings persists a local selection and applies it immediately.
 - Tabs, static page copy, choices and user-facing status copy are mapped through the i18n resource layer. Business identifiers and GenerationRequest/API schemas are unchanged.
@@ -36,9 +37,16 @@
 - Recipe steps normalize literal `\\n` for display, ingredient reference IDs are no longer rendered in cooking UI, duplicate session and nutrition notices are removed, and History separates blocking empty/error states from a non-blocking refresh warning when cached content exists.
 - Language preference is local AsyncStorage only; it is not account-synced or sent to the API. The current guest-session bootstrap mechanism remains unchanged, and no Mobile backend, schema, Android or iOS native directory was added.
 
+## 稳定性恢复与性能基准（2026-08-01）
+
+- Pixel_8a / Expo Go 已验证清数据后显示 onboarding、三步完成、Skip、完成后四 Tab、强制停止后重启不再显示 onboarding，以及 Home / Explore / History / Profile 四页进入；采集期间无项目 ReactNativeJS、AndroidRuntime、Expo Router、AsyncStorage 或 i18n 异常。
+- Onboarding 已从 NativeTabs 上方的普通覆盖层迁移为独立 `/onboarding` Stack route；根 Stack 始终挂载，AsyncStorage 标记写入成功后才 `router.replace('/')`，避免原生 Tab 抢占触摸和 Navigator 条件卸载重建。
+- Expo Go 远程开发环境的正常冷启动到首页可操作 5 次平均约 6.51 秒，品牌动画实际平均约 1.31 秒；已完成 onboarding 后从后台恢复 5 次 Android `TotalTime` 平均约 208 毫秒。完整原始数据保留在本轮交付报告。
+- API TypeScript 可运行入口 5 次启动平均约 1.02 秒；首个 health 平均约 28.8 毫秒，热连接 health 平均约 1.5 毫秒。当前 `pnpm start:api` 的 esbuild ESM 产物在 Node 24 下仍因 dotenv 动态 `require('fs')` 启动失败，未在本轮扩大范围修复。
+
 | 属性 | 当前值 |
 |---|---|
-| 更新时间 | 2026-07-28 |
+| 更新时间 | 2026-08-01 |
 | 当前阶段 | **P0 内网 Fastify/MySQL 菜谱生成服务：等待本机 `MYSQL_PASSWORD` 后执行真实 MySQL 联调** |
 | 当前状态 | `IN_PROGRESS` |
 | Blueprint 版本 | `1.0.0` |
