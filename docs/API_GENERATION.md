@@ -68,9 +68,12 @@ pnpm --filter @ai-kitchen/api migrate:down 001_initial_schema
 pnpm install --frozen-lockfile
 pnpm --filter @ai-kitchen/api typecheck
 pnpm --filter @ai-kitchen/api build
+pnpm --filter @ai-kitchen/api test:build-start
 pnpm --filter @ai-kitchen/api migrate:up
 pnpm --filter @ai-kitchen/api start
 ```
+
+API 构建保持 ESM，并将 Fastify、dotenv、mysql2、Zod 等第三方运行时依赖保留为 Node 运行时依赖；项目自身 API 源码与 workspace shared 源码由 esbuild 编译进产物。部署目录必须保留按 lockfile 安装的生产依赖，不能把 `dist/server.js` 当作无依赖单文件分发。`test:build-start` 会用临时本地端口启动构建产物、校验 Health 的数据库与 Provider 状态、终止子进程并确认端口释放，不调用真实 AI 生成。
 
 服务默认监听 `0.0.0.0:3100`。建议使用现有进程守护工具；若服务器没有既定方案，可使用 systemd：
 

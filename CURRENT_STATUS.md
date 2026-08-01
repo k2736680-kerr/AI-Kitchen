@@ -42,7 +42,7 @@
 - Pixel_8a / Expo Go 已验证清数据后显示 onboarding、三步完成、Skip、完成后四 Tab、强制停止后重启不再显示 onboarding，以及 Home / Explore / History / Profile 四页进入；采集期间无项目 ReactNativeJS、AndroidRuntime、Expo Router、AsyncStorage 或 i18n 异常。
 - Onboarding 已从 NativeTabs 上方的普通覆盖层迁移为独立 `/onboarding` Stack route；根 Stack 始终挂载，AsyncStorage 标记写入成功后才 `router.replace('/')`，避免原生 Tab 抢占触摸和 Navigator 条件卸载重建。
 - Expo Go 远程开发环境的正常冷启动到首页可操作 5 次平均约 6.51 秒，品牌动画实际平均约 1.31 秒；已完成 onboarding 后从后台恢复 5 次 Android `TotalTime` 平均约 208 毫秒。完整原始数据保留在本轮交付报告。
-- API TypeScript 可运行入口 5 次启动平均约 1.02 秒；首个 health 平均约 28.8 毫秒，热连接 health 平均约 1.5 毫秒。当前 `pnpm start:api` 的 esbuild ESM 产物在 Node 24 下仍因 dotenv 动态 `require('fs')` 启动失败，未在本轮扩大范围修复。
+- API TypeScript 可运行入口 5 次启动平均约 1.02 秒；首个 health 平均约 28.8 毫秒，热连接 health 平均约 1.5 毫秒。正式 esbuild 产物保持 Node ESM，并外部化第三方运行时依赖，已消除 dotenv 被打入单文件后产生的动态 `require('fs')` 错误；Node 24.14.0 下 build、Node 直接启动、Health、guest session、History 与端口释放均已验证。
 
 | 属性 | 当前值 |
 |---|---|

@@ -4,6 +4,14 @@
 
 ---
 
+## API 正式构建产物启动修复
+
+- API esbuild 构建继续输出 Node ESM，但不再把 dotenv、Fastify、mysql2、Zod 等第三方运行时依赖打入单文件；workspace shared 源码仍随 API 编译，部署时从已安装的锁定依赖解析运行时包。
+- 修复 dotenv CommonJS 在单文件 ESM bundle 中触发 `Dynamic require of "fs" is not supported`、导致 `pnpm start:api` 无法启动的问题。
+- 新增构建产物启动冒烟命令：使用临时本地端口启动 `dist/server.js`、校验 Health、终止进程并确认端口释放；不调用 AI 生成接口。
+
+---
+
 ## Mobile 品牌启动页与首次引导
 
 - Mobile Expo 资源配置已切换到最终 AI Kitchen 品牌素材：应用图标、Android adaptive icon 和 native splash 不再使用默认 Expo 图。
