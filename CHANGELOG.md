@@ -4,6 +4,15 @@
 
 ---
 
+## P0 体验优化：烹饪计时器与空状态引导（2026-08-05）
+
+- **烹饪计时器**：`features/cooking/cooking-step-card.tsx` 在步骤含 `durationMinutes` 时渲染可点击倒计时（开始 / 停止，mm:ss 实时显示，结束提示），纯前端 `setInterval` 实现，无新依赖；该组件在 `/cooking/[recipeId]` 当前步渲染，补齐下厨房 / 美食杰 / SideChef 同款逐步引导计时能力。
+- **历史空状态引导**：新增 `components/empty-state.tsx` 通用空态组件（图标 + 标题 + 引导文案 + 操作按钮）；`(tabs)/history.tsx` 在无记录时展示引导并提供「去生成菜谱」入口。
+- **i18n**：zh-CN / en-US 新增 `recipe.timer.*` 与 `history.goGenerate` 文案。
+- **验证**：mobile `tsc --noEmit` EXIT=0。Android 原生构建仍被 Windows 环境阻塞（见 HANDOFF），计时器与空状态暂以 Web 预览 / 类型检查验证，待上机实测。
+
+---
+
 ## 多方案生成、食材扩容与本地持久化（2026-08-04）
 
 ### 多候选菜谱生成（核心）

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { router, type Href } from 'expo-router';
 import { AppButton } from '@/components/app-button';
+import { EmptyState } from '@/components/empty-state';
 import { HomeHero } from '@/components/home-hero';
 import { Screen } from '@/components/screen';
 import { StatusMessage } from '@/components/status-message';
@@ -17,5 +19,5 @@ export default function HistoryScreen() {
   const repository = useMemo(() => environmentConfig.generationMode === 'remote' ? new RemoteRecipeDataRepository(environmentConfig.apiBaseUrl) : null, []);
   useEffect(() => { if (!repository || state.identityStatus !== 'ready') return; let active = true; const controller = new AbortController(); void repository.listHistory(locale, controller.signal).then((history) => { if (!active) return; history.items.forEach((entry) => { cacheRecipe(entry.recipe); addRecentRecipe({ recipeId: entry.recipe.recipeId, viewedAt: entry.lastVisitedAt, source: entry.source, locale: entry.recipe.locale }); }); setError(null); }).catch(() => { if (active) setError(t('history.refreshFailed')); }).finally(() => { if (active) setHasLoaded(true); }); return () => { active = false; controller.abort(); }; }, [addRecentRecipe, attempt, cacheRecipe, locale, repository, state.identityStatus, t]);
   const hasEntries = state.recentRecipes.some((entry) => entry.locale === locale);
-  return <Screen><HomeHero eyebrow={t('history.eyebrow')} title={t('history.title')} subtitle={repository ? t('history.remoteSubtitle') : t('history.localSubtitle')} />{repository && !hasLoaded && !hasEntries ? <StatusMessage message={t('history.loading')} /> : null}{error && !hasEntries ? <><StatusMessage message={error} tone="error" /><AppButton label={t('history.reload')} onPress={() => { setHasLoaded(false); setAttempt((value) => value + 1); }} /></> : null}{error && hasEntries ? <StatusMessage message={error} tone="warning" /> : null}{hasEntries ? <RecentRecipeList entries={state.recentRecipes} recipeCache={state.recipeCache} locale={locale} /> : hasLoaded && !error ? <RecentRecipeList entries={state.recentRecipes} recipeCache={state.recipeCache} locale={locale} /> : null}</Screen>;
+  return <Screen><HomeHero eyebrow={t('history.eyebrow')} title={t('history.title')} subtitle={repository ? t('history.remoteSubtitle') : t('history.localSubtitle')} />{repository && !hasLoaded && !hasEntries ? <StatusMessage message={t('history.loading')} /> : null}{error && !hasEntries ? <><StatusMessage message={error} tone="error" /><AppButton label={t('history.reload')} onPress={() => { setHasLoaded(false); setAttempt((value) => value + 1); }} /></> : null}{error && hasEntries ? <StatusMessage message={error} tone="warning" /> : null}{hasEntries ? <RecentRecipeList entries={state.recentRecipes} recipeCache={state.recipeCache} locale={locale} /> : (hasLoaded || error) ? <EmptyState icon="🍽️" title={t('history.empty')} actionLabel={t('history.goGenerate')} onAction={() => router.replace('/' as Href)} /> : null}</Screen>;
 }
