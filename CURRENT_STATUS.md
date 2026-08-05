@@ -2,6 +2,16 @@
 
 > 本文件记录当前真实状态。计划、示例和目标设计不得冒充实现完成。
 
+## 多方案生成 + 食材扩容 + 本地持久化（2026-08-04，COMPLETED）
+
+- **多候选菜谱生成**：`POST /api/v1/recipes/generate` 一次返回 `success.recipes`（1-5 个）而非单个 `recipe`（旧字段 deprecated 保留兼容 replay）。Provider 按 `candidateCount`（默认 4）并发调用 DashScope，每次指定一种烹饪方式（stir-fry/stew/steam/soup/cold/roast），`temperature 0.8 / topP 0.9`（可配置）。候选逐个过 Schema + 安全 + 语言校验，按 (cookingMethod, title) 去重，最多 repair 2 个/批；`request.excludedRecipes` 支持"再来一批"去重。
+- **Recipe Schema 新增维度**：`cookingMethod` / `cuisine` / `flavor`（带默认值，旧快照零改动可读）；`difficulty` 增 `hard`、`spiceLevel` 增 `hot`。迁移 004 为 `ai_kitchen_recipes` 加结构化列并回填，旧 response_payload 单 recipe 回填为数组。
+- **食材库 39 → 166 种**：新增 fruit/condiment/spice 类目与调料类 `isCondiment` 标志；resolver 豁免调料"必须来自已选"，主食材仍强制来自已选。
+- **移动端**：新增 `/recipe-list` 方案列表页（做法/菜系/用时/难度/口味卡片 + 「换个做法再来一批」）；P0Store 迁移 AsyncStorage 持久化（`state/p0-persist.ts`，300ms 防抖，杀进程保留历史/缓存/进度/收藏/偏好）；详情页收藏按钮（纯本地）；探索页搜索 + 难度/用时筛选 + 收藏夹 + 下拉刷新；设置页外观（跟随系统/浅色/深色）与清除本地数据；about/terms/privacy 真实文案；暗色模式真实调色板贯通。
+- **验证**：shared 30 + api 20 + mobile 13 = 63 项测试通过；shared/api/mobile 三包 typecheck 通过；决策 D-028/D-029/D-030 与 CHANGELOG 已更新。
+
+> 本节是当前事实基线；下方按阶段记录的旧状态保留历史，不覆盖本节结论。
+
 ## 当前身份与数据所有权基线（2026-07-29）
 
 - 当前只有 guest 能力，没有正式注册、登录、账号会话或跨设备恢复。
@@ -31,7 +41,10 @@
 - Terms of Service and Privacy Policy pages are explicit development placeholders and must be replaced before any formal release.
 - `zh-CN` and `en-US` UI support is implemented. Device language selects the first-run default (unsupported languages fall back to Chinese); Settings persists a local selection and applies it immediately.
 - Tabs, static page copy, choices and user-facing status copy are mapped through the i18n resource layer. Business identifiers and GenerationRequest/API schemas are unchanged.
-- 标准食材目录现以稳定 `id` 与 `category` 为业务值，并为全部 10 项提供 `zh-CN`/`en-US` 名称及别名。展示、当前语言搜索和菜谱食材引用均在 Mobile presentation 边界按语言解析；自定义食材保留用户原始输入。
+- 标准食材目录现以稳定 `id` 与 `category` 为业务值，已扩展为 36 项并提供 `zh-CN`/`en-US` 名称、别名和本地统一风格缩略图。展示、当前语言搜索和菜谱食材引用均在 Mobile presentation 边界按语言解析；自定义食材保留用户原始输入。
+- 首页标准食材卡片改为双向切换：首次点击选中，再次点击立即取消；选中状态同时使用颜色、勾选图标和文字表达。
+- 通用页头不再显示重复的右上角设置按钮；语言切换统一从“我的” Tab 进入，设置页路由仍保留。
+- 本轮已通过 root typecheck/lint、Shared 27 项与 API 20 项测试、Mobile 食材 Repository/Reducer 4 项定向测试；Pixel_8a 模拟器已验证首页缩略图、首次选中和二次点击取消。
 - 英文别名仅在有自然且有价值的译名时展示；未知标准 ID 依次回退到当前语言、默认语言及人类可读格式化名称，避免直接显示内部 ID。
 - Remote dynamic recipes now carry `recipe.locale` (`zh-CN`/`en-US`). Mobile snapshots the current language into `GenerationRequest v1`; locale participates in request hashing/idempotency, Provider output validation and MySQL persistence. Existing snapshots default to `zh-CN`, recipe bodies are never silently translated, and remote/session history is filtered by the current locale.
 - Recipe steps normalize literal `\\n` for display, ingredient reference IDs are no longer rendered in cooking UI, duplicate session and nutrition notices are removed, and History separates blocking empty/error states from a non-blocking refresh warning when cached content exists.
@@ -59,7 +72,7 @@
 
 ## P0 固定数据原型：首页到菜谱详情主链路
 
-- 已完成首页食材选择、搜索、分类、重复选择保护、单项移除和清空全部选择。
+- 已完成首页食材选择、搜索、分类、再次点击取消、单项移除和清空全部选择。
 - 已完成生成条件页：当前食材摘要、无食材提示、返回首页、默认人数/最大时间/厨具条件、条件修改、提交状态保护；条件保存在当前会话 Store。
 - 已完成本地菜谱生成边界：根据食材、最大时间和可用厨具确定性匹配现有菜谱，成功、无匹配和本地错误均有明确结果；不匹配不会兜底到同一菜谱。
 - 已完成生成中页：摘要、取消、重复提交保护、成功自动跳转、失败重试、卸载后的异步更新保护。

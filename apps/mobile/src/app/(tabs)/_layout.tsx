@@ -1,10 +1,10 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useTranslation } from 'react-i18next';
 
-import { Colors } from '@/constants/theme';
+import { useAppTheme } from '@/theme/app-theme';
 
 export default function TabsLayout() {
-  const colors = Colors.light;
+  const { colors } = useAppTheme();
   const { t } = useTranslation();
 
   return (

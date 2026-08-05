@@ -20,8 +20,10 @@ export class LocalRecipeGenerationRepository implements RecipeGenerationReposito
       return GenerationApiResponseSchema.parse({ status: 'no_match', schemaVersion: 'v1', requestId: request.requestId, message: result.message });
     }
 
-    const recipe = fixtureRecipeRepository.getById(result.recipeId);
-    if (!recipe) {
+    const recipes = result.recipeIds
+      .map((recipeId) => fixtureRecipeRepository.getById(recipeId))
+      .filter((recipe) => recipe !== undefined);
+    if (recipes.length === 0) {
       return GenerationApiResponseSchema.parse({
         status: 'generation_failed',
         schemaVersion: 'v1',
@@ -33,13 +35,14 @@ export class LocalRecipeGenerationRepository implements RecipeGenerationReposito
       status: 'success',
       schemaVersion: 'v1',
       requestId: request.requestId,
-      recipe,
+      recipes,
       metadata: {
         source: 'local',
         provider: 'deterministic',
         generatedAt: new Date().toISOString(),
         durationMs: Math.max(0, Date.now() - startedAt),
         repaired: false,
+        candidateCount: recipes.length,
         requestVersion: request.generationRequest.schemaVersion,
         recipeSchemaVersion: 'recipe.v1.0.0',
       },

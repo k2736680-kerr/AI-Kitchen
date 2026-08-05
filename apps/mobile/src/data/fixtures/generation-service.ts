@@ -1,6 +1,6 @@
 import {
   FIXTURE_ERRORS,
-  resolveDeterministicRecipe,
+  resolveDeterministicRecipes,
   type GenerationRequest,
 } from '@ai-kitchen/shared';
 
@@ -12,7 +12,7 @@ export interface LocalGenerationRequest {
 }
 
 export type LocalGenerationResult =
-  | { readonly status: 'success'; readonly recipeId: string }
+  | { readonly status: 'success'; readonly recipeIds: readonly string[] }
   | { readonly status: 'no-match'; readonly message: string };
 
 /** Local deterministic generation boundary. The same request is used by the remote contract. */
@@ -26,7 +26,7 @@ export function generateLocalRecipe(
         return;
       }
 
-      const result = resolveDeterministicRecipe(request.request, fixtureRecipeRepository.listAll());
+      const result = resolveDeterministicRecipes(request.request, fixtureRecipeRepository.listAll());
       if (result.status === 'no_match') {
         resolve({
           status: 'no-match',
@@ -37,11 +37,11 @@ export function generateLocalRecipe(
         return;
       }
 
-      if (!fixtureRecipeRepository.getById(result.recipe.recipeId)) {
+      if (!result.recipes.every((recipe) => fixtureRecipeRepository.getById(recipe.recipeId))) {
         reject(FIXTURE_ERRORS.notFound);
         return;
       }
-      resolve({ status: 'success', recipeId: result.recipe.recipeId });
+      resolve({ status: 'success', recipeIds: result.recipes.map((recipe) => recipe.recipeId) });
     };
 
     const timer = setTimeout(finish, 700);

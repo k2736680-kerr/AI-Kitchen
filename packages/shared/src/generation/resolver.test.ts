@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { RECIPE_FIXTURES } from '../fixtures/recipes';
-import { resolveDeterministicRecipe, validateGenerationInput } from './resolver';
+import { resolveDeterministicRecipe, validateGenerationInput, validateRecipeAgainstRequest } from './resolver';
 import type { GenerationRequest } from './types';
 
 const baseRequest: GenerationRequest = {
@@ -15,6 +15,8 @@ const baseRequest: GenerationRequest = {
   dietaryPreferences: [],
   allergens: [],
   excludedIngredients: [],
+  candidateCount: 4,
+  excludedRecipes: [],
 };
 
 describe('deterministic generation resolver', () => {
@@ -37,5 +39,33 @@ describe('deterministic generation resolver', () => {
   it('rejects unknown ingredient IDs', () => {
     const issues = validateGenerationInput({ ...baseRequest, selectedIngredientIds: ['unknown-food'] });
     expect(issues[0]?.code).toBe('UNKNOWN_INGREDIENT');
+  });
+
+  it('treats condiments as pantry staples not requiring explicit selection', () => {
+    const recipe = {
+      ...RECIPE_FIXTURES[0],
+      requiredIngredients: [
+        { ingredientId: 'tomato', displayName: '番茄', amount: '2 个' },
+        { ingredientId: 'egg', displayName: '鸡蛋', amount: '2 个' },
+        { ingredientId: 'salt', displayName: '盐', amount: '适量' },
+        { ingredientId: 'cooking-oil', displayName: '食用油', amount: '1 勺' },
+      ],
+    };
+    const request = { ...baseRequest, selectedIngredientIds: ['egg', 'tomato'] };
+    expect(validateRecipeAgainstRequest(request, recipe)).toHaveLength(0);
+    expect(resolveDeterministicRecipe(request, [recipe]).status).toBe('success');
+  });
+
+  it('still rejects required main ingredients that are not selected', () => {
+    const recipe = {
+      ...RECIPE_FIXTURES[0],
+      requiredIngredients: [
+        { ingredientId: 'tomato', displayName: '番茄', amount: '2 个' },
+        { ingredientId: 'egg', displayName: '鸡蛋', amount: '2 个' },
+        { ingredientId: 'pork', displayName: '猪肉', amount: '100 克' },
+      ],
+    };
+    const request = { ...baseRequest, selectedIngredientIds: ['egg', 'tomato'] };
+    expect(validateRecipeAgainstRequest(request, recipe).map((issue) => issue.code)).toContain('REQUIRED_INGREDIENT_MISSING');
   });
 });

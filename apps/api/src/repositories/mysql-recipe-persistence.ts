@@ -127,22 +127,26 @@ export class MySqlRecipePersistence implements RecipePersistence {
     );
   }
 
-  public async saveRecipeSuccess(input: { request: AuthenticatedGenerationApiRequest; requestHash: string; response: Extract<GenerationApiResponse, { status: 'success' }>; recipe: Recipe; durationMs: number }): Promise<void> {
+  public async saveRecipeSuccess(input: { request: AuthenticatedGenerationApiRequest; requestHash: string; response: Extract<GenerationApiResponse, { status: 'success' }>; recipes: readonly Recipe[]; durationMs: number }): Promise<void> {
     const guestId = input.request.identity.id;
     await this.database.transaction(async (session) => {
-      await session.execute(
-        `INSERT INTO ai_kitchen_recipes (recipe_id, schema_version, source, provider, model, title, locale, recipe_payload)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE recipe_payload = VALUES(recipe_payload), source = VALUES(source), provider = VALUES(provider), model = VALUES(model), title = VALUES(title), locale = VALUES(locale), updated_at = UTC_TIMESTAMP(3)`,
-        [input.recipe.recipeId, input.response.metadata.recipeSchemaVersion, input.response.metadata.source, input.response.metadata.provider ?? null, input.response.metadata.model ?? null, input.recipe.title, input.recipe.locale, JSON.stringify(input.recipe)],
-      );
+      for (const recipe of input.recipes) {
+        await session.execute(
+          `INSERT INTO ai_kitchen_recipes (recipe_id, schema_version, source, provider, model, title, locale, recipe_payload)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE recipe_payload = VALUES(recipe_payload), source = VALUES(source), provider = VALUES(provider), model = VALUES(model), title = VALUES(title), locale = VALUES(locale), updated_at = UTC_TIMESTAMP(3)`,
+          [recipe.recipeId, input.response.metadata.recipeSchemaVersion, input.response.metadata.source, input.response.metadata.provider ?? null, input.response.metadata.model ?? null, recipe.title, recipe.locale, JSON.stringify(recipe)],
+        );
+      }
       await session.execute(
         `UPDATE ai_kitchen_generation_requests
          SET status = 'succeeded', response_payload = ?, duration_ms = ?, completed_at = UTC_TIMESTAMP(3), error_code = NULL
          WHERE idempotency_key = ? AND request_hash = ?`,
         [JSON.stringify(input.response), input.durationMs, input.request.idempotencyKey, input.requestHash],
       );
-      await this.upsertHistory(session, { guestId, recipeId: input.recipe.recipeId, source: 'remote' });
+      for (const recipe of input.recipes) {
+        await this.upsertHistory(session, { guestId, recipeId: recipe.recipeId, source: 'remote' });
+      }
     });
   }
 

@@ -19,12 +19,24 @@ export type DeterministicGenerationResult =
 
 const ingredientById = new Map(INGREDIENT_FIXTURES.map((ingredient) => [ingredient.id, ingredient]));
 
+/** 调料/香料类食材视为厨房常备,无需用户显式选择即可出现在菜谱中。 */
+export function isCondimentIngredient(ingredientId: string): boolean {
+  return ingredientById.get(ingredientId)?.isCondiment === true;
+}
+
 function recipeIngredientIds(recipe: Recipe): readonly string[] {
   return [
     ...recipe.requiredIngredients,
     ...recipe.optionalIngredients,
     ...recipe.missingIngredients,
   ].map((ingredient) => ingredient.ingredientId);
+}
+
+/** requiredIngredients 中非调料的食材必须来自用户已选;调料类豁免。 */
+function missingRequiredIngredients(request: GenerationRequest, recipe: Recipe): readonly string[] {
+  return recipe.requiredIngredients
+    .map((ingredient) => ingredient.ingredientId)
+    .filter((ingredientId) => !request.selectedIngredientIds.includes(ingredientId) && !isCondimentIngredient(ingredientId));
 }
 
 export function validateGenerationInput(request: GenerationRequest): readonly GenerationValidationIssue[] {
@@ -77,7 +89,7 @@ export function validateRecipeAgainstRequest(request: GenerationRequest, recipe:
   if (request.excludedIngredients.some((ingredientId) => recipeIds.includes(ingredientId))) {
     issues.push({ code: 'EXCLUDED_INGREDIENT_CONFLICT', message: '菜谱包含用户标记的忌口食材。' });
   }
-  if (recipe.requiredIngredients.some((ingredient) => !request.selectedIngredientIds.includes(ingredient.ingredientId))) {
+  if (missingRequiredIngredients(request, recipe).length > 0) {
     issues.push({ code: 'REQUIRED_INGREDIENT_MISSING', message: '菜谱包含用户未提供的必要食材。' });
   }
   return issues;
@@ -94,13 +106,40 @@ export function resolveDeterministicRecipe(
   const inputIssues = validateGenerationInput(request);
   if (inputIssues.length > 0) return { status: 'no_match', reason: 'NO_SAFE_MATCH' };
 
-  const ingredientMatches = recipes.filter((recipe) =>
-    recipe.requiredIngredients.every((ingredient) => request.selectedIngredientIds.includes(ingredient.ingredientId)),
-  );
+  const ingredientMatches = recipes.filter((recipe) => {
+    const required = recipe.requiredIngredients.map((ingredient) => ingredient.ingredientId);
+    return required.every((ingredientId) => request.selectedIngredientIds.includes(ingredientId) || isCondimentIngredient(ingredientId));
+  });
   const timeMatches = ingredientMatches.filter((recipe) => recipe.totalTimeMinutes <= request.maxCookingTimeMinutes);
   const cookwareMatches = timeMatches.filter((recipe) => validateRecipeAgainstRequest(request, recipe).every((issue) => issue.code !== 'COOKWARE_UNAVAILABLE'));
   const preferenceMatches = cookwareMatches.filter((recipe) => validateRecipeAgainstRequest(request, recipe).every((issue) => issue.code !== 'DIETARY_PREFERENCE_CONFLICT'));
   const allergenSafeMatches = preferenceMatches.filter((recipe) => validateRecipeAgainstRequest(request, recipe).every((issue) => issue.code !== 'ALLERGEN_CONFLICT'));
   const safeRecipe = allergenSafeMatches.find((recipe) => validateRecipeAgainstRequest(request, recipe).length === 0);
   return safeRecipe ? { status: 'success', recipe: safeRecipe } : { status: 'no_match', reason: 'NO_SAFE_MATCH' };
+}
+
+export type DeterministicRecipesResult =
+  | { readonly status: 'success'; readonly recipes: readonly Recipe[] }
+  | { readonly status: 'no_match'; readonly reason: 'NO_INGREDIENTS' | 'NO_SAFE_MATCH' };
+
+/** 多候选版:返回所有通过安全校验的匹配菜谱(上限 candidateCount,不足则返回全部)。 */
+export function resolveDeterministicRecipes(
+  request: GenerationRequest,
+  recipes: readonly Recipe[],
+): DeterministicRecipesResult {
+  if (request.selectedIngredientIds.length === 0 && request.customIngredients.length === 0) {
+    return { status: 'no_match', reason: 'NO_INGREDIENTS' };
+  }
+
+  const inputIssues = validateGenerationInput(request);
+  if (inputIssues.length > 0) return { status: 'no_match', reason: 'NO_SAFE_MATCH' };
+
+  const ingredientMatches = recipes.filter((recipe) => {
+    const required = recipe.requiredIngredients.map((ingredient) => ingredient.ingredientId);
+    return required.every((ingredientId) => request.selectedIngredientIds.includes(ingredientId) || isCondimentIngredient(ingredientId));
+  });
+  const timeMatches = ingredientMatches.filter((recipe) => recipe.totalTimeMinutes <= request.maxCookingTimeMinutes);
+  const safeMatches = timeMatches.filter((recipe) => validateRecipeAgainstRequest(request, recipe).length === 0);
+  if (safeMatches.length === 0) return { status: 'no_match', reason: 'NO_SAFE_MATCH' };
+  return { status: 'success', recipes: safeMatches.slice(0, request.candidateCount) };
 }

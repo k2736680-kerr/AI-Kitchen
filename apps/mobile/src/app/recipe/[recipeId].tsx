@@ -19,11 +19,12 @@ import { useP0Store } from '@/state/p0-store';
 export default function RecipeDetailScreen() {
   const { t } = useTranslation();
   const { recipeId } = useLocalSearchParams<{ recipeId?: string }>();
-  const { state, addRecentRecipe, cacheRecipe } = useP0Store();
+  const { state, addRecentRecipe, cacheRecipe, toggleFavoriteRecipe, isFavoriteRecipe } = useP0Store();
   const [loadError, setLoadError] = useState<string | null>(null);
   const remoteData = useMemo(() => environmentConfig.generationMode === 'remote' ? new RemoteRecipeDataRepository(environmentConfig.apiBaseUrl) : null, []);
   const recipe = recipeId ? state.recipeCache[recipeId] ?? (remoteData ? undefined : fixtureRecipeRepository.getById(recipeId)) : undefined;
   const existingEntry = recipeId ? state.recentRecipes.find((entry) => entry.recipeId === recipeId) : undefined;
+  const isFavorite = recipeId ? isFavoriteRecipe(recipeId) : false;
   const source = existingEntry?.source ?? (state.generation.recipeId === recipeId
     ? state.generation.source === 'provider' ? 'remote' : 'local'
     : 'fixture');
@@ -50,5 +51,5 @@ export default function RecipeDetailScreen() {
   }, [addRecentRecipe, existingEntry?.source, recipe, remoteData, source, state.identityStatus]);
   if (!recipe && remoteData && !loadError) return <Screen><AppHeader title={t('recipe.loading')} back /><StatusMessage message={t('recipe.loadingHint')} /></Screen>;
   if (!recipe) return <Screen><AppHeader title={t('recipe.notFound')} back /><StatusMessage message={loadError ?? t('recipe.notFoundHint')} tone="error" /><AppButton label={t('recipe.backToConditions')} onPress={() => router.replace('/generate' as Href)} /><AppButton label={t('common.home')} variant="secondary" onPress={() => router.replace('/' as Href)} /></Screen>;
-  return <Screen><AppHeader title={t('common.appName')} back /><RecipeHeader recipe={recipe} source={source} selectedServings={state.generationDraft.servings} /><RecipeConstraintSummary recipe={recipe} /><RecipeIngredientList title={t('recipe.requiredIngredients')} ingredients={recipe.requiredIngredients} /><RecipeIngredientList title={t('recipe.optionalIngredients')} ingredients={recipe.optionalIngredients} /><MissingIngredientNotice ingredients={recipe.missingIngredients} /><RecipeStepList steps={recipe.steps} /><SafetyNotice notices={recipe.safetyNotices} /><AppButton label={t('recipe.startCooking')} disabled={recipe.steps.length === 0} onPress={() => router.push(`/cooking/${recipe.recipeId}` as Href)} /><AppButton label={t('recipe.backToConditions')} variant="secondary" onPress={() => router.replace('/generate' as Href)} /><AppButton label={t('common.home')} variant="ghost" onPress={() => router.replace('/' as Href)} /></Screen>;
+  return <Screen><AppHeader title={t('common.appName')} back /><RecipeHeader recipe={recipe} source={source} selectedServings={state.generationDraft.servings} /><AppButton label={isFavorite ? t('recipe.favorited') : t('recipe.favorite')} variant={isFavorite ? 'secondary' : 'ghost'} onPress={() => toggleFavoriteRecipe(recipe.recipeId)} /><RecipeConstraintSummary recipe={recipe} /><RecipeIngredientList title={t('recipe.requiredIngredients')} ingredients={recipe.requiredIngredients} /><RecipeIngredientList title={t('recipe.optionalIngredients')} ingredients={recipe.optionalIngredients} /><MissingIngredientNotice ingredients={recipe.missingIngredients} /><RecipeStepList steps={recipe.steps} /><SafetyNotice notices={recipe.safetyNotices} /><AppButton label={t('recipe.startCooking')} disabled={recipe.steps.length === 0} onPress={() => router.push(`/cooking/${recipe.recipeId}` as Href)} /><AppButton label={t('recipe.backToConditions')} variant="secondary" onPress={() => router.replace('/generate' as Href)} /><AppButton label={t('common.home')} variant="ghost" onPress={() => router.replace('/' as Href)} /></Screen>;
 }

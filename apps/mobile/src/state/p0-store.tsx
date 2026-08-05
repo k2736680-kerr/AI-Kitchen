@@ -3,6 +3,7 @@ import type {
   AllergenCode,
   Cookware,
   DietaryPreference,
+  GenerationRequest,
   IngredientCategory,
   IngredientDefinition,
   MaxTimeMinutes,
@@ -17,6 +18,7 @@ import {
   useMemo,
   useRef,
   useReducer,
+  useState,
   type PropsWithChildren,
 } from 'react';
 
@@ -25,6 +27,13 @@ import { guestSessionService } from '../auth/guest-session';
 import { environmentConfig } from '../config/environment';
 import { fixtureIngredientRepository } from '../data/fixtures/ingredient-repository';
 import { p0Reducer } from './p0-reducer';
+import {
+  clearPersistedP0State,
+  deserializeP0State,
+  loadPersistedP0State,
+  savePersistedP0State,
+  serializeP0State,
+} from './p0-persist';
 import {
   createCustomIngredient,
   createGenerationRequest,
@@ -36,7 +45,7 @@ import {
 
 interface P0StoreValue {
   readonly state: P0State;
-  selectCatalogIngredient(ingredient: IngredientDefinition): void;
+  toggleCatalogIngredient(ingredient: IngredientDefinition): void;
   addCustomIngredient(value: string): AddCustomIngredientResult;
   removeIngredient(ingredientId: string): void;
   clearSelectedIngredients(): void;
@@ -51,13 +60,16 @@ interface P0StoreValue {
   clearExcludedIngredients(): void;
   setSelectedCategory(category: IngredientCategory | 'all'): void;
   setLastRecipe(recipeId: string | null): void;
-  startGeneration(locale: SupportedLocale): void;
-  setGenerationSucceeded(recipe: Recipe, source: 'local' | 'deterministic' | 'provider'): void;
+  startGeneration(locale: SupportedLocale, excludedRecipes?: GenerationRequest['excludedRecipes']): void;
+  setGenerationSucceeded(recipes: readonly Recipe[], source: 'local' | 'deterministic' | 'provider'): void;
   setGenerationNoMatch(message: string): void;
   setGenerationFailed(error: ApiError): void;
   cancelGeneration(): void;
   cacheRecipe(recipe: Recipe): void;
   addRecentRecipe(entry: RecentRecipeEntry): void;
+  toggleFavoriteRecipe(recipeId: string): void;
+  isFavoriteRecipe(recipeId: string): boolean;
+  clearLocalData(): Promise<void>;
   initializeCookingSession(recipeId: string, totalSteps: number): void;
   setCookingStep(recipeId: string, stepIndex: number): void;
   completeCookingStep(recipeId: string, stepIndex: number): void;
@@ -80,6 +92,34 @@ export function P0StoreProvider({ children }: PropsWithChildren) {
     stateRef.current = state;
   }, [state]);
 
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    let active = true;
+    void loadPersistedP0State().then((raw) => {
+      if (!active) return;
+      if (raw) {
+        const patch = deserializeP0State(raw, stateRef.current.guestId);
+        dispatch({ type: 'RESET_SESSION', state: { ...stateRef.current, ...patch, generation: stateRef.current.generation, identityStatus: stateRef.current.identityStatus } });
+      }
+    }).finally(() => {
+      if (active) setHydrated(true);
+    });
+    return () => { active = false; };
+  }, []);
+
+  // 防抖持久化:state 稳定 300ms 后写回 AsyncStorage。
+  const persistTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!hydrated) return;
+    if (persistTimer.current) clearTimeout(persistTimer.current);
+    persistTimer.current = setTimeout(() => {
+      void savePersistedP0State(serializeP0State(stateRef.current)).catch(() => undefined);
+    }, 300);
+    return () => {
+      if (persistTimer.current) clearTimeout(persistTimer.current);
+    };
+  }, [state, hydrated]);
+
   useEffect(() => {
     if (environmentConfig.generationMode === 'local') {
       dispatch({ type: 'SET_GUEST_IDENTITY_READY' });
@@ -97,9 +137,9 @@ export function P0StoreProvider({ children }: PropsWithChildren) {
 
   const actions = useMemo<Omit<P0StoreValue, 'state'>>(
     () => ({
-      selectCatalogIngredient: (ingredient) => {
+      toggleCatalogIngredient: (ingredient) => {
         dispatch({
-          type: 'SELECT_CATALOG_INGREDIENT',
+          type: 'TOGGLE_CATALOG_INGREDIENT',
           ingredient: {
             id: ingredient.id,
             displayName: ingredient.localization['zh-CN'].name,
@@ -157,11 +197,11 @@ export function P0StoreProvider({ children }: PropsWithChildren) {
       setLastRecipe: (recipeId) => {
         dispatch({ type: 'SET_LAST_RECIPE', recipeId });
       },
-      startGeneration: (locale) => {
-        dispatch({ type: 'START_GENERATION', requestId: createRequestId(), idempotencyKey: createIdempotencyKey(), request: createGenerationRequest(stateRef.current, locale) });
+      startGeneration: (locale, excludedRecipes = []) => {
+        dispatch({ type: 'START_GENERATION', requestId: createRequestId(), idempotencyKey: createIdempotencyKey(), request: createGenerationRequest(stateRef.current, locale, excludedRecipes) });
       },
-      setGenerationSucceeded: (recipe, source) => {
-        dispatch({ type: 'SET_GENERATION_SUCCEEDED', recipe, source });
+      setGenerationSucceeded: (recipes, source) => {
+        dispatch({ type: 'SET_GENERATION_SUCCEEDED', recipes, source });
       },
       setGenerationNoMatch: (message) => {
         dispatch({ type: 'SET_GENERATION_NO_MATCH', message });
@@ -177,6 +217,14 @@ export function P0StoreProvider({ children }: PropsWithChildren) {
       },
       addRecentRecipe: (entry) => {
         dispatch({ type: 'ADD_RECENT_RECIPE', entry });
+      },
+      toggleFavoriteRecipe: (recipeId) => {
+        dispatch({ type: 'TOGGLE_FAVORITE_RECIPE', recipeId });
+      },
+      isFavoriteRecipe: (recipeId) => stateRef.current.favoriteRecipeIds.includes(recipeId),
+      clearLocalData: async () => {
+        await clearPersistedP0State();
+        dispatch({ type: 'RESET_SESSION', state: createInitialP0State(stateRef.current.guestId) });
       },
       initializeCookingSession: (recipeId, totalSteps) => {
         dispatch({ type: 'INITIALIZE_COOKING_SESSION', recipeId, totalSteps });

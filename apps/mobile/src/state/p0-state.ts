@@ -33,6 +33,8 @@ export interface GenerationSessionState {
   readonly requestId: string | null;
   readonly idempotencyKey: string | null;
   readonly recipeId: string | null;
+  /** 一次多候选生成的所有菜谱 id(展示方案列表用),recipeId 为首个。 */
+  readonly recipeIds: readonly string[];
   readonly error: ApiError | null;
   readonly message: string | null;
   readonly requestSnapshot: GenerationRequest | null;
@@ -63,6 +65,7 @@ export interface P0State {
   readonly recipeCache: Readonly<Record<string, Recipe>>;
   readonly lastRecipeId: string | null;
   readonly recentRecipes: readonly RecentRecipeEntry[];
+  readonly favoriteRecipeIds: readonly string[];
   readonly activeCookingRecipeId: string | null;
   readonly cookingSessions: Readonly<Record<string, CookingSessionState>>;
   readonly uiPreferences: P0UiPreferences;
@@ -88,6 +91,8 @@ const DEFAULT_DRAFT: GenerationDraft = {
   dietaryPreferences: [],
   allergens: [],
   excludedIngredients: [],
+  candidateCount: 4,
+  excludedRecipes: [],
 };
 
 const INITIAL_GENERATION: GenerationSessionState = {
@@ -95,13 +100,18 @@ const INITIAL_GENERATION: GenerationSessionState = {
   requestId: null,
   idempotencyKey: null,
   recipeId: null,
+  recipeIds: [],
   error: null,
   message: null,
   requestSnapshot: null,
   source: null,
 };
 
-export function createGenerationRequest(state: P0State, locale: SupportedLocale): GenerationRequest {
+/**
+ * 基于当前草稿构造生成请求。
+ * @param excludedRecipes 「再来一批」时传入上一批的 title+cookingMethod,用于去重。
+ */
+export function createGenerationRequest(state: P0State, locale: SupportedLocale, excludedRecipes: GenerationRequest['excludedRecipes'] = []): GenerationRequest {
   return {
     schemaVersion: 'v1',
     locale,
@@ -113,6 +123,8 @@ export function createGenerationRequest(state: P0State, locale: SupportedLocale)
     dietaryPreferences: [...state.generationDraft.dietaryPreferences],
     allergens: [...state.generationDraft.allergens],
     excludedIngredients: [...state.generationDraft.excludedIngredients],
+    candidateCount: state.generationDraft.candidateCount ?? 4,
+    excludedRecipes,
   };
 }
 
@@ -127,6 +139,7 @@ export function createInitialP0State(guestId: string | null = null): P0State {
     recipeCache: {},
     lastRecipeId: null,
     recentRecipes: [],
+    favoriteRecipeIds: [],
     activeCookingRecipeId: null,
     cookingSessions: {},
     uiPreferences: { selectedCategory: 'all' },

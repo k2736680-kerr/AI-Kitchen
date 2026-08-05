@@ -1,4 +1,4 @@
-import type { GenerationRequest } from '@ai-kitchen/shared';
+import { COOKING_METHOD_OPTIONS, type GenerationRequest } from '@ai-kitchen/shared';
 
 import type { ApiConfig } from '../config';
 import { buildRecipeRepairPrompt, buildRecipeSystemPrompt, buildRecipeUserPrompt } from './recipe-prompt';
@@ -14,8 +14,18 @@ export class AliyunQwenRecipeProvider implements RecipeProvider {
     this.model = config.model;
   }
 
-  public generate(request: GenerationRequest, signal: AbortSignal): Promise<unknown | null> {
-    return this.call(buildRecipeSystemPrompt(request.locale), buildRecipeUserPrompt(request), signal);
+  public async generateBatch(request: GenerationRequest, signal: AbortSignal): Promise<ReadonlyArray<unknown | null>> {
+    const methods = pickCookingMethods(request.candidateCount, request.excludedRecipes);
+    const attempts = await Promise.allSettled(
+      methods.map((method) => this.call(buildRecipeSystemPrompt(request.locale), buildRecipeUserPrompt(request, method), signal)),
+    );
+    const values = attempts.map((attempt) => (attempt.status === 'fulfilled' ? attempt.value : null));
+    // 全部失败时按顺序抛出首个错误,让服务端走 rate_limited/timeout/unavailable 分支
+    if (values.every((value) => value === null)) {
+      const firstFailure = attempts.find((attempt): attempt is PromiseRejectedResult => attempt.status === 'rejected');
+      if (firstFailure) throw firstFailure.reason;
+    }
+    return values;
   }
 
   public repair(input: { request: GenerationRequest; candidate: unknown; reason: string; signal: AbortSignal }): Promise<unknown | null> {
@@ -36,8 +46,8 @@ export class AliyunQwenRecipeProvider implements RecipeProvider {
           headers: { Authorization: `Bearer ${this.config.apiKey}`, 'Content-Type': 'application/json', Accept: 'application/json' },
           body: JSON.stringify({
             model: this.config.model,
-            temperature: 0.2,
-            top_p: 0.8,
+            temperature: this.config.temperature,
+            top_p: this.config.topP,
             stream: false,
             response_format: { type: 'json_object' },
             enable_thinking: false,
@@ -70,4 +80,23 @@ export class AliyunQwenRecipeProvider implements RecipeProvider {
       upstreamSignal.removeEventListener('abort', forwardAbort);
     }
   }
+}
+
+/**
+ * 从烹饪方式池中按需选取,优先覆盖不同做法,并跳过已排除(上一批已生成)的方式;
+ * 候选数超过剩余可选项时循环复用可选项。
+ */
+function pickCookingMethods(
+  count: number,
+  excludedRecipes: ReadonlyArray<{ readonly title: string; readonly cookingMethod: (typeof COOKING_METHOD_OPTIONS)[number] }> = [],
+): readonly (typeof COOKING_METHOD_OPTIONS)[number][] {
+  if (count <= 0) return ['stir-fry'];
+  const excluded = new Set(excludedRecipes.map((recipe) => recipe.cookingMethod));
+  const available = COOKING_METHOD_OPTIONS.filter((method) => !excluded.has(method));
+  const pool = available.length > 0 ? available : COOKING_METHOD_OPTIONS;
+  const methods: (typeof COOKING_METHOD_OPTIONS)[number][] = [];
+  for (let index = 0; index < count; index += 1) {
+    methods.push(pool[index % pool.length]);
+  }
+  return methods;
 }

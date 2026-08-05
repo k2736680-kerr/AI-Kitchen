@@ -15,7 +15,8 @@
         "backgroundColor": "#F7F8F3",
         "foregroundImage": "./assets/images/ai-kitchen/brand/adaptive-icon-foreground.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.moyoung.kerr.aikitchen"
     },
     "web": {
       "output": "static",

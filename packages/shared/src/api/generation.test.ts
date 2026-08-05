@@ -63,7 +63,7 @@ describe('versioned generation API schema', () => {
       status: 'success',
       schemaVersion: 'v1',
       requestId: validRequest.requestId,
-      recipe: RECIPE_FIXTURES[0],
+      recipes: [RECIPE_FIXTURES[0]],
       metadata: {
         source: 'deterministic',
         generatedAt: '2026-07-28T00:00:00.000Z',
@@ -74,5 +74,25 @@ describe('versioned generation API schema', () => {
       },
     };
     expect(GenerationApiResponseSchema.safeParse(response).success).toBe(true);
+  });
+
+  it('rejects a success response without recipes and keeps deprecated single recipe optional', () => {
+    const deprecated = {
+      status: 'success',
+      schemaVersion: 'v1',
+      requestId: validRequest.requestId,
+      recipe: RECIPE_FIXTURES[0],
+      metadata: {
+        source: 'deterministic',
+        generatedAt: '2026-07-28T00:00:00.000Z',
+        durationMs: 12,
+        repaired: false,
+        requestVersion: 'v1',
+        recipeSchemaVersion: 'recipe.v1.0.0',
+      },
+    };
+    expect(GenerationApiResponseSchema.safeParse(deprecated).success).toBe(false);
+    const withRecipes = { ...deprecated, recipes: [RECIPE_FIXTURES[0]] };
+    expect(GenerationApiResponseSchema.safeParse(withRecipes).success).toBe(true);
   });
 });

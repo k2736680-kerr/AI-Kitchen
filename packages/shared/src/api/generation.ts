@@ -33,6 +33,7 @@ export const GenerationMetadataSchema = z.object({
   generatedAt: z.string().datetime({ offset: true }),
   durationMs: z.number().int().nonnegative(),
   repaired: z.boolean(),
+  candidateCount: z.number().int().min(1).max(5).optional(),
   requestVersion: z.literal(GENERATION_REQUEST_SCHEMA_VERSION),
   recipeSchemaVersion: z.literal(RECIPE_SCHEMA_VERSION),
 }).strict();
@@ -79,7 +80,10 @@ export const GenerationApiSuccessSchema = z.object({
   status: z.literal('success'),
   schemaVersion: z.literal(GENERATION_API_SCHEMA_VERSION),
   requestId: requestIdSchema,
-  recipe: RecipeSchema,
+  /** 一次生成 1-5 个不同烹饪方式的菜谱候选,客户端展示为方案列表。 */
+  recipes: z.array(RecipeSchema).min(1).max(5),
+  /** Deprecated:兼容旧版单菜谱持久化 payload,新请求不再填充。 */
+  recipe: RecipeSchema.optional(),
   metadata: GenerationMetadataSchema,
 }).strict();
 

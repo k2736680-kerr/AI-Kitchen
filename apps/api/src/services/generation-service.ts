@@ -86,9 +86,9 @@ export class GenerationService {
     };
     const run = <T>(work: (signal: AbortSignal) => Promise<T>): Promise<T> => deadline(work, Math.min(this.config.providerTimeoutMs, this.config.totalTimeoutMs));
 
-    let rawCandidate: unknown | null;
+    let rawCandidates: ReadonlyArray<unknown | null>;
     try {
-      rawCandidate = await run((signal) => this.provider.generate(request.generationRequest, signal));
+      rawCandidates = await run((signal) => this.provider.generateBatch(request.generationRequest, signal));
     } catch (error) {
       if (error instanceof ProviderRateLimitError) {
         const response: GenerationApiResponse = { status: 'rate_limited', schemaVersion: GENERATION_API_SCHEMA_VERSION, requestId: request.requestId, error: { code: 'RATE_LIMITED', message: '生成请求过于频繁，请稍后重试。', ...(error.retryAfterSeconds ? { retryAfterSeconds: error.retryAfterSeconds } : {}) } };
@@ -98,50 +98,58 @@ export class GenerationService {
       return completeFailure('service_unavailable', 'SERVICE_UNAVAILABLE', failureResponse('service_unavailable', request.requestId, '生成服务暂时不可用，请稍后重试。'));
     }
 
-    if (rawCandidate === null) {
+    if (rawCandidates.length === 0 || rawCandidates.every((candidate) => candidate === null)) {
       const response: GenerationApiResponse = { status: 'no_match', schemaVersion: GENERATION_API_SCHEMA_VERSION, requestId: request.requestId, message: '没有找到符合当前条件的菜谱。' };
       await this.persistence.completeGeneration({ request, requestHash, response, status: 'no_match', durationMs: Date.now() - startedAt });
       return response;
     }
 
-    let repaired = false;
-    let recipe = candidateRecipe(rawCandidate, request.generationRequest.locale);
-    let reason = recipe ? [...validateRecipeAgainstRequest(request.generationRequest, recipe).map((issue) => issue.message), ...validateRecipeLanguage(recipe, request.generationRequest.locale)].join(' ') : '菜谱输出不符合结构化 Schema。';
-    if ((!recipe || reason) && this.config.repairEnabled && this.provider.repair) {
-      repaired = true;
-      const remaining = this.config.totalTimeoutMs - (Date.now() - startedAt);
-      if (remaining > 0) {
-        try {
-          rawCandidate = await deadline((signal) => this.provider.repair!({ request: request.generationRequest, candidate: rawCandidate, reason, signal }), Math.min(this.config.providerTimeoutMs, remaining));
-          recipe = rawCandidate === null ? undefined : candidateRecipe(rawCandidate, request.generationRequest.locale);
-          reason = recipe ? [...validateRecipeAgainstRequest(request.generationRequest, recipe).map((issue) => issue.message), ...validateRecipeLanguage(recipe, request.generationRequest.locale)].join(' ') : '菜谱输出不符合结构化 Schema。';
-        } catch (error) {
-          if (error instanceof ProviderTimeoutError) return completeFailure('timeout', 'TIMEOUT', failureResponse('timeout', request.requestId, '生成超时，请稍后重试。'));
-          return completeFailure('failed', 'GENERATION_FAILED', failureResponse('generation_failed', request.requestId, '菜谱生成失败，请稍后重试。'));
+    const recipes: Recipe[] = [];
+    let repaired = 0;
+    for (const rawCandidate of rawCandidates) {
+      if (rawCandidate === null) continue;
+      let recipe = candidateRecipe(rawCandidate, request.generationRequest.locale);
+      let reason = recipe ? this.validationReason(request, recipe) : '菜谱输出不符合结构化 Schema。';
+      if ((!recipe || reason) && this.config.repairEnabled && this.provider.repair && repaired < MAX_REPAIR_PER_BATCH) {
+        const remaining = this.config.totalTimeoutMs - (Date.now() - startedAt);
+        if (remaining > 0) {
+          repaired += 1;
+          try {
+            const fixed = await deadline((signal) => this.provider.repair!({ request: request.generationRequest, candidate: rawCandidate, reason, signal }), Math.min(this.config.providerTimeoutMs, remaining));
+            recipe = fixed === null ? undefined : candidateRecipe(fixed, request.generationRequest.locale);
+            reason = recipe ? this.validationReason(request, recipe) : '菜谱输出不符合结构化 Schema。';
+          } catch (error) {
+            if (error instanceof ProviderTimeoutError) return completeFailure('timeout', 'TIMEOUT', failureResponse('timeout', request.requestId, '生成超时，请稍后重试。'));
+            return completeFailure('failed', 'GENERATION_FAILED', failureResponse('generation_failed', request.requestId, '菜谱生成失败，请稍后重试。'));
+          }
         }
       }
+      if (recipe && !reason) recipes.push(recipe);
     }
-    if (!recipe || reason) return completeFailure('failed', 'GENERATION_FAILED', failureResponse('generation_failed', request.requestId, '没有得到符合安全条件的菜谱。'));
 
-    const finalRecipe = RecipeSchema.parse({ ...recipe, recipeId: randomUUID(), generationMode: 'provider', locale: request.generationRequest.locale });
+    const deduped = deduplicateRecipes(recipes, request.generationRequest);
+    if (deduped.length === 0) return completeFailure('failed', 'GENERATION_FAILED', failureResponse('generation_failed', request.requestId, '没有得到符合安全条件的菜谱。'));
+
+    const finalRecipes = deduped.map((recipe) => RecipeSchema.parse({ ...recipe, recipeId: randomUUID(), generationMode: 'provider', locale: request.generationRequest.locale }));
     const response: Extract<GenerationApiResponse, { status: 'success' }> = {
       status: 'success',
       schemaVersion: GENERATION_API_SCHEMA_VERSION,
       requestId: request.requestId,
-      recipe: finalRecipe,
+      recipes: finalRecipes,
       metadata: {
         source: 'provider',
         provider: this.provider.name,
         model: this.provider.model,
         generatedAt: this.now().toISOString(),
         durationMs: Date.now() - startedAt,
-        repaired,
+        repaired: repaired > 0,
+        candidateCount: finalRecipes.length,
         requestVersion: request.generationRequest.schemaVersion,
         recipeSchemaVersion: RECIPE_SCHEMA_VERSION,
       },
     };
     try {
-      await this.persistence.saveRecipeSuccess({ request, requestHash, response, recipe: finalRecipe, durationMs: response.metadata.durationMs });
+      await this.persistence.saveRecipeSuccess({ request, requestHash, response, recipes: finalRecipes, durationMs: response.metadata.durationMs });
       return response;
     } catch {
       return completeFailure(
@@ -151,4 +159,28 @@ export class GenerationService {
       );
     }
   }
+
+  private validationReason(request: AuthenticatedGenerationApiRequest, recipe: Recipe): string {
+    return [
+      ...validateRecipeAgainstRequest(request.generationRequest, recipe).map((issue) => issue.message),
+      ...validateRecipeLanguage(recipe, request.generationRequest.locale),
+    ].join(' ');
+  }
+}
+
+/** 单批最多修复的候选数,避免修复风暴拖垮总预算。 */
+const MAX_REPAIR_PER_BATCH = 2;
+
+/** 按 (cookingMethod, title) 去重,并剔除用户要求排除的历史方案。 */
+function deduplicateRecipes(recipes: readonly Recipe[], request: AuthenticatedGenerationApiRequest['generationRequest']): Recipe[] {
+  const seen = new Set<string>();
+  const excludedKeys = new Set(request.excludedRecipes.map((recipe) => `${recipe.cookingMethod}:${recipe.title.trim()}`));
+  const result: Recipe[] = [];
+  for (const recipe of recipes) {
+    const key = `${recipe.cookingMethod}:${recipe.title.trim()}`;
+    if (seen.has(key) || excludedKeys.has(key)) continue;
+    seen.add(key);
+    result.push(recipe);
+  }
+  return result;
 }

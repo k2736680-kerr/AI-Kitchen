@@ -18,9 +18,53 @@ export const Palette = {
   border: '#DCE5DD',
   dangerSurface: '#FBEAE5',
   warningSurface: '#FFF4DD',
-} as const;
+  /** 品牌渐变:鼠尾草绿 → 深苔绿。用于头部、主按钮、选中态。 */
+  brandGradient: ['#5C9A78', '#3F6B52'],
+  /** 暖杏色点缀。用于高亮、装饰。 */
+  apricot: '#F2B28C',
+  /** 极浅背景,用于卡片内浅色区域。 */
+  surfaceTint: '#F3F6F0',
+} as const satisfies Readonly<Record<string, unknown>>;
 
-export const Colors = {
+/** 暗色模式的独立调色板。 */
+export const PaletteDark = {
+  background: '#101612',
+  surface: '#1A231D',
+  surfaceSecondary: '#243129',
+  sage: '#7FB89A',
+  sageDeep: '#A3D4BC',
+  sageLight: '#2E4436',
+  coral: '#F0927A',
+  yellow: '#F3C875',
+  text: '#E8EFE9',
+  textSecondary: '#A8B5AC',
+  textWeak: '#7C8A81',
+  disabled: '#5C685F',
+  border: '#2E3B33',
+  dangerSurface: '#3A241E',
+  warningSurface: '#3A2F18',
+  brandGradient: ['#5C9A78', '#3F6B52'],
+  apricot: '#C98A64',
+  surfaceTint: '#141B16',
+} as const satisfies Readonly<Record<string, unknown>>;
+
+export interface ThemeColors {
+  readonly text: string;
+  readonly background: string;
+  readonly backgroundElement: string;
+  readonly backgroundSelected: string;
+  readonly textSecondary: string;
+  readonly textWeak: string;
+  readonly primary: string;
+  readonly primaryPressed: string;
+  readonly border: string;
+  readonly disabled: string;
+  readonly brandGradient: readonly [string, string];
+  readonly apricot: string;
+  readonly surfaceTint: string;
+}
+
+export const Colors: Readonly<Record<'light' | 'dark', ThemeColors>> = {
   light: {
     text: Palette.text,
     background: Palette.background,
@@ -32,23 +76,29 @@ export const Colors = {
     primaryPressed: Palette.sageDeep,
     border: Palette.border,
     disabled: Palette.disabled,
+    brandGradient: [Palette.sage, Palette.sageDeep],
+    apricot: Palette.apricot,
+    surfaceTint: Palette.surfaceTint,
   },
   dark: {
-    text: Palette.text,
-    background: Palette.background,
-    backgroundElement: Palette.surface,
-    backgroundSelected: Palette.sageLight,
-    textSecondary: Palette.textSecondary,
-    textWeak: Palette.textWeak,
-    primary: Palette.sage,
-    primaryPressed: Palette.sageDeep,
-    border: Palette.border,
-    disabled: Palette.disabled,
+    text: PaletteDark.text,
+    background: PaletteDark.background,
+    backgroundElement: PaletteDark.surface,
+    backgroundSelected: PaletteDark.sageLight,
+    textSecondary: PaletteDark.textSecondary,
+    textWeak: PaletteDark.textWeak,
+    primary: PaletteDark.sage,
+    primaryPressed: PaletteDark.sageDeep,
+    border: PaletteDark.border,
+    disabled: PaletteDark.disabled,
+    brandGradient: [PaletteDark.sage, PaletteDark.sageDeep],
+    apricot: PaletteDark.apricot,
+    surfaceTint: PaletteDark.surfaceTint,
   },
-} as const;
+} satisfies Readonly<Record<'light' | 'dark', ThemeColors>>;
 
 export type ThemeColor = keyof typeof Colors.light;
-
+export type TextThemeColor = Exclude<ThemeColor, 'brandGradient'>;
 export const Fonts = Platform.select({
   ios: { sans: 'system-ui', serif: 'ui-serif', rounded: 'ui-rounded', mono: 'ui-monospace' },
   default: { sans: 'normal', serif: 'serif', rounded: 'normal', mono: 'monospace' },

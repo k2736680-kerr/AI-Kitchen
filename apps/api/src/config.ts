@@ -15,6 +15,8 @@ const environmentSchema = z.object({
   DASHSCOPE_API_KEY: optionalSecret,
   DASHSCOPE_MODEL: nonEmpty.default('qwen3.7-plus'),
   DASHSCOPE_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(35_000).default(35_000),
+  DASHSCOPE_TEMPERATURE: z.coerce.number().min(0).max(1.5).default(0.8),
+  DASHSCOPE_TOP_P: z.coerce.number().min(0).max(1).default(0.9),
   MYSQL_HOST: nonEmpty,
   MYSQL_PORT: z.coerce.number().int().min(1).max(65_535).default(3306),
   MYSQL_DATABASE: nonEmpty,
@@ -33,7 +35,7 @@ export type ApiConfig = Readonly<{
   host: string;
   port: number;
   corsOrigin: string;
-  dashscope: Readonly<{ baseUrl: string; apiKey?: string; model: string; timeoutMs: number }>;
+  dashscope: Readonly<{ baseUrl: string; apiKey?: string; model: string; timeoutMs: number; temperature: number; topP: number }>;
   mysql: Readonly<{ host: string; port: number; database: string; user: string; password: string; connectionLimit: number }>;
   session: Readonly<{ ttlDays: number }>;
   generation: Readonly<{ totalTimeoutMs: number; repairEnabled: boolean; mode: 'remote' }>;
@@ -52,7 +54,7 @@ export function loadApiConfig(environment: NodeJS.ProcessEnv = process.env): Api
     host: value.API_HOST,
     port: value.API_PORT,
     corsOrigin: value.API_CORS_ORIGIN,
-    dashscope: { baseUrl: value.DASHSCOPE_BASE_URL.replace(/\/$/, ''), apiKey: value.DASHSCOPE_API_KEY, model: value.DASHSCOPE_MODEL, timeoutMs: value.DASHSCOPE_TIMEOUT_MS },
+    dashscope: { baseUrl: value.DASHSCOPE_BASE_URL.replace(/\/$/, ''), apiKey: value.DASHSCOPE_API_KEY, model: value.DASHSCOPE_MODEL, timeoutMs: value.DASHSCOPE_TIMEOUT_MS, temperature: value.DASHSCOPE_TEMPERATURE, topP: value.DASHSCOPE_TOP_P },
     mysql: { host: value.MYSQL_HOST, port: value.MYSQL_PORT, database: value.MYSQL_DATABASE, user: value.MYSQL_USER, password: value.MYSQL_PASSWORD, connectionLimit: value.MYSQL_CONNECTION_LIMIT },
     session: { ttlDays: value.SESSION_TTL_DAYS },
     generation: { totalTimeoutMs: value.GENERATION_TOTAL_TIMEOUT_MS, repairEnabled: value.GENERATION_REPAIR_ENABLED, mode: value.GENERATION_MODE },

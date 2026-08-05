@@ -18,7 +18,7 @@ import {
 } from './p0-state';
 
 export type P0Action =
-  | { readonly type: 'SELECT_CATALOG_INGREDIENT'; readonly ingredient: SelectedIngredient }
+  | { readonly type: 'TOGGLE_CATALOG_INGREDIENT'; readonly ingredient: SelectedIngredient }
   | { readonly type: 'ADD_CUSTOM_INGREDIENT'; readonly ingredient: SelectedIngredient }
   | { readonly type: 'REMOVE_INGREDIENT'; readonly ingredientId: string }
   | { readonly type: 'CLEAR_SELECTED_INGREDIENTS' }
@@ -40,12 +40,13 @@ export type P0Action =
   | { readonly type: 'SET_GUEST_IDENTITY_READY' }
   | { readonly type: 'SET_GUEST_IDENTITY_ERROR'; readonly message: string }
   | { readonly type: 'START_GENERATION'; readonly requestId: string; readonly idempotencyKey: string; readonly request: GenerationRequest }
-  | { readonly type: 'SET_GENERATION_SUCCEEDED'; readonly recipe: Recipe; readonly source: 'local' | 'deterministic' | 'provider' }
+  | { readonly type: 'SET_GENERATION_SUCCEEDED'; readonly recipes: readonly Recipe[]; readonly source: 'local' | 'deterministic' | 'provider' }
   | { readonly type: 'SET_GENERATION_NO_MATCH'; readonly message: string }
   | { readonly type: 'SET_GENERATION_FAILED'; readonly error: ApiError }
   | { readonly type: 'CANCEL_GENERATION' }
   | { readonly type: 'CACHE_RECIPE'; readonly recipe: Recipe }
   | { readonly type: 'ADD_RECENT_RECIPE'; readonly entry: RecentRecipeEntry }
+  | { readonly type: 'TOGGLE_FAVORITE_RECIPE'; readonly recipeId: string }
   | { readonly type: 'INITIALIZE_COOKING_SESSION'; readonly recipeId: string; readonly totalSteps: number }
   | { readonly type: 'SET_COOKING_STEP'; readonly recipeId: string; readonly stepIndex: number }
   | { readonly type: 'COMPLETE_COOKING_STEP'; readonly recipeId: string; readonly stepIndex: number }
@@ -84,6 +85,22 @@ function addIngredient(
   };
 }
 
+function toggleCatalogIngredient(
+  state: P0State,
+  ingredient: SelectedIngredient,
+): P0State {
+  const alreadySelected = state.selectedIngredients.some((item) => item.id === ingredient.id);
+  const selectedIngredients = alreadySelected
+    ? state.selectedIngredients.filter((item) => item.id !== ingredient.id)
+    : [...state.selectedIngredients, ingredient];
+
+  return {
+    ...state,
+    selectedIngredients,
+    generationDraft: toGenerationDraft(selectedIngredients, state),
+  };
+}
+
 function validStepIndex(session: P0State['cookingSessions'][string], stepIndex: number): boolean {
   return Number.isInteger(stepIndex) && stepIndex >= 0 && stepIndex < session.totalSteps;
 }
@@ -101,7 +118,9 @@ function nextIncompleteStep(session: P0State['cookingSessions'][string], fromInd
 
 export function p0Reducer(state: P0State, action: P0Action): P0State {
   switch (action.type) {
-    case 'SELECT_CATALOG_INGREDIENT':
+    case 'TOGGLE_CATALOG_INGREDIENT':
+      return toggleCatalogIngredient(state, action.ingredient);
+
     case 'ADD_CUSTOM_INGREDIENT':
       return addIngredient(state, action.ingredient);
 
@@ -208,6 +227,7 @@ export function p0Reducer(state: P0State, action: P0Action): P0State {
           requestId: action.requestId,
           idempotencyKey: action.idempotencyKey,
           recipeId: null,
+          recipeIds: [],
           error: null,
           message: null,
           requestSnapshot: action.request,
@@ -215,19 +235,27 @@ export function p0Reducer(state: P0State, action: P0Action): P0State {
         },
       };
 
-    case 'SET_GENERATION_SUCCEEDED':
+    case 'SET_GENERATION_SUCCEEDED': {
+      if (action.recipes.length === 0) return state;
+      const recipeCache = { ...state.recipeCache };
+      for (const recipe of action.recipes) {
+        recipeCache[recipe.recipeId] = recipe;
+      }
+      const recipeIds = action.recipes.map((recipe) => recipe.recipeId);
       return {
         ...state,
-        recipeCache: { ...state.recipeCache, [action.recipe.recipeId]: action.recipe },
+        recipeCache,
         generation: {
           ...state.generation,
           status: 'succeeded',
-          recipeId: action.recipe.recipeId,
+          recipeId: recipeIds[0],
+          recipeIds,
           error: null,
           message: null,
           source: action.source,
         },
       };
+    }
 
     case 'SET_GENERATION_NO_MATCH':
       return {
@@ -236,6 +264,7 @@ export function p0Reducer(state: P0State, action: P0Action): P0State {
           ...state.generation,
           status: 'no-match',
           recipeId: null,
+          recipeIds: [],
           error: null,
           message: action.message,
         },
@@ -248,6 +277,7 @@ export function p0Reducer(state: P0State, action: P0Action): P0State {
           ...state.generation,
           status: 'failed',
           recipeId: null,
+          recipeIds: [],
           error: action.error,
         },
       };
@@ -270,6 +300,13 @@ export function p0Reducer(state: P0State, action: P0Action): P0State {
 
     case 'CACHE_RECIPE':
       return { ...state, recipeCache: { ...state.recipeCache, [action.recipe.recipeId]: action.recipe } };
+
+    case 'TOGGLE_FAVORITE_RECIPE': {
+      const favoriteRecipeIds = state.favoriteRecipeIds.includes(action.recipeId)
+        ? state.favoriteRecipeIds.filter((recipeId) => recipeId !== action.recipeId)
+        : [...state.favoriteRecipeIds, action.recipeId];
+      return { ...state, favoriteRecipeIds };
+    }
 
     case 'INITIALIZE_COOKING_SESSION': {
       if (!action.recipeId || action.totalSteps <= 0 || !Number.isInteger(action.totalSteps)) return state;

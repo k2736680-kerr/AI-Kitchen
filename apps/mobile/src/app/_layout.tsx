@@ -7,6 +7,7 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { OnboardingProvider, useOnboarding } from '@/features/onboarding/onboarding-context';
 import { I18nProvider } from '@/i18n';
 import { P0StoreProvider } from '@/state/p0-store';
+import { AppThemeProvider } from '@/theme/app-theme';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -39,6 +40,7 @@ function RootNavigator() {
         <Stack.Screen name="generate" options={{ headerShown: false }} />
         <Stack.Screen name="generating" options={{ headerShown: false }} />
         <Stack.Screen name="generation-result" options={{ headerShown: false }} />
+        <Stack.Screen name="recipe-list" options={{ headerShown: false }} />
         <Stack.Screen name="recipe/[recipeId]" options={{ headerShown: false }} />
         <Stack.Screen name="cooking/[recipeId]" options={{ headerShown: false }} />
         <Stack.Screen name="settings" options={{ headerShown: false }} />
@@ -52,12 +54,14 @@ function RootNavigator() {
 
 export default function RootLayout() {
   return (
-    <I18nProvider>
-      <OnboardingProvider>
-        <P0StoreProvider>
-          <RootNavigator />
-        </P0StoreProvider>
-      </OnboardingProvider>
-    </I18nProvider>
+    <AppThemeProvider>
+      <I18nProvider>
+        <OnboardingProvider>
+          <P0StoreProvider>
+            <RootNavigator />
+          </P0StoreProvider>
+        </OnboardingProvider>
+      </I18nProvider>
+    </AppThemeProvider>
   );
 }

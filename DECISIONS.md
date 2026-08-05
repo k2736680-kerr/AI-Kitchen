@@ -34,6 +34,9 @@
 | D-016 | 正式后端使用内网 Node.js + MySQL | Accepted | 2026-07-28 |
 | D-017 | 动态菜谱按请求语言保存与检索 | Accepted | 2026-07-29 |
 | D-027 | 用户身份与数据所有权采用 guest/registered 两态 | Accepted | 2026-07-29 |
+| D-028 | 一次生成多个候选菜谱（按烹饪方式区分） | Accepted | 2026-08-04 |
+| D-029 | 调料/香料视为厨房常备，豁免"必要食材必须来自已选" | Accepted | 2026-08-04 |
+| D-030 | P0 本地状态持久化与纯本地收藏 | Accepted | 2026-08-04 |
 
 ---
 
@@ -648,6 +651,71 @@ Cursor rules、`CLAUDE.md`、`AGENTS.md` 和 ChatGPT Project instructions 用于
 - 本阶段不创建正式 users/auth identities、owner migration、注册登录 API、登录注册页面或伪用户；阶段 1 允许创建受控 guest identity/session 基础和游客会话 API。
 - 后续身份数据库、会话、guest claim/merge 和现有业务表 owner 迁移必须按 `docs/adr/0004-user-identity-and-data-ownership.md` 分阶段实施。
 - D-010 的 guest → anonymous → registered 路径和 D-017 的旧 Supabase ownership 说明不再作为当前实现依据；D-016 的内网 Node.js + MySQL 后端决策保持有效。
+
+---
+
+## D-028：一次生成多个候选菜谱（按烹饪方式区分）
+
+**状态：** Accepted
+**日期：** 2026-08-04
+
+### 背景
+
+用户输入相同食材（如西红柿、鸡蛋）时结果单一（几乎总是"炒"）。根因是 prompt 写死"只能输出一个 JSON 对象"、采样温度 0.2、Recipe Schema 无 cookingMethod 维度、且客户端默认走 3 条本地 fixture。
+
+### 备选
+
+1. 单次调用让模型输出 JSON 数组（`{"recipes":[...]}`）——JSON mode 下数组格式漂移风险高，一次失败拖垮整批；
+2. 并发 N 次调用，每次指定一个 cookingMethod，`Promise.allSettled` 容忍部分失败；
+3. 维持单候选 + 详情页"换一个"按钮。
+
+### 决策
+
+采用方案 2。`RecipeProvider.generate` 改为 `generateBatch(request, signal): Promise<Array<unknown|null>>`，按 `candidateCount`（默认 4，可选 3-5）从 `COOKING_METHOD_OPTIONS`（stir-fry/stew/steam/soup/cold/roast）轮转选取烹饪方式并发调用；全部失败时抛出首个错误（rate_limited/timeout/unavailable 分支保持），部分失败槽位返回 null。采样参数默认 `temperature 0.8 / topP 0.9`（可经环境变量覆盖）。
+
+服务端对每个候选走 `RecipeSchema.safeParse → validateRecipeAgainstRequest → validateRecipeLanguage` 校验，无效者最多 repair 2 个/批；按 `(cookingMethod, title)` 去重并剔除 `request.excludedRecipes`；成功响应 `success.recipes` 为 1-5 个菜谱数组（`recipe` 单数字段保留为 deprecated，兼容旧 replay payload）。
+
+### 后果
+
+- `GenerationApiSuccessSchema`：`recipe` → `recipes`（数组）为破坏性契约变更；迁移 004 回填旧 `response_payload`（单 recipe → recipes 数组）与 `ai_kitchen_recipes` 新结构化列。
+- 移动端新增方案列表页 `/recipe-list`，「再来一批」通过 `excludedRecipes` 传历史方案去重。
+- 单请求并发多次模型调用，需关注 DashScope QPM；candidateCount 上限 5、repair 上限 2 控制成本。
+
+---
+
+## D-029：调料/香料视为厨房常备，豁免"必要食材必须来自已选"
+
+**状态：** Accepted
+**日期：** 2026-08-04
+
+### 决策
+
+`IngredientDefinition` 新增 `isCondiment` 标志（盐、糖、生抽、食用油、葱姜蒜等）。resolver 的 `REQUIRED_INGREDIENT_MISSING` 与 deterministic 匹配对 `isCondiment` 食材豁免：模型可以把调料放进 `requiredIngredients` 而不要求用户显式选择；主食材仍必须来自已选。prompt 同步说明"调料类无需用户提供"。
+
+### 原因
+
+原硬约束使模型连葱姜蒜、油盐都不能用，是内容单一的次要根因；调料归入厨房常备符合真实做饭心智。
+
+### 后果
+
+食材目录从 39 种扩至 166 种（新增调料/香料/水果类目）。历史校验逻辑不变，仅新增豁免分支，向后兼容。
+
+---
+
+## D-030：P0 本地状态持久化与纯本地收藏
+
+**状态：** Accepted
+**日期：** 2026-08-04
+
+### 决策
+
+P0Store 全内存状态（历史、菜谱缓存、烹饪进度）迁移为 AsyncStorage 持久化：`p0-persist.ts` 序列化 selectedIngredients/generationDraft/recipeCache(上限 50)/recentRecipes(10)/cookingSessions(8)/favoriteRecipeIds/uiPreferences，transient 的 generation/identityStatus 不入库；300ms 防抖写回，挂载时 hydrate。
+
+收藏（`favoriteRecipeIds`）为纯本地，不同步后端——与 CURRENT_STATUS 的 guest 身份基线一致，避免为收藏引入服务端 owner 迁移。
+
+### 后果
+
+杀进程后历史/收藏/进度可恢复；settings 新增"清除本地数据"。未来 registered 身份落地时，收藏可迁移至服务端。
 
 ---
 

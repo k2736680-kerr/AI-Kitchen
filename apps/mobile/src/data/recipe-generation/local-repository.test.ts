@@ -20,6 +20,8 @@ const request: GenerationApiRequest = {
     dietaryPreferences: [],
     allergens: [],
     excludedIngredients: [],
+    candidateCount: 4,
+    excludedRecipes: [],
   },
 };
 
@@ -27,7 +29,7 @@ describe('LocalRecipeGenerationRepository', () => {
   it('returns the standard success response', async () => {
     const result = await new LocalRecipeGenerationRepository().generate(request, new AbortController().signal);
     expect(result.status).toBe('success');
-    if (result.status === 'success') expect(result.recipe.recipeId).toBe('fixture-tomato-egg-noodles');
+    if (result.status === 'success') expect(result.recipes[0].recipeId).toBe('fixture-tomato-egg-noodles');
   });
 
   it('keeps allergen filtering in the standard response boundary', async () => {

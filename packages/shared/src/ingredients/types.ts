@@ -3,6 +3,12 @@ export const INGREDIENT_CATEGORIES = [
   'vegetable',
   'staple',
   'meat',
+  'seafood',
+  'soy',
+  'dairy',
+  'fruit',
+  'condiment',
+  'spice',
 ] as const;
 
 export type IngredientCategory = (typeof INGREDIENT_CATEGORIES)[number];
@@ -25,6 +31,12 @@ export interface IngredientDefinition {
   /** Compatibility label for non-UI prompt construction. UI must use `localization`. */
   readonly displayName: string;
   readonly allergenCodes?: readonly AllergenCode[];
+  /**
+   * 调料/香料类食材(盐、糖、生抽、葱姜蒜等)。
+   * 此类食材允许出现在菜谱 requiredIngredients 中而不要求用户显式选择,
+   * 视为厨房常备。主食材仍必须来自用户已选。
+   */
+  readonly isCondiment?: boolean;
 }
 
 export interface SelectedIngredient {

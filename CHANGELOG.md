@@ -4,6 +4,52 @@
 
 ---
 
+## 多方案生成、食材扩容与本地持久化（2026-08-04）
+
+### 多候选菜谱生成（核心）
+
+- **契约变更（破坏性）**：`GenerationApiSuccessSchema.recipe`（单个）改为 `recipes`（1-5 个数组）；`recipe` 保留为 deprecated 可选字段兼容旧 replay payload。新增 `GenerationMetadata.candidateCount`。
+- **Schema 新增维度字段**：RecipeSchema 增加 `cookingMethod`（stir-fry/stew/steam/soup/cold/roast）、`cuisine`（11 个菜系）、`flavor`（7 种口味），均带 `.default()` 兼容旧 JSON 快照；`difficulty` 增加 `hard`、`spiceLevel` 增加 `hot`。
+- **生成请求扩展**：`GenerationRequest` 新增 `candidateCount`（默认 4）与 `excludedRecipes`（"再来一批"去重，参与 requestHash 形成新幂等域）。
+- **后端批量生成**：`RecipeProvider.generate` → `generateBatch`，按候选数并发调用 DashScope（每次指定一种烹饪方式），`Promise.allSettled` 容忍部分失败、全部失败抛出首个错误；采样参数默认 `temperature 0.8 / topP 0.9`（原 0.2/0.8，环境变量可覆盖）。
+- **prompt 重写**：`recipe-prompt.ts` 移除"只能输出一份"限制，新增烹饪方式约束、历史排除列表、调料豁免说明；repair 流程保持单候选，单批最多修复 2 个。
+- **服务端校验**：候选逐个走 Schema + 安全 + 语言校验，按 `(cookingMethod, title)` 去重；`saveRecipeSuccess` 改为批量事务内逐条 upsert recipes + history。
+- **数据库迁移 004**：`ai_kitchen_recipes` 增加 cooking_method/cuisine/flavor 结构化列并回填；旧 `response_payload` 单 recipe 回填为 recipes 数组（含 down 迁移）。
+
+### 食材库扩容
+
+- 标准食材从 39 种扩至 **166 种**：新增水果（15）、调料（27，含油盐酱醋糖料酒蚝油等）、香料（10，葱姜蒜八角桂皮等）类目，蔬菜/肉蛋/水产/豆制品/主食大量补全。
+- `IngredientDefinition` 新增 `isCondiment` 标志；resolver 对调料类食材豁免"必须来自已选"约束，主食材仍强制来自已选。`INGREDIENT_CATEGORIES` 增加 fruit/condiment/spice。
+
+### 移动端
+
+- **新增方案列表页 `/recipe-list`**：生成成功展示 3-5 个不同烹饪方式的候选卡片（做法/菜系/用时/难度/口味），点按进详情；「换个做法再来一批」通过 `excludedRecipes` 去重。
+- **P0Store 持久化**：新增 `state/p0-persist.ts`（AsyncStorage，300ms 防抖写回 + 挂载 hydrate），历史、菜谱缓存（上限 50）、最近浏览（10）、烹饪进度、收藏、偏好跨进程保留；transient 生成状态不入库。
+- **收藏功能**：详情页新增收藏按钮，纯本地 `favoriteRecipeIds`；探索页支持收藏夹筛选。
+- **探索页重写**：搜索框 + 难度/用时筛选 chips + 收藏夹切换 + 下拉刷新。
+- **设置页补齐**：外观（跟随系统/浅色/深色）选择、服务条款/隐私政策入口、清除本地数据。
+- **暗色模式贯通**：`theme.ts` 新增真实暗色调色板 `PaletteDark`，新增 `theme/app-theme.tsx` 主题 Provider（模式持久化），核心组件/tab 栏跟随主题。
+- **about/terms/privacy** 补齐真实文案（移除占位）。
+
+### 测试
+
+- shared：fixtures 数量断言更新至 166；新增 condiment 豁免/主料缺失用例；generation API 数组契约用例。
+- api：provider 批量并发/全失败抛错用例；persistence 批量事务回滚用例；app.test 全量适配 recipes 数组。
+- mobile：reducer 多候选存储/失败清空/收藏 toggle 用例；local repository 数组契约；食材搜索用例适配新目录。
+- 全量 63 个测试通过；shared/api/mobile 三包 typecheck 通过。
+
+---
+
+## 首页食材选择与目录丰富度
+
+- 移除通用页头右上角重复的设置按钮；语言切换统一从“我的” Tab 中进入。
+- 标准食材卡片现为双向切换交互：首次点击选中，再次点击直接取消；并同步更新当前会话的生成草稿。
+- 标准食材从 10 项扩展到 36 项，新增水产、豆制品和乳制品分类，并为新目录补齐中英文名称、常用别名及已支持的过敏原映射。
+- 首页每个标准食材卡片显示随 App 打包的统一风格缩略图，不依赖运行时网络；选中状态增加勾选图标、文字和屏幕阅读器提示。
+- 新增食材点击切换回归测试，并在 Pixel_8a 模拟器完成首页图片显示、选中、二次点击取消与目录底部图片的手工验证。
+
+---
+
 ## API 正式构建产物启动修复
 
 - API esbuild 构建继续输出 Node ESM，但不再把 dotenv、Fastify、mysql2、Zod 等第三方运行时依赖打入单文件；workspace shared 源码仍随 API 编译，部署时从已安装的锁定依赖解析运行时包。

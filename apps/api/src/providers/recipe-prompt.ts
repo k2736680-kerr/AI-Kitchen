@@ -1,4 +1,5 @@
 import { INGREDIENT_FIXTURES, type GenerationRequest, type SupportedLocale } from '@ai-kitchen/shared';
+import { COOKING_METHOD_OPTIONS } from '@ai-kitchen/shared';
 
 const ingredientById = new Map(INGREDIENT_FIXTURES.map((ingredient) => [ingredient.id, ingredient]));
 
@@ -9,8 +10,11 @@ const recipeSchemaGuide = {
   description: '由服务端指定语言的简短说明',
   servings: '正整数',
   totalTimeMinutes: '正整数，不能超过用户限制',
-  difficulty: 'easy 或 medium',
-  spiceLevel: 'mild 或 medium',
+  difficulty: 'easy、medium 或 hard',
+  spiceLevel: 'mild、medium 或 hot',
+  cookingMethod: '本方案指定的烹饪方式',
+  cuisine: '菜系，如 sichuan/cantonese/hunan/jiangsu/zhejiang/northeastern/shandong/western/japanese/korean/other',
+  flavor: '口味，如 light/spicy/savory/sweet/sour/sweet-sour/salty',
   dietaryTags: 'vegetarian/low-spice/easy/balanced 的数组',
   allergenCodes: 'egg.chicken/wheat.common/milk.cow/nut.peanut/shellfish.shrimp 的数组',
   requiredCookware: 'frying-pan/pot/oven/rice-cooker 的数组',
@@ -53,15 +57,25 @@ export function buildRecipeSystemPrompt(locale: SupportedLocale): string {
     '只能输出一个 JSON 对象，不得使用 Markdown、解释或额外文本。',
     '如果无法安全满足约束，只输出 {"status":"no_match"}。',
     '不得把用户过敏原或忌口食材加入菜谱；不得声称医疗级或绝对安全。',
-    '必须遵守人数、时间和可用厨具；requiredIngredients 必须来自用户已选标准食材。',
+    '必须遵守人数、时间和可用厨具。',
+    '主食材（requiredIngredients 中的非调料类）必须来自用户已选标准食材；盐、糖、生抽、食用油、葱姜蒜等调料香料视为厨房常备，可直接使用，不必要求用户提供。',
     ...languageInstructions(locale),
     'JSON key、recipeId、ingredientId、toolId、difficulty、tag ID、时长、人数、步骤编号和布尔值必须保持既定稳定格式。recipe.locale 由服务端写入，不要自行决定。',
     `菜谱对象必须包含这些字段：${JSON.stringify(recipeSchemaGuide)}。`,
   ].join('\n');
 }
 
-export function buildRecipeUserPrompt(request: GenerationRequest): string {
-  return `根据以下标准化生成条件创建一份可执行菜谱候选。请求语言：${request.locale}。\n${JSON.stringify(promptInput(request))}`;
+export function buildRecipeUserPrompt(request: GenerationRequest, cookingMethod?: (typeof COOKING_METHOD_OPTIONS)[number]): string {
+  const parts: string[] = [`根据以下标准化生成条件创建一份可执行菜谱候选。请求语言：${request.locale}。`];
+  if (cookingMethod) {
+    parts.push(`本次方案的烹饪方式必须为：${cookingMethod}。请围绕该烹饪方式设计步骤、时长和口感。`);
+  }
+  if (request.excludedRecipes.length > 0) {
+    const excluded = request.excludedRecipes.map((recipe) => `${recipe.title}（${recipe.cookingMethod}）`).join('、');
+    parts.push(`不要生成与以下已生成菜谱相同的菜品（避免菜名或做法雷同）：${excluded}。`);
+  }
+  parts.push(JSON.stringify(promptInput(request)));
+  return parts.join('\n');
 }
 
 export function buildRecipeRepairPrompt(input: { candidate: unknown; reason: string; locale: SupportedLocale }): string {

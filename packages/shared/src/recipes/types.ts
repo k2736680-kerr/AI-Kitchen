@@ -2,8 +2,10 @@ import { z } from 'zod';
 
 import {
   ALLERGEN_OPTIONS,
+  COOKING_METHOD_OPTIONS,
   COOKWARE_OPTIONS,
   DIETARY_PREFERENCE_OPTIONS,
+  cookingMethodSchema,
 } from '../generation/types';
 import { SUPPORTED_LOCALES } from '../ingredients/types';
 
@@ -30,6 +32,36 @@ const recipeSafetyNoticeSchema = z.object({
   isDemoOnly: z.boolean(),
 }).strict();
 
+/** 主要烹饪方式,定义见 generation/types.ts(共享给生成请求与菜谱)。 */
+
+/** 菜系标签,用于探索页筛选。 */
+export const CUISINE_OPTIONS = [
+  'sichuan',
+  'cantonese',
+  'hunan',
+  'jiangsu',
+  'zhejiang',
+  'northeastern',
+  'shandong',
+  'western',
+  'japanese',
+  'korean',
+  'other',
+] as const;
+export const cuisineSchema = z.enum(CUISINE_OPTIONS);
+
+/** 口味标签。 */
+export const FLAVOR_OPTIONS = [
+  'light',
+  'spicy',
+  'savory',
+  'sweet',
+  'sour',
+  'sweet-sour',
+  'salty',
+] as const;
+export const flavorSchema = z.enum(FLAVOR_OPTIONS);
+
 export const RecipeSchema = z.object({
   recipeId: z.string().trim().min(1).max(120),
   generationMode: z.enum(['fixture', 'provider']),
@@ -39,8 +71,11 @@ export const RecipeSchema = z.object({
   description: z.string().trim().min(1).max(2000),
   servings: z.number().int().positive().max(12),
   totalTimeMinutes: z.number().int().positive().max(240),
-  difficulty: z.enum(['easy', 'medium']),
-  spiceLevel: z.enum(['mild', 'medium']),
+  difficulty: z.enum(['easy', 'medium', 'hard']),
+  spiceLevel: z.enum(['mild', 'medium', 'hot']),
+  cookingMethod: cookingMethodSchema.default('stir-fry'),
+  cuisine: cuisineSchema.default('other'),
+  flavor: flavorSchema.default('savory'),
   dietaryTags: z.array(z.enum(DIETARY_PREFERENCE_OPTIONS)).max(DIETARY_PREFERENCE_OPTIONS.length),
   allergenCodes: z.array(z.enum(ALLERGEN_OPTIONS)).max(ALLERGEN_OPTIONS.length),
   requiredCookware: z.array(z.enum(COOKWARE_OPTIONS)).max(COOKWARE_OPTIONS.length),
@@ -58,6 +93,9 @@ export type RecipeGenerationMode = Recipe['generationMode'];
 export type NutritionStatus = Recipe['nutritionStatus'];
 export type RecipeDifficulty = Recipe['difficulty'];
 export type RecipeSpiceLevel = Recipe['spiceLevel'];
+export type CookingMethod = z.infer<typeof cookingMethodSchema>;
+export type Cuisine = z.infer<typeof cuisineSchema>;
+export type Flavor = z.infer<typeof flavorSchema>;
 export type RecipeIngredient = Recipe['requiredIngredients'][number];
 export type RecipeStep = Recipe['steps'][number];
 export type RecipeSafetyNotice = Recipe['safetyNotices'][number];

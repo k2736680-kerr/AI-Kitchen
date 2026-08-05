@@ -11,7 +11,7 @@ import type { ApiDependencies } from './app';
 
 const config: ApiConfig = {
   environment: 'test', host: '127.0.0.1', port: 3100, corsOrigin: '*', logLevel: 'error',
-  dashscope: { baseUrl: 'https://dashscope.example.com/compatible-mode/v1', apiKey: 'test-key', model: 'qwen3.7-plus', timeoutMs: 30 },
+  dashscope: { baseUrl: 'https://dashscope.example.com/compatible-mode/v1', apiKey: 'test-key', model: 'qwen3.7-plus', timeoutMs: 30, temperature: 0.8, topP: 0.9 },
   mysql: { host: 'localhost', port: 3306, database: 'ai_kitchen', user: 'test', password: 'test', connectionLimit: 1 },
   session: { ttlDays: 180 },
   generation: { totalTimeoutMs: 40, repairEnabled: true, mode: 'remote' },
@@ -26,7 +26,7 @@ function createTestApp(dependencies: Omit<ApiDependencies, 'sessionStore'>) {
 const basePayload = {
   schemaVersion: 'v1', requestId: 'req_api_test_1234', idempotencyKey: 'idem_api_test_1234', clientVersion: '1.0.0',
   identity: { type: 'guest' as const, guestId: 'session-guest-api-test' },
-  generationRequest: { schemaVersion: 'v1', locale: 'zh-CN', selectedIngredientIds: ['egg', 'tomato', 'noodles'], customIngredients: [], servings: 2, maxCookingTimeMinutes: 30, availableTools: [], dietaryPreferences: [], allergens: [], excludedIngredients: [] },
+  generationRequest: { schemaVersion: 'v1', locale: 'zh-CN', selectedIngredientIds: ['egg', 'tomato', 'noodles'], customIngredients: [], servings: 2, maxCookingTimeMinutes: 30, availableTools: [], dietaryPreferences: [], allergens: [], excludedIngredients: [], candidateCount: 4, excludedRecipes: [] },
 };
 
 const englishRecipe = {
@@ -39,7 +39,7 @@ const englishRecipe = {
 };
 
 function provider(overrides: Partial<RecipeProvider> = {}): RecipeProvider {
-  return { name: 'aliyun-dashscope', model: 'qwen3.7-plus', generate: async (generationRequest) => generationRequest.locale === 'en-US' ? englishRecipe : RECIPE_FIXTURES[0], repair: async (input) => input.request.locale === 'en-US' ? englishRecipe : RECIPE_FIXTURES[0], ...overrides };
+  return { name: 'aliyun-dashscope', model: 'qwen3.7-plus', generateBatch: async (generationRequest) => [generationRequest.locale === 'en-US' ? englishRecipe : RECIPE_FIXTURES[0]], repair: async (input) => input.request.locale === 'en-US' ? englishRecipe : RECIPE_FIXTURES[0], ...overrides };
 }
 
 function request(payload: unknown): { payload: string; headers: Record<string, string> } {
@@ -68,9 +68,9 @@ describe('Fastify recipe API', () => {
     expect(first.statusCode).toBe(200);
     const firstBody = first.json();
     expect(firstBody.status).toBe('success');
-    const recipeId = firstBody.recipe.recipeId as string;
+    const recipeId = firstBody.recipes[0].recipeId as string;
     const replay = await app.inject({ method: 'POST', url: '/api/v1/recipes/generate', ...request(basePayload) });
-    expect(replay.json().recipe.recipeId).toBe(recipeId);
+    expect(replay.json().recipes[0].recipeId).toBe(recipeId);
     const recipe = await app.inject({ method: 'GET', url: `/api/v1/recipes/${recipeId}`, headers: authHeaders });
     expect(recipe.statusCode).toBe(200);
     const visit = await app.inject({ method: 'POST', url: '/api/v1/history/visit', payload: JSON.stringify({ guestId: 'forged-guest', recipeId, source: 'remote' }), headers: { ...authHeaders, 'content-type': 'application/json' } });
@@ -89,13 +89,13 @@ describe('Fastify recipe API', () => {
     expect(createGenerationRequestHash(enRequest)).toBe(createGenerationRequestHash(enRequest));
 
     let providerCalls = 0;
-    const app = await createTestApp({ config, persistence: new InMemoryRecipePersistence(), provider: provider({ generate: async (generationRequest) => { providerCalls += 1; return generationRequest.locale === 'en-US' ? englishRecipe : RECIPE_FIXTURES[0]; } }) });
+    const app = await createTestApp({ config, persistence: new InMemoryRecipePersistence(), provider: provider({ generateBatch: async (generationRequest) => { providerCalls += 1; return [generationRequest.locale === 'en-US' ? englishRecipe : RECIPE_FIXTURES[0]]; } }) });
     const zhResponse = await app.inject({ method: 'POST', url: '/api/v1/recipes/generate', ...request(zh) });
     const enResponse = await app.inject({ method: 'POST', url: '/api/v1/recipes/generate', ...request(en) });
     const replay = await app.inject({ method: 'POST', url: '/api/v1/recipes/generate', ...request(en) });
-    expect(zhResponse.json().recipe.recipeId).not.toBe(enResponse.json().recipe.recipeId);
-    expect(enResponse.json().recipe).toMatchObject({ locale: 'en-US', title: 'Tomato egg noodles' });
-    expect(replay.json().recipe.recipeId).toBe(enResponse.json().recipe.recipeId);
+    expect(zhResponse.json().recipes[0].recipeId).not.toBe(enResponse.json().recipes[0].recipeId);
+    expect(enResponse.json().recipes[0]).toMatchObject({ locale: 'en-US', title: 'Tomato egg noodles' });
+    expect(replay.json().recipes[0].recipeId).toBe(enResponse.json().recipes[0].recipeId);
     expect(providerCalls).toBe(2);
     const zhHistory = await app.inject({ method: 'GET', url: `/api/v1/history?guestId=forged-guest&locale=zh-CN`, headers: authHeaders });
     const enHistory = await app.inject({ method: 'GET', url: `/api/v1/history?guestId=forged-guest&locale=en-US`, headers: authHeaders });
@@ -110,7 +110,7 @@ describe('Fastify recipe API', () => {
     const english = { ...basePayload, requestId: 'req_api_language_repair', idempotencyKey: 'idem_api_language_repair', generationRequest: { ...basePayload.generationRequest, locale: 'en-US' as const } };
     let repairCalls = 0;
     const repairedApp = await createTestApp({ config, persistence: new InMemoryRecipePersistence(), provider: provider({
-      generate: async () => RECIPE_FIXTURES[0],
+      generateBatch: async () => [RECIPE_FIXTURES[0]],
       repair: async () => { repairCalls += 1; return englishRecipe; },
     }) });
     const repaired = await repairedApp.inject({ method: 'POST', url: '/api/v1/recipes/generate', ...request(english) });
@@ -120,7 +120,7 @@ describe('Fastify recipe API', () => {
     await repairedApp.close();
 
     const failedApp = await createTestApp({ config, persistence: new InMemoryRecipePersistence(), provider: provider({
-      generate: async () => RECIPE_FIXTURES[0], repair: async () => RECIPE_FIXTURES[0],
+      generateBatch: async () => [RECIPE_FIXTURES[0]], repair: async () => RECIPE_FIXTURES[0],
     }) });
     const failed = await failedApp.inject({ method: 'POST', url: '/api/v1/recipes/generate', ...request({ ...english, requestId: 'req_api_language_failed', idempotencyKey: 'idem_api_language_failed' }) });
     expect(failed.statusCode).toBe(500);
@@ -145,17 +145,17 @@ describe('Fastify recipe API', () => {
   });
 
   it('handles provider timeout, provider rate limits, and one successful repair', async () => {
-    const timeoutProvider = provider({ generate: async () => new Promise<null>(() => undefined) });
+    const timeoutProvider = provider({ generateBatch: async () => new Promise<null[]>(() => undefined) });
     const timeoutApp = await createTestApp({ config: { ...config, dashscope: { ...config.dashscope, timeoutMs: 10 }, generation: { ...config.generation, totalTimeoutMs: 10 } }, persistence: new InMemoryRecipePersistence(), provider: timeoutProvider });
     expect((await timeoutApp.inject({ method: 'POST', url: '/api/v1/recipes/generate', ...request({ ...basePayload, idempotencyKey: 'idem_api_timeout_1234' }) })).statusCode).toBe(504);
     await timeoutApp.close();
 
-    const limitedApp = await createTestApp({ config, persistence: new InMemoryRecipePersistence(), provider: provider({ generate: async () => { throw new ProviderRateLimitError('limited', 12); } }) });
+    const limitedApp = await createTestApp({ config, persistence: new InMemoryRecipePersistence(), provider: provider({ generateBatch: async () => { throw new ProviderRateLimitError('limited', 12); } }) });
     expect((await limitedApp.inject({ method: 'POST', url: '/api/v1/recipes/generate', ...request({ ...basePayload, idempotencyKey: 'idem_api_limited_1234' }) })).statusCode).toBe(429);
     await limitedApp.close();
 
     let repairCalls = 0;
-    const repairApp = await createTestApp({ config, persistence: new InMemoryRecipePersistence(), provider: provider({ generate: async () => ({ invalid: true }), repair: async () => { repairCalls += 1; return RECIPE_FIXTURES[0]; } }) });
+    const repairApp = await createTestApp({ config, persistence: new InMemoryRecipePersistence(), provider: provider({ generateBatch: async () => [{ invalid: true }], repair: async () => { repairCalls += 1; return RECIPE_FIXTURES[0]; } }) });
     expect((await repairApp.inject({ method: 'POST', url: '/api/v1/recipes/generate', ...request({ ...basePayload, idempotencyKey: 'idem_api_repair_1234' }) })).statusCode).toBe(200);
     expect(repairCalls).toBe(1);
     await repairApp.close();
@@ -164,7 +164,7 @@ describe('Fastify recipe API', () => {
   it('fails closed when repair cannot fix an invalid or unsafe candidate', async () => {
     let repairCalls = 0;
     const failingApp = await createTestApp({ config, persistence: new InMemoryRecipePersistence(), provider: provider({
-      generate: async () => ({ invalid: true }),
+      generateBatch: async () => [{ invalid: true }],
       repair: async () => { repairCalls += 1; return { still: 'invalid' }; },
     }) });
     const invalid = await failingApp.inject({ method: 'POST', url: '/api/v1/recipes/generate', ...request({ ...basePayload, idempotencyKey: 'idem_api_repair_failure' }) });
@@ -172,7 +172,7 @@ describe('Fastify recipe API', () => {
     expect(repairCalls).toBe(1);
     await failingApp.close();
 
-    const unsafeApp = await createTestApp({ config, persistence: new InMemoryRecipePersistence(), provider: provider({ generate: async () => RECIPE_FIXTURES[0], repair: async () => RECIPE_FIXTURES[0] }) });
+    const unsafeApp = await createTestApp({ config, persistence: new InMemoryRecipePersistence(), provider: provider({ generateBatch: async () => [RECIPE_FIXTURES[0]], repair: async () => RECIPE_FIXTURES[0] }) });
     const unsafePayload = { ...basePayload, idempotencyKey: 'idem_api_safety_failure', generationRequest: { ...basePayload.generationRequest, selectedIngredientIds: ['tomato'] } };
     const unsafe = await unsafeApp.inject({ method: 'POST', url: '/api/v1/recipes/generate', ...request(unsafePayload) });
     expect(unsafe.statusCode).toBe(500);
@@ -189,7 +189,7 @@ describe('Fastify recipe API', () => {
     expect(missing.statusCode).toBe(401);
 
     const generated = await app.inject({ method: 'POST', url: '/api/v1/recipes/generate', ...requestAs({ ...basePayload, requestId: 'req_guest_a_123456', idempotencyKey: 'idem_guest_a_123456' }, 'test-token-a') });
-    const recipeId = generated.json().recipe.recipeId as string;
+    const recipeId = generated.json().recipes[0].recipeId as string;
     const guestBDetail = await app.inject({ method: 'GET', url: `/api/v1/recipes/${recipeId}`, headers: { authorization: 'Bearer test-token-b' } });
     expect(guestBDetail.statusCode).toBe(404);
     const guestBHistory = await app.inject({ method: 'GET', url: '/api/v1/history?guestId=00000000-0000-4000-8000-00000000000a', headers: { authorization: 'Bearer test-token-b' } });

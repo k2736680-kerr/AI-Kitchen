@@ -30,10 +30,14 @@ export class InMemoryRecipePersistence implements RecipePersistence {
     this.generations.set(input.request.idempotencyKey, { requestHash: input.requestHash, status: input.status });
   }
 
-  public async saveRecipeSuccess(input: { request: AuthenticatedGenerationApiRequest; requestHash: string; response: Extract<GenerationApiResponse, { status: 'success' }>; recipe: Recipe; durationMs: number }): Promise<void> {
-    this.recipes.set(input.recipe.recipeId, input.recipe);
+  public async saveRecipeSuccess(input: { request: AuthenticatedGenerationApiRequest; requestHash: string; response: Extract<GenerationApiResponse, { status: 'success' }>; recipes: readonly Recipe[]; durationMs: number }): Promise<void> {
+    for (const recipe of input.recipes) {
+      this.recipes.set(recipe.recipeId, recipe);
+    }
     this.generations.set(input.request.idempotencyKey, { requestHash: input.requestHash, status: 'succeeded', response: input.response });
-    this.upsertHistory({ guestId: input.request.identity.id, recipeId: input.recipe.recipeId, source: 'remote' });
+    for (const recipe of input.recipes) {
+      this.upsertHistory({ guestId: input.request.identity.id, recipeId: recipe.recipeId, source: 'remote' });
+    }
   }
 
   public async getRecipe(recipeId: string, guestId: string): Promise<Recipe | null> {

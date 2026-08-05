@@ -39,7 +39,7 @@ describe('P0 fixtures', () => {
   });
 
   it('contains the required P0 catalog and recipes', () => {
-    expect(INGREDIENT_FIXTURES).toHaveLength(10);
+    expect(INGREDIENT_FIXTURES).toHaveLength(166);
     expect(RECIPE_FIXTURES.map((recipe) => recipe.recipeId)).toEqual([
       'fixture-tomato-egg-noodles',
       'fixture-onion-chicken-fried-rice',

@@ -15,9 +15,9 @@ export function AppButton({ label, variant = 'primary', disabled, style, ...prop
 
 const styles = StyleSheet.create({
   button: { minHeight: 52, borderRadius: Radius.button, paddingHorizontal: Spacing.lg, justifyContent: 'center', alignItems: 'center' },
-  primary: { backgroundColor: Palette.sage },
-  secondary: { backgroundColor: Palette.surface, borderColor: Palette.sage, borderWidth: 1 },
+  primary: { backgroundColor: Palette.sage, shadowColor: '#1E2922', shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 },
+  secondary: { backgroundColor: Palette.surface, borderColor: Palette.sage, borderWidth: 1.5 },
   ghost: { alignSelf: 'flex-start', minHeight: 40, paddingHorizontal: Spacing.sm },
   label: { fontWeight: '700', textAlign: 'center' }, primaryLabel: { color: Palette.surface }, secondaryLabel: { color: Palette.sageDeep },
-  disabled: { backgroundColor: Palette.disabled, borderColor: Palette.disabled }, disabledLabel: { color: Palette.surface }, pressed: { opacity: 0.84 },
+  disabled: { backgroundColor: Palette.disabled, borderColor: Palette.disabled }, disabledLabel: { color: Palette.surface }, pressed: { opacity: 0.84, transform: [{ scale: 0.985 }] },
 });

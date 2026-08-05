@@ -56,11 +56,15 @@ export default function GeneratingScreen() {
     void repository.generate(request, controller.signal).then((result) => {
       if (!active) return;
       if (result.status === 'success') {
-        setLastRecipe(result.recipe.recipeId);
-        setGenerationSucceeded(result.recipe, result.metadata.source);
-        addRecentRecipe({ recipeId: result.recipe.recipeId, viewedAt: new Date().toISOString(), source: result.metadata.source === 'provider' ? 'remote' : 'local', locale: result.recipe.locale });
-        if (remoteData) void remoteData.recordVisit({ recipeId: result.recipe.recipeId, source: 'remote' }, new AbortController().signal).catch(() => undefined);
-        router.replace(`/recipe/${result.recipe.recipeId}` as Href);
+        setLastRecipe(result.recipes[0].recipeId);
+        setGenerationSucceeded(result.recipes, result.metadata.source);
+        const first = result.recipes[0];
+        addRecentRecipe({ recipeId: first.recipeId, viewedAt: new Date().toISOString(), source: result.metadata.source === 'provider' ? 'remote' : 'local', locale: first.locale });
+        if (remoteData) {
+          const firstId = first.recipeId;
+          void remoteData.recordVisit({ recipeId: firstId, source: 'remote' }, new AbortController().signal).catch(() => undefined);
+        }
+        router.replace(result.recipes.length > 1 ? '/recipe-list' as Href : `/recipe/${first.recipeId}` as Href);
       } else if (result.status === 'no_match') {
         setGenerationNoMatch(result.message);
         router.replace('/generation-result' as Href);

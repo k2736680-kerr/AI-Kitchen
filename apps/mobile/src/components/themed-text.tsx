@@ -1,9 +1,9 @@
 import { Platform, StyleSheet, Text, type TextProps } from 'react-native';
 
-import { Fonts, type ThemeColor } from '@/constants/theme';
+import { Fonts, type TextThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-export type ThemedTextProps = TextProps & { type?: 'default' | 'title' | 'pageTitle' | 'sectionTitle' | 'small' | 'smallBold' | 'subtitle' | 'link' | 'linkPrimary' | 'code'; themeColor?: ThemeColor };
+export type ThemedTextProps = TextProps & { type?: 'default' | 'title' | 'pageTitle' | 'sectionTitle' | 'small' | 'smallBold' | 'subtitle' | 'link' | 'linkPrimary' | 'code'; themeColor?: TextThemeColor };
 
 export function ThemedText({ style, type = 'default', themeColor, ...rest }: ThemedTextProps) {
   const theme = useTheme();
