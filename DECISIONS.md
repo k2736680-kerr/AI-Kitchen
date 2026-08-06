@@ -31,12 +31,14 @@
 | D-013 | requestId + idempotencyKey 全链路使用 | Accepted | 2026-07-24 |
 | D-014 | 关系规范化与 Recipe Snapshot 并存 | Accepted | 2026-07-24 |
 | D-015 | P0/P1 实施严格范围控制 | Accepted | 2026-07-24 |
-| D-016 | 正式后端使用内网 Node.js + MySQL | Accepted | 2026-07-28 |
+| D-016 | 正式后端使用内网 Node.js + MySQL | Superseded by D-032 | 2026-07-28 |
 | D-017 | 动态菜谱按请求语言保存与检索 | Accepted | 2026-07-29 |
 | D-027 | 用户身份与数据所有权采用 guest/registered 两态 | Accepted | 2026-07-29 |
 | D-028 | 一次生成多个候选菜谱（按烹饪方式区分） | Accepted | 2026-08-04 |
 | D-029 | 调料/香料视为厨房常备，豁免"必要食材必须来自已选" | Accepted | 2026-08-04 |
 | D-030 | P0 本地状态持久化与纯本地收藏 | Accepted | 2026-08-04 |
+| D-031 | 公网 HTTPS 与内部 HTTP 分层 | Superseded by D-032 | 2026-08-06 |
+| D-032 | 正式后端迁移到 Supabase Auth、PostgreSQL/RLS 与 Edge Functions | Accepted | 2026-08-06 |
 
 ---
 
@@ -582,7 +584,7 @@ requestId 贯穿 App/API/AI/规则/营养。日志使用稳定 event/code 和版
 
 ### 决策
 
-Cursor rules、`CLAUDE.md`、`AGENTS.md` 和 ChatGPT Project instructions 用于持续上下文；真正不可绕过的限制仍通过权限、hooks/CI、RLS、Schema、测试和发布审批实现。
+仓库统一使用根 `AGENTS.md` 提供 Coding Agent 持续上下文；真正不可绕过的限制仍通过权限、hooks/CI、RLS、Schema、测试和发布审批实现。已完成使命且内容重复的 Cursor/Claude/ChatGPT 专用指令已在仓库清理中移除，避免架构信息漂移。
 
 ### 后果
 
@@ -590,7 +592,7 @@ Cursor rules、`CLAUDE.md`、`AGENTS.md` 和 ChatGPT Project instructions 用于
 
 ## D-016：正式后端使用内网 Node.js + MySQL
 
-**状态：** Accepted
+**状态：** Superseded by D-032
 **日期：** 2026-07-28
 
 ### 背景
@@ -649,8 +651,8 @@ Cursor rules、`CLAUDE.md`、`AGENTS.md` 和 ChatGPT Project instructions 用于
 ### 后果
 
 - 本阶段不创建正式 users/auth identities、owner migration、注册登录 API、登录注册页面或伪用户；阶段 1 允许创建受控 guest identity/session 基础和游客会话 API。
-- 后续身份数据库、会话、guest claim/merge 和现有业务表 owner 迁移必须按 `docs/adr/0004-user-identity-and-data-ownership.md` 分阶段实施。
-- D-010 的 guest → anonymous → registered 路径和 D-017 的旧 Supabase ownership 说明不再作为当前实现依据；D-016 的内网 Node.js + MySQL 后端决策保持有效。
+- 后续 registered 身份、guest claim/merge 和账号删除必须按 `05_AUTH_AND_IDENTITY.md` 与 D-032 分阶段实施，并继续由 Supabase Auth/RLS 强制 owner 边界。
+- D-010 的三态产品身份路径仍被本决策替代；D-032 采用 Supabase anonymous 作为 guest 的技术实现，不把 anonymous 暴露为新的产品身份状态。
 
 ---
 
@@ -716,6 +718,57 @@ P0Store 全内存状态（历史、菜谱缓存、烹饪进度）迁移为 Async
 ### 后果
 
 杀进程后历史/收藏/进度可恢复；settings 新增"清除本地数据"。未来 registered 身份落地时，收藏可迁移至服务端。
+
+---
+
+## D-031：公网 HTTPS 与内部 HTTP 分层
+
+**状态：** Superseded by D-032
+**日期：** 2026-08-06
+
+### 背景
+
+Mobile 需要通过公网域名访问长期在线 API，而 API 与 MySQL 位于同一受控内网服务器。主机已有 Nginx 占用 80，Docker Hub 出口不稳定，并且服务端密钥与数据库不得进入 App。
+
+### 决策
+
+App、浏览器和其他外部客户端只访问 `https://kerr.test.moyoung.com`。服务器使用独立 Docker Nginx 容器在 443 终止 TLS，再通过服务器内部 HTTP 连接 API `3100`；API 不直接调用外部 TLS 证书，MySQL 仍只在内网访问。production/staging Mobile 配置在代码层拒绝 HTTP，部署脚本在启动前校验证书域名和私钥匹配。
+
+### 后果
+
+- 公网网关必须把 443/TLS 转发到 `10.0.30.171:443`，不能只保留指向 `3100` 的 HTTP 规则。
+- HTTPS 验收通过后关闭公网到 `3100` 的 HTTP 穿透，`3100` 仅供受控内网访问。
+- 证书必须精确覆盖 `kerr.test.moyoung.com` 或使用 `*.test.moyoung.com`；`*.moyoung.com` 不覆盖两级子域名。
+- 证书与私钥只保存在服务器被 Git 忽略的 `deploy/server/certs`，不写入镜像、日志或 APK。
+- 内部 HTTP 减少重复 TLS 配置，但 3100 只能位于受控内网/穿透目标侧，不作为 App 正式地址。
+
+---
+
+## D-032：正式后端迁移到 Supabase Auth、PostgreSQL/RLS 与 Edge Functions
+
+**状态：** Accepted
+**日期：** 2026-08-06
+
+### 背景
+
+内网 Fastify/MySQL 已能运行，但公网 TLS、穿透、服务器维护和长期可用性增加了不必要的运维复杂度。用户确认当前服务没有真实用户或必须保留的数据，并明确允许推翻旧后端，以最简单的方式迁移全部 API 和数据库。
+
+### 决策
+
+- 正式运行时改为 Supabase Auth 匿名用户、PostgreSQL、RLS 和单个 `api` Edge Function。
+- App 继续使用现有 `/api/v1` REST 契约；产品层仍称“游客”，Supabase anonymous 只是技术身份，不新增登录界面。
+- 所有业务表使用 `owner_id = auth.uid()`，RLS 默认隔离；客户端不能提交可信 owner，Edge Function 也不使用 Service Role 执行业务读写。
+- Prompt、Provider、Schema、业务和食品安全校验抽到 `@ai-kitchen/server-core`，Fastify 与 Edge 构建产物复用同一实现。
+- Supabase 访问令牌与刷新令牌保存在 SecureStore；Mobile 在令牌临近过期时自动刷新。
+- 不迁移旧 MySQL 数据和旧自定义 Guest Token。旧服务器仅保留到 Supabase 真实冒烟和手机切流通过，随后停止。
+
+### 后果
+
+- D-016 与 D-031 被本决策替代；自定义域名、Nginx 证书、内网穿透和 MySQL 不再是正式发布链路。
+- 生产 Base URL 为 `https://<project-ref>.supabase.co/functions/v1/api`，天然使用 HTTPS。
+- 需要 Supabase Personal Access Token、Organization ID 和新项目数据库密码完成首次部署；DashScope Key 只上传为 Function Secret。
+- 免费项目可能暂停或出现冷启动，不等同于有 SLA 的付费常驻服务；真实生成时延和中国大陆网络质量必须在切流前验收。
+- Fastify/MySQL 源码暂作为历史兼容与测试参考保留；`10.0.30.171` 上的运行服务、代码、Secret、证书、构建缓存、`ai_kitchen` 数据库和全部 `ai_kitchen_api` Host 账号已于 2026-08-06 清理。
 
 ---
 

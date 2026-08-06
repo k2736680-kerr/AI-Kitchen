@@ -6,7 +6,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/app-button';
 import { ThemedText } from '@/components/themed-text';
-import { Palette, Radius, Shadows, Spacing } from '@/constants/theme';
+import { Radius, Shadows, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 const onboardingSlides = [
   {
@@ -28,6 +29,7 @@ const onboardingSlides = [
 
 export function FirstLaunchOnboarding({ disabled = false, onComplete }: { readonly disabled?: boolean; readonly onComplete: () => void }) {
   const { t } = useTranslation();
+  const theme = useTheme();
   const { width, height } = useWindowDimensions();
   const [stepIndex, setStepIndex] = useState(0);
 
@@ -37,33 +39,33 @@ export function FirstLaunchOnboarding({ disabled = false, onComplete }: { readon
   const isLastStep = stepIndex === onboardingSlides.length - 1;
 
   return (
-    <SafeAreaView style={styles.overlay}>
+    <SafeAreaView style={[styles.overlay, { backgroundColor: theme.background }]}>
       <Image source={require('@/assets/images/ai-kitchen/decor/botanical-sprig-left.png')} style={styles.leftSprig} contentFit="contain" />
       <Image source={require('@/assets/images/ai-kitchen/decor/botanical-sprig-right.png')} style={styles.rightSprig} contentFit="contain" />
       <Image source={require('@/assets/images/ai-kitchen/decor/botanical-wave-bottom.png')} style={styles.bottomWave} contentFit="cover" />
 
       <View style={styles.container}>
         <View style={styles.topRow}>
-          <View style={styles.brandChip}>
+          <View style={[styles.brandChip, { backgroundColor: theme.backgroundElement }]}>
             <Image source={require('@/assets/images/ai-kitchen/brand/splash-mark.png')} style={styles.brandChipImage} contentFit="contain" />
-            <ThemedText type="smallBold" style={styles.brandChipText}>{t('common.appName')}</ThemedText>
+            <ThemedText type="smallBold" style={{ color: theme.primaryPressed }}>{t('common.appName')}</ThemedText>
           </View>
           <Pressable
             accessibilityRole="button"
             disabled={disabled}
             onPress={onComplete}
             style={[styles.skipButton, __DEV__ && styles.skipButtonDevelopment]}>
-            <ThemedText type="smallBold" style={styles.skipButtonText}>{t('onboarding.skip')}</ThemedText>
+            <ThemedText type="smallBold" style={{ color: theme.primaryPressed }}>{t('onboarding.skip')}</ThemedText>
           </Pressable>
         </View>
 
         <View style={styles.copyBlock}>
-          <ThemedText type="smallBold" style={styles.eyebrow}>{t('onboarding.eyebrow')}</ThemedText>
-          <ThemedText type="pageTitle" style={styles.title}>{t('onboarding.title')}</ThemedText>
+          <ThemedText type="smallBold" style={[styles.eyebrow, { color: theme.apricot }]}>{t('onboarding.eyebrow')}</ThemedText>
+          <ThemedText type="pageTitle" style={{ color: theme.text }}>{t('onboarding.title')}</ThemedText>
           <ThemedText themeColor="textSecondary" style={styles.subtitle}>{t('onboarding.subtitle')}</ThemedText>
         </View>
 
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: theme.backgroundElement }]}>
           <Image source={slide.image} style={{ width: illustrationWidth, height: illustrationHeight }} contentFit="contain" />
           <View style={styles.cardCopy}>
             <ThemedText type="sectionTitle" style={styles.cardTitle}>{t(slide.titleKey)}</ThemedText>
@@ -74,7 +76,7 @@ export function FirstLaunchOnboarding({ disabled = false, onComplete }: { readon
         <View style={styles.footer}>
           <View style={styles.dots}>
             {onboardingSlides.map((_, index) => (
-              <View key={index} style={[styles.dot, index === stepIndex && styles.dotActive]} />
+              <View key={index} style={[styles.dot, { backgroundColor: theme.border }, index === stepIndex && styles.dotActive, index === stepIndex && { backgroundColor: theme.primary }]} />
             ))}
           </View>
 
@@ -92,7 +94,6 @@ export function FirstLaunchOnboarding({ disabled = false, onComplete }: { readon
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: Palette.background,
     zIndex: 900,
   },
   container: {
@@ -112,7 +113,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
-    backgroundColor: Palette.surface,
     borderRadius: Radius.chip,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
@@ -122,9 +122,6 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
   },
-  brandChipText: {
-    color: Palette.sageDeep,
-  },
   skipButton: {
     borderRadius: Radius.chip,
     paddingHorizontal: Spacing.sm,
@@ -133,18 +130,11 @@ const styles = StyleSheet.create({
   skipButtonDevelopment: {
     marginRight: 140,
   },
-  skipButtonText: {
-    color: Palette.sageDeep,
-  },
   copyBlock: {
     gap: Spacing.xs,
   },
   eyebrow: {
-    color: Palette.coral,
     letterSpacing: 0.4,
-  },
-  title: {
-    color: Palette.text,
   },
   subtitle: {
     maxWidth: 420,
@@ -154,7 +144,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.lg,
-    backgroundColor: Palette.surface,
     borderRadius: Radius.large,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xl,
@@ -183,11 +172,9 @@ const styles = StyleSheet.create({
     width: 9,
     height: 9,
     borderRadius: Radius.chip,
-    backgroundColor: Palette.border,
   },
   dotActive: {
     width: 28,
-    backgroundColor: Palette.sage,
   },
   leftSprig: {
     position: 'absolute',

@@ -15,7 +15,8 @@ export const GuestSessionResponseSchema = z.object({
   schemaVersion: z.literal(AUTH_API_SCHEMA_VERSION),
   subject: GuestSubjectSchema,
   session: z.object({
-    token: z.string().min(32).max(256).optional(),
+    token: z.string().min(32).max(4096).optional(),
+    refreshToken: z.string().min(12).max(4096).optional(),
     expiresAt: expiresAtSchema,
   }).strict(),
 }).strict();

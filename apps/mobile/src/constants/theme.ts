@@ -62,6 +62,12 @@ export interface ThemeColors {
   readonly brandGradient: readonly [string, string];
   readonly apricot: string;
   readonly surfaceTint: string;
+  readonly dangerSurface: string;
+  readonly warningSurface: string;
+  readonly dangerBorder: string;
+  readonly warningBorder: string;
+  readonly successBorder: string;
+  readonly onPrimary: string;
 }
 
 export const Colors: Readonly<Record<'light' | 'dark', ThemeColors>> = {
@@ -79,6 +85,12 @@ export const Colors: Readonly<Record<'light' | 'dark', ThemeColors>> = {
     brandGradient: [Palette.sage, Palette.sageDeep],
     apricot: Palette.apricot,
     surfaceTint: Palette.surfaceTint,
+    dangerSurface: Palette.dangerSurface,
+    warningSurface: Palette.warningSurface,
+    dangerBorder: '#EAA18F',
+    warningBorder: '#E9C97F',
+    successBorder: '#9BBCA3',
+    onPrimary: '#FFFFFF',
   },
   dark: {
     text: PaletteDark.text,
@@ -94,6 +106,12 @@ export const Colors: Readonly<Record<'light' | 'dark', ThemeColors>> = {
     brandGradient: [PaletteDark.sage, PaletteDark.sageDeep],
     apricot: PaletteDark.apricot,
     surfaceTint: PaletteDark.surfaceTint,
+    dangerSurface: PaletteDark.dangerSurface,
+    warningSurface: PaletteDark.warningSurface,
+    dangerBorder: '#8E5548',
+    warningBorder: '#7A6332',
+    successBorder: '#4F8062',
+    onPrimary: '#FFFFFF',
   },
 } satisfies Readonly<Record<'light' | 'dark', ThemeColors>>;
 

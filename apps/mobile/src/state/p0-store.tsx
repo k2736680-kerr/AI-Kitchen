@@ -125,6 +125,10 @@ export function P0StoreProvider({ children }: PropsWithChildren) {
       dispatch({ type: 'SET_GUEST_IDENTITY_READY' });
       return;
     }
+    if (environmentConfig.configurationError) {
+      dispatch({ type: 'SET_GUEST_IDENTITY_ERROR', message: environmentConfig.configurationError });
+      return;
+    }
     let active = true;
     void guestSessionService.bootstrapGuestSession().then((session) => {
       if (active) dispatch({ type: 'SET_GUEST_IDENTITY', guestId: session.subject.id });

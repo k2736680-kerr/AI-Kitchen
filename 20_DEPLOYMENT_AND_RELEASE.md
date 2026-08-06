@@ -5,7 +5,7 @@
 | 属性 | 内容 |
 |---|---|
 | 文档状态 | Draft / Ready for CI/CD Design |
-| 实施状态 | 尚未创建 CI、EAS、Supabase 环境或签名 |
+| 实施状态 | Supabase migration/Function 部署脚本已创建；远程环境、EAS 与商店签名尚未完成 |
 | 依赖 | `14_EXPO_AND_NATIVE_STRATEGY.md`、`18_TEST_STRATEGY.md`、`19_OBSERVABILITY.md` |
 | 最后更新 | 2026-07-27 |
 

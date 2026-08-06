@@ -9,7 +9,7 @@
 | 数据库 | Supabase PostgreSQL |
 | 适用阶段 | P0–P2 |
 | 最后更新 | 2026-07-24 |
-| 实施状态 | 尚未创建数据库或迁移 |
+| 实施状态 | PostgreSQL migration、RLS、事务 RPC 与安全测试已创建；等待远程项目执行 |
 
 ---
 

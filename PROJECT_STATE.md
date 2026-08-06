@@ -4,11 +4,11 @@
 
 | 属性 | 当前值 |
 |---|---|
-| 状态日期 | 2026-07-28 |
+| 状态日期 | 2026-08-06 |
 | Blueprint 版本 | 1.0.0 |
 | Blueprint 状态 | Phase 1–4 完成 |
-| 产品阶段 | P0 移动端主链路与内网 API/MySQL 实现完成，等待真实环境联调 |
-| 代码状态 | pnpm Monorepo、Mobile、Shared 契约、Fastify API 和 MySQL migration 已创建 |
+| 产品阶段 | P0 移动端主链路与 Supabase 正式后端已联通，等待 ARM64 真机安装验收 |
+| 代码状态 | pnpm Monorepo、Mobile、Shared/Server Core、Supabase migration/RLS/Edge Function 已实现并部署；旧 Fastify/MySQL 服务器、数据库和账号已全部清理 |
 | 发布状态 | 未发布 |
 | 优先平台 | Android |
 
@@ -24,7 +24,7 @@
 
 - 产品愿景、用户、核心流程、非目标和 P0/P1/P2 范围；
 - 12–18 周总体路线；
-- React Native/Expo/内网 Node.js/MySQL 技术基线；
+- React Native/Expo/Supabase Auth/PostgreSQL/RLS/Edge Functions 技术基线；
 - 数据库、API、身份、Recipe Schema 和 AI Pipeline；
 - Prompt、Rule、Food Safety、Nutrition 和 Privacy 设计；
 - Mobile、Expo、UI、State、Local Sync、Testing、Observability、Deployment 和 Store 设计；
@@ -40,7 +40,8 @@
 - React Native + Expo + TypeScript；
 - Android 优先；
 - App 只调用自有后端；
-- 内网 Node.js/Fastify + MySQL；
+- Supabase Edge Function + PostgreSQL/RLS；
+- 生产 API 使用 Supabase 托管 HTTPS；
 - Monorepo + 共享 Schema；
 - Recipe Candidate 与 Final Recipe 分离；
 - AI 输出四层处理；
@@ -70,7 +71,7 @@ React Native、Expo、TypeScript strict、Expo Router、Query layer、轻量 Sto
 
 ### Backend/Data
 
-内网 Node.js API、MySQL、原生 migrations、versioned REST、rate limit、budget、logs。
+Supabase Edge Function、PostgreSQL migrations、RLS、事务 RPC、versioned REST、rate limit、budget、logs。
 
 ### AI/Domain
 
@@ -96,8 +97,7 @@ P2：正式账号、删除、营养来源、隐私、监控、签名、iOS 和�
 
 ## 6. 尚未开始或尚未接通
 
-- 用户内网 MySQL migration 执行与真实数据验证；
-- 阿里云百炼真实凭据、Provider 调用与部署联调；
+- 公网网关可信 HTTPS/443 与 Android ARM 真机外网验收；
 - 可信身份/登录、跨启动同步和本地 DB；
 - automated E2E/CI；
 - EAS/monitoring/store release。
@@ -132,18 +132,18 @@ P2：正式账号、删除、营养来源、隐私、监控、签名、iOS 和�
 | 数据丢失 | migrations、snapshot、sync/tombstone、backup |
 | 成本失控 | limits、Token、budget、kill switch |
 | 范围膨胀 | P0/P1/P2、ADR |
-| AI 上下文漂移 | Blueprint、AGENTS/CLAUDE/Cursor/ChatGPT rules |
+| AI 上下文漂移 | 编号 Blueprint、根 `AGENTS.md`、状态与决策文档 |
 | 发布/隐私不一致 | data map、store checklist、release manifest |
 
 ---
 
 ## 9. 下一阶段退出条件
 
-P0 固定数据原型阶段只有在以下完成后退出：
+当前 ARM64 真机验收阶段只有在以下完成后退出：
 
-- Monorepo 和基础工具链可复现；
-- 首页→条件→详情固定 Fixture 流程；
-- 所有主要页面状态；
-- Android 模拟器和一台真机；
-- 测试、运行说明和可回滚 commit；
-- 状态文档真实更新。
+- Supabase Release APK 安装到真实 Android ARM64 手机；
+- anonymous session 创建与刷新成功；
+- 真实生成、详情、历史和 visit 主链路成功；
+- 记录启动、网络、生成时延和崩溃日志；
+- 确认 App 不包含旧域名、旧服务器地址或服务端 Secret；
+- 状态文档和可回滚提交真实更新。

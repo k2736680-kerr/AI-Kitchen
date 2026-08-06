@@ -13,7 +13,7 @@
 
 ## 1. 项目一句话定义
 
-> 实施更正（D-016，2026-07-28）：正式服务端是用户内网 Node.js/Fastify + MySQL；历史 Blueprint 中的 Supabase/Edge/PostgreSQL 仅保留为原始目标设计，不能作为当前实施依据。
+> 实施更正（D-032，2026-08-06）：正式服务端为 Supabase Auth + PostgreSQL/RLS + Edge Functions。旧内网 Node.js/Fastify + MySQL 运行环境已清理，不再提供在线回滚。
 
 AI Kitchen 是一款移动端 AI 厨房助手：用户选择手头已有食材并设置人数、时间、厨具、忌口和过敏限制，系统在服务端生成结构化菜谱，经业务和食品安全规则校验后，提供可执行的分步烹饪指导。
 
@@ -40,15 +40,15 @@ AI Kitchen 是一款移动端 AI 厨房助手：用户选择手头已有食材�
 
 ## 3. 当前真实状态
 
-截至 2026-07-27：
+截至 2026-08-06：
 
 - 已完成 Blueprint Phase 1–4 和完整文档索引；
 - 已完成数据库、API、身份、AI、Prompt、规则、安全、营养、隐私、移动端、测试、部署和商店专项设计；
 - 已生成 Cursor、Claude Code、Codex、ChatGPT 项目规则和交接模板；
 - 已创建可运行的 pnpm Monorepo、Expo Mobile、Shared Schema 和 P0 页面；
-- 已创建版本化 Generation API、Fastify/MySQL 源码、幂等 migration 和 Local/Remote Adapter；
-- 尚未连接用户内网 MySQL、配置真实阿里云百炼凭据或调用真实 AI；
-- 下一阶段是填写环境变量并完成内网 API、MySQL、阿里云与真机联调。
+- 已创建版本化 Generation API、Fastify/MySQL 回滚实现和 Local/Remote Adapter；
+- 已实现 Supabase PostgreSQL migration、RLS、事务 RPC、anonymous Auth Edge Function、自动 Session Refresh 和部署脚本；
+- Supabase migration、Function、Secret 和真实接口验收已完成；下一阶段是在 Android ARM64 真机安装正式 APK 并完成外网体验验收。
 
 禁止将蓝图中的目标状态误认为当前已经实现的状态。
 
@@ -106,8 +106,8 @@ AI Kitchen 是一款移动端 AI 厨房助手：用户选择手头已有食材�
 ### 5.2 服务端
 
 - App 只访问项目自有后端；
-- P0–P2 使用内网 Node.js/Fastify API 作为主要服务端入口；
-- 数据库使用 MySQL；
+- P0–P2 使用 Supabase Edge Function 作为正式服务端入口；
+- 数据库使用 Supabase PostgreSQL，所有业务表启用 owner RLS；
 - 数据库变更必须通过迁移；
 - development、staging、production 分离；
 - 所有生成请求必须可追踪、可去重、可限流、可计费分析。

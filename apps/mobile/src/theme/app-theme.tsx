@@ -21,16 +21,13 @@ const AppThemeContext = createContext<AppThemeValue | null>(null);
 export function AppThemeProvider({ children }: PropsWithChildren) {
   const systemScheme = useColorScheme();
   const [mode, setModeState] = useState<ThemeMode>('system');
-  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     let active = true;
     void AsyncStorage.getItem(STORAGE_KEY).then((value) => {
       if (!active) return;
       if (value === 'light' || value === 'dark' || value === 'system') setModeState(value);
-    }).finally(() => {
-      if (active) setHydrated(true);
-    });
+    }).catch(() => undefined);
     return () => { active = false; };
   }, []);
 
@@ -44,7 +41,6 @@ export function AppThemeProvider({ children }: PropsWithChildren) {
     return { mode, resolved, colors: Colors[resolved], setMode };
   }, [mode, systemScheme]);
 
-  if (!hydrated) return null;
   return <AppThemeContext.Provider value={value}>{children}</AppThemeContext.Provider>;
 }
 

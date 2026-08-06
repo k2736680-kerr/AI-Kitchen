@@ -2,6 +2,14 @@
   "name": "@ai-kitchen/mobile",
   "main": "expo-router/entry",
   "version": "1.0.0",
+  "expo": {
+    "autolinking": {
+      "searchPaths": [
+        "../../node_modules",
+        "./node_modules"
+      ]
+    }
+  },
   "dependencies": {
     "@ai-kitchen/shared": "workspace:*",
     "@expo/ui": "~57.0.7",
@@ -12,7 +20,7 @@
     "expo-font": "~57.0.1",
     "expo-glass-effect": "~57.0.1",
     "expo-image": "~57.0.1",
-    "expo-linear-gradient": "~15.0.7",
+    "expo-linear-gradient": "~57.0.1",
     "expo-linking": "~57.0.4",
     "expo-localization": "~57.0.1",
     "expo-router": "~57.0.8",
@@ -43,8 +51,8 @@
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint"

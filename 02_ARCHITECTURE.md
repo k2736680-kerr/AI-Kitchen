@@ -2,7 +2,7 @@
 
 > 本文定义 AI Kitchen 的目标系统架构、组件边界、信任模型、数据流、环境、失败处理和扩展原则。当前尚未正式实现，因此文中“系统采用”代表已确认的目标基线，不代表代码已经存在。
 
-> 实施更正（2026-07-28）：正式运行后端已由 D-016 调整为内网 Node.js/Fastify + MySQL；本文中 Supabase/PostgreSQL 描述保留为历史目标设计，不代表当前正式实现。
+> 实施更正（2026-08-06）：D-032 已将正式运行后端调整为 Supabase Auth/PostgreSQL/RLS/Edge Functions；内网 Node.js/Fastify + MySQL 仅作切流回滚。
 
 | 属性 | 内容 |
 |---|---|

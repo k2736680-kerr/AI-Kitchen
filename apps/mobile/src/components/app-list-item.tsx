@@ -1,7 +1,8 @@
 import type { PropsWithChildren } from 'react';
 import { Pressable, StyleSheet, View, type PressableProps, type ViewProps } from 'react-native';
 
-import { Palette, Radius, Spacing } from '@/constants/theme';
+import { Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { ThemedText } from './themed-text';
 
 interface AppListItemBaseProps {
@@ -17,6 +18,7 @@ type AppListItemProps =
   | (AppListItemBaseProps & Omit<ViewProps, 'children'> & { readonly onPress?: undefined });
 
 export function AppListItem({ title, subtitle, trailingText, showChevron = false, compact = false, style, ...props }: AppListItemProps) {
+  const theme = useTheme();
   const staticStyle = typeof style === 'function' ? undefined : style;
   const content = (
     <>
@@ -41,8 +43,9 @@ export function AppListItem({ title, subtitle, trailingText, showChevron = false
         onPress={onPress}
         style={({ pressed }) => [
           styles.row,
+          { backgroundColor: theme.backgroundElement, borderBottomColor: theme.border },
           compact && styles.compactRow,
-          pressed && styles.pressed,
+          pressed && { backgroundColor: theme.backgroundSelected },
           staticStyle,
         ]}
         {...pressableProps}>
@@ -52,14 +55,15 @@ export function AppListItem({ title, subtitle, trailingText, showChevron = false
   }
 
   return (
-    <View style={[styles.row, compact && styles.compactRow, staticStyle]} {...props}>
+    <View style={[styles.row, { backgroundColor: theme.backgroundElement, borderBottomColor: theme.border }, compact && styles.compactRow, staticStyle]} {...props}>
       {content}
     </View>
   );
 }
 
 export function AppListSection({ children }: PropsWithChildren) {
-  return <View style={styles.section}>{children}</View>;
+  const theme = useTheme();
+  return <View style={[styles.section, { borderColor: theme.border }]}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
@@ -67,7 +71,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.input,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: Palette.border,
   },
   row: {
     minHeight: 60,
@@ -77,15 +80,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.sm,
-    backgroundColor: Palette.surface,
     borderBottomWidth: 1,
-    borderBottomColor: Palette.border,
   },
   compactRow: {
     minHeight: 52,
-  },
-  pressed: {
-    backgroundColor: Palette.sageLight,
   },
   copy: {
     flex: 1,

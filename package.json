@@ -6,13 +6,17 @@
     "node": ">=24"
   },
   "scripts": {
+    "postinstall": "node ./scripts/relink-mobile-dependencies.cjs",
     "dev:mobile": "pnpm --filter @ai-kitchen/mobile start",
     "dev:api": "pnpm --filter @ai-kitchen/api dev",
     "build:api": "pnpm --filter @ai-kitchen/api build",
     "start:api": "pnpm --filter @ai-kitchen/api start",
     "migrate:api": "pnpm --filter @ai-kitchen/api migrate:up",
+    "build:supabase-core": "node scripts/build-supabase-core.mjs",
+    "typecheck:supabase": "pnpm build:supabase-core && npx --yes deno check --config supabase/functions/api/deno.json supabase/functions/api/index.ts",
+    "test:supabase": "npx --yes deno test --allow-env --config supabase/functions/api/deno.json supabase/functions/api/index.test.ts",
     "android": "pnpm --filter @ai-kitchen/mobile android",
-    "typecheck": "pnpm --filter @ai-kitchen/api typecheck && pnpm --filter @ai-kitchen/mobile typecheck && pnpm --filter @ai-kitchen/shared typecheck",
+    "typecheck": "pnpm --filter @ai-kitchen/server-core typecheck && pnpm --filter @ai-kitchen/api typecheck && pnpm --filter @ai-kitchen/mobile typecheck && pnpm --filter @ai-kitchen/shared typecheck",
     "lint": "pnpm --filter @ai-kitchen/api lint && pnpm --filter @ai-kitchen/mobile lint",
     "test": "pnpm --filter @ai-kitchen/shared test && pnpm --filter @ai-kitchen/api test",
     "test:api": "pnpm --filter @ai-kitchen/api test",

@@ -85,8 +85,8 @@ describe('Fastify recipe API', () => {
     const en = { ...basePayload, requestId: 'req_api_english_1234', idempotencyKey: 'idem_api_english_1234', generationRequest: { ...basePayload.generationRequest, locale: 'en-US' as const } };
     const zhRequest = (await import('@ai-kitchen/shared')).GenerationApiRequestSchema.parse(zh);
     const enRequest = (await import('@ai-kitchen/shared')).GenerationApiRequestSchema.parse(en);
-    expect(createGenerationRequestHash(zhRequest)).not.toBe(createGenerationRequestHash(enRequest));
-    expect(createGenerationRequestHash(enRequest)).toBe(createGenerationRequestHash(enRequest));
+    await expect(createGenerationRequestHash(zhRequest)).resolves.not.toBe(await createGenerationRequestHash(enRequest));
+    await expect(createGenerationRequestHash(enRequest)).resolves.toBe(await createGenerationRequestHash(enRequest));
 
     let providerCalls = 0;
     const app = await createTestApp({ config, persistence: new InMemoryRecipePersistence(), provider: provider({ generateBatch: async (generationRequest) => { providerCalls += 1; return [generationRequest.locale === 'en-US' ? englishRecipe : RECIPE_FIXTURES[0]]; } }) });

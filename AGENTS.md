@@ -33,7 +33,8 @@ The Blueprint may describe target code that does not exist. Before editing:
 
 - React Native + Expo + TypeScript mobile client.
 - Versioned owned REST API; App does not call AI providers directly.
-- 内网 Node.js API + MySQL；服务端验证数据归属，当前 guestId 仅为过渡期业务标识。
+- Supabase anonymous Auth + PostgreSQL/RLS + Edge Functions 是正式后端；App 仍只调用自有版本化 REST API，不直连数据库或 AI Provider。
+- 旧 Fastify/MySQL 源码仅作为历史兼容与测试参考，不得重新部署为正式链路。
 - Monorepo shared request/response/Recipe Schema.
 - Model output is Recipe Candidate only.
 - Deterministic Schema, business, Food Safety, and Nutrition stages assemble Final Recipe.

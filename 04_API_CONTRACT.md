@@ -2,7 +2,7 @@
 
 > AI Kitchen 对外 API 契约基线。本文定义移动端与服务端之间的 HTTP 边界、资源模型、请求与响应格式、身份上下文、幂等、错误码、分页、兼容策略、安全要求、可观测性和契约测试。本文是移动端、Edge Functions、共享 Schema、Auth、Recipe Schema、AI Engine 与数据库实现的共同约束。
 
-> 实施更正（2026-07-28）：D-016 已将正式运行平台调整为内网 Fastify + MySQL。本文的 Supabase/Edge/PostgreSQL 内容为历史目标设计；当前可运行接口与部署方式以 `docs/API_GENERATION.md` 为准。
+> 实施更正（2026-08-06）：D-032 已将正式运行平台调整为 Supabase Auth/PostgreSQL/RLS/Edge Functions；内网 Fastify/MySQL 仅作切流回滚。
 
 | 属性 | 内容 |
 |---|---|
@@ -12,7 +12,7 @@
 | 传输 | HTTPS only |
 | 适用阶段 | P0–P2 |
 | 最后更新 | 2026-07-24 |
-| 实施状态 | Generation API v1 契约、Fastify/MySQL 源码和 Mobile Adapter 已实现；等待用户内网环境联调 |
+| 实施状态 | 七个 REST 接口、Edge Function、共享生成核心和 Mobile Adapter 已实现；等待远程部署联调 |
 
 ---
 
@@ -39,7 +39,7 @@
 本文继承以下已接受决策：
 
 - `D-003`：App 不直接调用 AI Provider；
-- `D-016`：正式后端使用内网 Node.js + MySQL；
+- `D-032`：正式后端使用 Supabase Auth、PostgreSQL/RLS 与 Edge Functions；
 - `D-006`：Monorepo + 共享 Schema；
 - `D-007`：AI 输出通过语法、Schema、业务和食品安全四层校验；
 - `D-008`：食品安全失败关闭；

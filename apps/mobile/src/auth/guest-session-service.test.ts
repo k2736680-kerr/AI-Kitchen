@@ -6,10 +6,12 @@ import type { SessionStorage } from './session-storage';
 class MemorySessionStorage implements SessionStorage {
   public token: string | null = null;
   public expiresAt: string | null = null;
+  public refreshToken: string | null = null;
   public async readToken(): Promise<string | null> { return this.token; }
   public async readExpiresAt(): Promise<string | null> { return this.expiresAt; }
-  public async writeSession(token: string, expiresAt: string): Promise<void> { this.token = token; this.expiresAt = expiresAt; }
-  public async deleteSession(): Promise<void> { this.token = null; this.expiresAt = null; }
+  public async readRefreshToken(): Promise<string | null> { return this.refreshToken; }
+  public async writeSession(token: string, expiresAt: string, refreshToken?: string): Promise<void> { this.token = token; this.expiresAt = expiresAt; this.refreshToken = refreshToken ?? this.refreshToken; }
+  public async deleteSession(): Promise<void> { this.token = null; this.expiresAt = null; this.refreshToken = null; }
 }
 
 describe('GuestSessionService', () => {
@@ -22,6 +24,26 @@ describe('GuestSessionService', () => {
     expect(first.subject.id).toBe(second.subject.id);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(storage.token).toBe('a'.repeat(43));
+    vi.unstubAllGlobals();
+  });
+
+  it('refreshes an expired Supabase access token without creating a new guest', async () => {
+    const storage = new MemorySessionStorage();
+    storage.token = 'expired-access-token';
+    storage.expiresAt = '2026-01-01T00:00:00.000Z';
+    storage.refreshToken = 'stored-refresh-token';
+    const nextToken = 'b'.repeat(600);
+    const fetchMock = vi.fn(async (_input: string, init?: RequestInit) => {
+      expect(init?.method).toBe('POST');
+      expect(JSON.parse(String(init?.body))).toEqual({ refreshToken: 'stored-refresh-token' });
+      return new Response(JSON.stringify({ schemaVersion: 'v1', subject: { type: 'guest', id: '00000000-0000-4000-8000-000000000003' }, session: { token: nextToken, refreshToken: 'rotated-refresh-token', expiresAt: '2026-12-31T00:00:00.000Z' } }), { status: 200 });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const service = new GuestSessionService('http://api.test', storage);
+    const session = await service.bootstrapGuestSession();
+    expect(session.subject.id).toBe('00000000-0000-4000-8000-000000000003');
+    expect(await service.readToken()).toBe(nextToken);
+    expect(storage.refreshToken).toBe('rotated-refresh-token');
     vi.unstubAllGlobals();
   });
 

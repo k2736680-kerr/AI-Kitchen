@@ -5,6 +5,10 @@ node_modules/
 dist/
 build/
 coverage/
+artifacts/
+preview/
+web-export/
+.workbuddy/
 *.log
 .env
 .env.*
@@ -14,5 +18,8 @@ Thumbs.db
 *.zip
 *.7z
 *.rar
+deploy/supabase/.env
+deploy/supabase/deployment-result.env
+supabase/functions/_shared/ai-kitchen-core.js
 apps/mobile/android/
 apps/mobile/ios/

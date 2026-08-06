@@ -8,6 +8,7 @@
     "dev": "tsx watch src/server.ts",
     "build": "node esbuild.config.mjs",
     "start": "node dist/server.js",
+    "migrate:dist": "node dist/migrate.js up",
     "test:build-start": "node scripts/smoke-built-server.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src esbuild.config.mjs scripts",
@@ -16,6 +17,7 @@
     "migrate:down": "tsx src/scripts/migrate.ts down"
   },
   "dependencies": {
+    "@ai-kitchen/server-core": "workspace:*",
     "@ai-kitchen/shared": "workspace:*",
     "@fastify/cors": "^11.1.0",
     "dotenv": "^16.6.1",

@@ -11,12 +11,15 @@ const externalRuntimeDependencies = Object.entries(packageJson.dependencies ?? {
 
 await build({
   absWorkingDir: apiDirectory,
-  entryPoints: ['src/server.ts'],
+  entryPoints: {
+    server: 'src/server.ts',
+    migrate: 'src/scripts/migrate.ts',
+  },
   bundle: true,
   external: externalRuntimeDependencies,
   format: 'esm',
   logLevel: 'info',
-  outfile: 'dist/server.js',
+  outdir: 'dist',
   platform: 'node',
   target: 'node24',
 });

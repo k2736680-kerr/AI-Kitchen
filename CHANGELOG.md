@@ -1,6 +1,80 @@
 # Changelog
 
-本文件记录 AI Kitchen Blueprint、代码、Schema、数据库和发布版本的显著变化。文档版本与 App 版本独立；当前尚无 App 版本。
+本文件记录 AI Kitchen Blueprint、代码、Schema、数据库和发布版本的显著变化。文档版本与 App/构建版本独立；当前尚未发布到应用商店。
+
+---
+
+## 旧服务器最终删除与本地仓库瘦身（2026-08-06）
+
+- 使用 MySQL 管理员权限确认 `ai_kitchen` 数据库为 0，并删除全部 2 条 `ai_kitchen_api` Host 账号记录；临时管理员密码文件随后删除。
+- 服务器复查确认 AI Kitchen Compose、容器、镜像、网络、BuildKit 专用缓存、项目/证书路径、cron 和 3100/3101/443 监听全部不存在；同机 STF 与人脸搜索项目保持运行。
+- 删除本地旧服务器 `deploy/server`、Dockerfile/TLS 配置和旧服务器凭据副本；Supabase 重复部署不再依赖旧服务器 `.env`，百炼 Key 留空时保留远程已有 Function Secret。
+- 删除 Fastify 兼容实现中仅为旧域名服务的 ACME challenge、TLS proxy secret 和公网 HTTP 拦截逻辑；测试改用通用示例地址，活动代码不再包含旧 IP/域名运行引用。
+- 清理约 2.26 GB Android build、Expo/API/Supabase 临时输出和两个旧 x86_64 APK，只保留 ARM64 Supabase APK。
+- 删除重复素材包、原始 Blueprint DOCX、素材 manifest、未引用模板组件/图片和旧 ingredient `gen2` 图片。
+- 文档入口合并到简化版 `README.md` / `CURRENT_STATUS.md`；Markdown 从 51 份缩减到 32 份，删除过期 MySQL、身份、竞品、素材审核、重复 ADR 和多 AI 工具专用指令。22 份编号 Blueprint 继续保留为 Schema、食品安全、隐私、测试和发布的正式依据。
+- 清理后验证：全仓 typecheck、Shared 30、API 20、Mobile 配置/Session 7、Edge 3 项测试、API lint、PowerShell 部署脚本语法和 Markdown 相对链接检查通过；Mobile lint 仍在规则执行前因 hoisted AJV/ESLint `defaultMeta` 故障退出。
+
+---
+
+## Supabase 正式后端迁移实现与部署（2026-08-06）
+
+- 新增 Supabase PostgreSQL migration、owner RLS、事务 RPC、SQL 安全测试和 anonymous Auth 配置。
+- 新增单个 `api` Edge Function，保持现有七个 `/api/v1` REST 接口；生产 URL 改为 Supabase 托管 HTTPS。
+- 抽取 `@ai-kitchen/server-core`，Fastify 与 Edge 共用 DashScope Provider、Prompt、GenerationService 和校验链；新增 Edge bundle 构建。
+- Mobile SecureStore 增加 Supabase refresh token，并在 access token 临近过期时自动刷新；共享身份响应允许 JWT 长 token 和可选 refresh token。
+- 新增 `deploy/supabase/deploy.ps1`、Git 忽略的授权文件和部署说明；只有远程 Health 通过后才切换 Mobile production Base URL。
+- 用户确认当前无真实用户/保留数据，故不迁移旧 MySQL 数据或自定义 Guest Token；旧 Fastify/MySQL 暂作切流回滚。
+- 验证：PostgreSQL 语法解析、Edge Deno check、PowerShell 语法、Server Core/API/Mobile/Shared typecheck；Shared 30、API 22、Mobile Session 3、Edge 3 项测试通过。远程 Supabase/RLS/真实 AI/真机仍待授权后执行。
+- **后续部署完成**：项目 `dthfeeafcecfmxghjnbo` 已在首尔区域上线，anonymous Auth、migration、DB lint、Function Secrets、Edge Function 和 DB SSL enforcement 已完成；真实 Guest/Refresh/Generate/Recipe/History/Visit 与跨游客隔离通过。
+- 新增 migration `202608060002_restrict_direct_table_access.sql`：撤销 authenticated/anon 的业务表和序列直连权限，只保留 owner 来自 `auth.uid()` 的受控 RPC；携带有效游客 JWT 直连 PostgREST 实测返回 403，真实生成链路仍通过。
+- Mobile production 已切换 Supabase Base URL；新增 ARM64 Release APK `artifacts/android/ai-kitchen-1.0.0-arm64-supabase.apk`，只含 `arm64-v8a`、不含旧域名，SHA-256 `E5DC01E35CC6F740912CF23A0812EAA17187883A402A1759B936A4B49D505AD9`。
+- 旧 `10.0.30.171` 服务已停用并清理：删除 AI Kitchen 容器、4 个专用 API 镜像、网络、代码、服务端 Secret、证书、acme 自动续期、专用 BuildKit 缓存、`ai_kitchen` 数据库、全部 `ai_kitchen_api` Host 账号和本地旧服务器 `.env` 凭据副本，3100/3101/443 已无监听；同机另外两个 Compose 项目保持健康。当前无在线 ADB 真机，APK 安装验收待设备连接。
+
+---
+
+## 长期在线服务器部署与仓库清理（2026-08-06）
+
+- 新增 `apps/api/Dockerfile` 与 `deploy/server` Docker Compose 部署路径；API 使用多阶段构建、`restart: unless-stopped`、数据库健康检查、日志轮转、只读文件系统和最小 capabilities，不再依赖开发电脑常驻。
+- API 构建新增 `dist/migrate.js`，服务器以独立一次性 migration 容器执行正向迁移；部署脚本为每次构建生成唯一镜像标签，健康失败时恢复上一 API 镜像，回滚后再次验证数据库和 Provider 状态。
+- 新增独立 Docker Nginx TLS 入口：服务器内部 API 保持 HTTP `3100`，公网只通过 `443` 提供 HTTPS；TLS 容器使用服务器缓存镜像、独立加载被 Git 忽略的证书，不修改主机现有 80 端口 Nginx。MySQL 3306 明确禁止直接暴露公网，跨网络连接需 VPN/专线。
+- API 已部署到 Ubuntu 22.04 x86_64 `10.0.30.171`，公钥登录与 Docker 权限可用；Docker 28.1.1 / Compose 2.35.1 常驻运行健康容器。API 与 MySQL 同机，使用 host network 和 `127.0.0.1:3306`，无需扩大 `ai_kitchen_api` 到 Docker bridge 网段的授权。
+- 服务器 Docker Hub 出口不可用，Dockerfile 改用 AWS Public ECR 的官方 Docker Library Node 24 镜像，npm/pnpm 使用 `registry.npmmirror.com`；服务器首次构建与后续缓存重建通过。
+- 内网穿透目标由旧电脑 `10.0.30.221:3100` 切换为服务器 `10.0.30.171:3100`，公网 HTTP Health 已返回 200；HTTPS 需要另将公网 443/TLS 转发到服务器 `10.0.30.171:443`，验收通过后关闭公网到 `3100` 的 HTTP 规则，正式 Mobile 不降级为明文 HTTP。
+- TLS 部署脚本新增域名覆盖与证书/私钥匹配门禁，并支持 `--https-only` 在不重建健康 API 的情况下启动入口。用户提供的 `*.moyoung.com` 证书链和私钥本身有效，但不覆盖 `kerr.test.moyoung.com`，因此未启动错误证书；需提供该精确域名或 `*.test.moyoung.com` 证书。
+- Mobile production/staging remote 模式强制使用 HTTPS，错误 HTTP 配置会被清空并在游客会话初始化前显示配置错误；仅 development loopback 可使用 HTTP。
+- 真实生成首次发现百炼把 `cuisine/flavor` 输出成中文枚举，导致两次 repair 累计超过 40 秒；强化 Prompt 的固定英文 ID 约束并补回归断言后，真实 Guest Session → 3 候选生成 → MySQL → History 在约 16.1 秒成功，3 个候选均保存且未 repair。
+- 新增被 Git 忽略的服务器 `deploy/server/.env` 和 Mobile `apps/mobile/.env.production`；服务端文件留出 MySQL 与 DashScope 占位值供用户填写，客户端只保存公网 API 地址。
+- 清理旧 Web 导出/预览服务、临时日志、旧 APK 与过期 `HANDOFF_2026-08-05.md`；正式 Blueprint、ADR 和状态文档保留，并增加生成目录忽略规则。
+- 验证：API typecheck、lint、6 个测试文件 20 项、server/migrate 构建、部署 shell 与 Compose、Linux Docker build、migration、健康检查、内网真实 AI/History、公网 HTTP Health、Mobile typecheck、HTTPS 配置测试 4 项、服务器 Nginx 配置检查及本机临时 `8443 HTTPS → 3100 HTTP` 冒烟通过；公网 HTTPS 待正确域名证书和网关 443 转发。
+
+---
+
+## Mobile 流程响应与视觉一致性优化（2026-08-06）
+
+- 新增共享 `ScreenList`，将首页食材、探索、历史和多做法候选页改为单一纵向虚拟列表，移除虚拟列表嵌套普通 ScrollView 的运行警告。
+- 首页 166 项食材目录按窗口分批渲染，食材卡使用 memo；首页和探索搜索使用 deferred query，使输入即时反馈与筛选计算解耦。
+- 探索菜谱、历史记录和多做法候选卡增加稳定 render callback、合理的首批/批次/window 参数和 Android clipped-subview 优化。
+- 新增统一 `SelectionChip`，分类、人数、时间、厨具、饮食偏好、过敏原、忌口与探索筛选共享选中渐变、按压反馈、可访问状态和最小触控高度。
+- `Screen`、`AppCard`、`AppButton`、`StatusMessage` 全部改用当前主题语义色；补齐 light/dark 的 danger、warning、success border 与 on-primary token，消除公共组件在深色模式下残留亮色背景的问题。
+- 主题 Provider 启动时先渲染系统主题，再异步恢复持久化模式，不再以空树阻塞首屏。
+- Pixel_8a release 视觉复核覆盖首页、探索、历史空状态、深色首页、深色首次引导和深色“我的”页；首次截图发现并修复食材图片容器缺少 92×92 尺寸造成的双列卡片异常拉伸。现有素材满足本轮需求，未新增生成图片。
+- 验证：Mobile `tsc --noEmit` 通过；6 个相关测试文件共 18 项通过；x86_64 `assembleRelease`、安装、无 Metro 冷启动通过，两次冷启动 `TotalTime=1022ms / 718ms`；运行日志无 `VirtualizedLists`、AndroidRuntime、Expo 或 ReactNativeJS fatal。
+- 优化版模拟器 APK：`artifacts/android/ai-kitchen-1.0.0-x86_64-optimized.apk`，SHA-256 `BA3CEF05925EEAC87AA3B52A1CFC3FB27ED3BEA4F52B823652B370C236AE2E45`。仍为 debug keystore / x86_64，不用于商店或 ARM 真机发布。
+- `expo lint` 仍因 hoisted `@eslint/eslintrc` / AJV `defaultMeta` 初始化问题在规则运行前失败，未隐藏或转为 skip。
+
+---
+
+## Android 本地打包链路恢复（2026-08-06）
+
+- 清理遗留 Vitest、CMake/Ninja、并发 pnpm 和旧 WorkBuddy 删除任务造成的 Windows 文件锁，修复 `ERR_PNPM_EPERM`、损坏的 `react-native-screens` hoisted 目录及 `build.ninja still dirty`。
+- 根 `package.json` 新增 Windows-only postinstall，调用 `scripts/relink-mobile-dependencies.cjs` 将版本一致的 Mobile junction 指向短 hoisted 路径；非 Windows 平台不执行链接调整。
+- Mobile Expo 自动链接增加 monorepo 根 `node_modules` 搜索路径；`expo-linear-gradient` 由 15.x 升至 SDK 57 对应的 57.0.1，修复启动时缺少 `LazyKType` 的原生崩溃。
+- Expo prebuild 将 Mobile `android` / `ios` 脚本切换为 `expo run:*`；Android 原生目录继续由 prebuild 生成，不作为手工维护源文件。
+- 使用 Node 24.14.0、pnpm 11.14.0、JDK 21、Gradle 9.3.1 和 Android SDK 36/Build Tools 37 完成 x86_64 debug 与 standalone release 构建。
+- Release APK 已安装到 `Pixel_8a / emulator-5554` 并在无 Metro 状态下启动；未发现 AndroidRuntime / Expo / ReactNativeJS fatal。产物：`artifacts/android/ai-kitchen-1.0.0-x86_64-standalone.apk`，SHA-256 `F7DB4BDB1B81DB0F4156B3B8D64E509190ABE57A12A81B80FE51A4BC0770FF9E`。
+- 当前 release 使用 debug keystore 且只包含 x86_64，仅用于模拟器验收，不是商店或 ARM 真机发布包。
+- 验证中 Mobile typecheck 通过；`expo lint` 因 hoisted `@eslint/eslintrc` / AJV 初始化异常在规则执行前失败，保留为显式未解项。
 
 ---
 

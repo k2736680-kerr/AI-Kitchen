@@ -10,10 +10,12 @@ import { Screen } from '@/components/screen';
 import { StatusMessage } from '@/components/status-message';
 import { ThemedText } from '@/components/themed-text';
 import { getAppVersion, supportedLanguageNames } from '@/config/app-info';
-import { Palette, Radius, Spacing, BottomTabInset } from '@/constants/theme';
+import { Radius, Spacing, BottomTabInset } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function ProfileScreen() {
   const { t, i18n } = useTranslation();
+  const theme = useTheme();
   const currentLanguage = i18n.language === 'en-US' ? t('settings.english') : t('settings.chinese');
   const version = getAppVersion();
 
@@ -23,12 +25,12 @@ export default function ProfileScreen() {
 
       <AppCard>
         <View style={styles.guestHeader}>
-          <View style={styles.guestMarkContainer}>
+          <View style={[styles.guestMarkContainer, { backgroundColor: theme.backgroundSelected }]}>
             <Image source={require('@/assets/images/ai-kitchen/brand/splash-mark.png')} style={styles.guestMark} contentFit="contain" />
           </View>
           <View style={styles.guestHeaderCopy}>
-            <View style={styles.guestBadge}>
-              <ThemedText type="smallBold" style={styles.guestBadgeText}>{t('profile.guestBadge')}</ThemedText>
+            <View style={[styles.guestBadge, { backgroundColor: theme.backgroundSelected }]}>
+              <ThemedText type="smallBold" style={{ color: theme.primaryPressed }}>{t('profile.guestBadge')}</ThemedText>
             </View>
             <ThemedText type="sectionTitle">{t('profile.guestTitle')}</ThemedText>
           </View>
@@ -111,7 +113,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.card,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Palette.sageLight,
   },
   guestMark: {
     width: 44,
@@ -119,12 +120,8 @@ const styles = StyleSheet.create({
   },
   guestBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: Palette.sageLight,
     borderRadius: Radius.chip,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
-  },
-  guestBadgeText: {
-    color: Palette.sageDeep,
   },
 });

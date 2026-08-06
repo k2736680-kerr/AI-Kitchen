@@ -24,6 +24,9 @@ describe('AliyunQwenRecipeProvider', () => {
     const body = JSON.parse(String(calls[0][1].body));
     expect(body).toMatchObject({ model: 'qwen3.7-plus', temperature: 0.8, top_p: 0.9, stream: false, response_format: { type: 'json_object' }, enable_thinking: false });
     expect(body.messages[0].content).toContain('简体中文');
+    expect(body.messages[0].content).toContain('cuisine 与 flavor 禁止输出中文标签');
+    expect(body.messages[0].content).toContain('sichuan/cantonese/hunan');
+    expect(body.messages[0].content).toContain('light/spicy/savory');
     // 每个候选被分配不同的烹饪方式
     const methods = calls.map((call) => JSON.parse(String(call[1].body)).messages[1].content);
     expect(methods[0]).toContain('stir-fry');

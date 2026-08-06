@@ -9,7 +9,7 @@
 | 身份服务 | Supabase Auth |
 | 适用阶段 | P0–P2 |
 | 最后更新 | 2026-07-27 |
-| 实施状态 | 尚未创建 Auth 配置或身份迁移代码 |
+| 实施状态 | anonymous Auth、JWT/refresh token、SecureStore 与 owner RLS 已实现；等待远程项目验证 |
 
 ---
 
